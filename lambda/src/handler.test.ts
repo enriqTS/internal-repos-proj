@@ -74,6 +74,24 @@ describe('validateRequest', () => {
     expect(result).toBeNull();
   });
 
+  it('should accept undefined readme explicitly', () => {
+    const result = validateRequest({
+      name: 'my-project',
+      readme: undefined,
+      files: [{ path: 'file.txt', content: Buffer.from('hi') }],
+    });
+    expect(result).toBeNull();
+  });
+
+  it('should accept whitespace-only readme', () => {
+    const result = validateRequest({
+      name: 'my-project',
+      readme: '   \t\n  ',
+      files: [{ path: 'file.txt', content: Buffer.from('hi') }],
+    });
+    expect(result).toBeNull();
+  });
+
   it('should return error for missing files', () => {
     const result = validateRequest({
       name: 'my-project',
