@@ -47,11 +47,7 @@ jobs:
         run: npm test
 
       - name: Build Lambda
-        run: |
-          npm run build --workspace=lambda
-          cd lambda/dist
-          cp ../package.json .
-          npm install --omit=dev
+        run: npm run build --workspace=lambda
 
       - name: Terraform Init
         working-directory: infra
@@ -105,11 +101,7 @@ jobs:
         run: npm ci
 
       - name: Build Lambda
-        run: |
-          npm run build --workspace=lambda
-          cd lambda/dist
-          cp ../package.json .
-          npm install --omit=dev
+        run: npm run build --workspace=lambda
 
       - name: Terraform Init
         working-directory: infra

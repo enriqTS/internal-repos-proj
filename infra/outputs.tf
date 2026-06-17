@@ -9,8 +9,8 @@ output "cloudfront_distribution_id" {
 }
 
 output "api_gateway_endpoint" {
-  description = "The invoke URL for the API Gateway upload endpoint"
-  value       = "${aws_api_gateway_stage.prod.invoke_url}/upload"
+  description = "The invoke URL for the API Gateway stage (without resource path)"
+  value       = aws_api_gateway_stage.prod.invoke_url
 }
 
 output "s3_bucket_name" {
