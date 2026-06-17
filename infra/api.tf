@@ -52,6 +52,26 @@ resource "aws_iam_role_policy" "lambda_s3_policy" {
   })
 }
 
+resource "aws_iam_role_policy" "lambda_staging_s3_policy" {
+  name = "${var.bucket_name_prefix}-lambda-staging-s3-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "${aws_s3_bucket.staging.arn}/staging/*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy" "lambda_logs_policy" {
   name = "${var.bucket_name_prefix}-lambda-logs-policy"
   role = aws_iam_role.lambda_role.id
