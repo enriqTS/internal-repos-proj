@@ -103,6 +103,58 @@ export function detectReadmeFile(files: FileList): File | null {
 }
 
 /**
+ * Orchestrates README detection, reading, truncation, and UI feedback.
+ * Clears previous notices, skips if textarea has content, reads the detected
+ * README file, truncates if needed, and shows appropriate notices.
+ */
+export async function handleReadmeAutofill(
+  files: FileList,
+  textarea: HTMLTextAreaElement,
+  noticeContainer: HTMLDivElement,
+): Promise<void> {
+  // Clear any previous notices
+  noticeContainer.innerHTML = '';
+
+  // Only autofill if textarea is empty/whitespace
+  if (textarea.value.trim().length > 0) return;
+
+  const readmeFile = detectReadmeFile(files);
+  if (!readmeFile) return;
+
+  let content: string;
+  try {
+    content = await readmeFile.text();
+  } catch {
+    // Cannot read file — leave textarea unchanged
+    return;
+  }
+
+  let truncated = false;
+  if (content.length > MAX_README_LENGTH) {
+    content = content.slice(0, MAX_README_LENGTH);
+    truncated = true;
+  }
+
+  textarea.value = content;
+
+  // Show autofill notice
+  const notice = document.createElement('span');
+  notice.className = 'readme-autofill-notice';
+  notice.textContent = `Auto-filled from ${readmeFile.name}`;
+  notice.setAttribute('aria-live', 'polite');
+  noticeContainer.appendChild(notice);
+
+  // Show truncation warning if applicable
+  if (truncated) {
+    const warning = document.createElement('span');
+    warning.className = 'readme-truncation-warning';
+    warning.textContent = `Content was truncated to ${MAX_README_LENGTH.toLocaleString()} characters (maximum allowed).`;
+    warning.setAttribute('role', 'alert');
+    noticeContainer.appendChild(warning);
+  }
+}
+
+/**
  * Render the upload form into the given container element.
  * Handles validation, submission, and response display.
  */
