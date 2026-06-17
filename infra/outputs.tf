@@ -3,6 +3,11 @@ output "cloudfront_distribution_url" {
   value       = aws_cloudfront_distribution.frontend.domain_name
 }
 
+output "cloudfront_distribution_id" {
+  description = "The ID of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.frontend.id
+}
+
 output "api_gateway_endpoint" {
   description = "The invoke URL for the API Gateway upload endpoint"
   value       = "${aws_api_gateway_stage.prod.invoke_url}/upload"
@@ -16,4 +21,10 @@ output "s3_bucket_name" {
 output "s3_bucket_arn" {
   description = "The ARN of the S3 bucket"
   value       = aws_s3_bucket.frontend.arn
+}
+
+output "api_key_value" {
+  description = "The auto-generated API key value for the upload endpoint"
+  value       = aws_api_gateway_api_key.upload_key.value
+  sensitive   = true
 }

@@ -62,7 +62,6 @@ jobs:
         working-directory: infra
         run: terraform plan -out=tfplan
         env:
-          TF_VAR_api_key_value: ${{ secrets.API_KEY_VALUE }}
           TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
 
@@ -125,21 +124,29 @@ jobs:
         working-directory: infra
         run: terraform apply -auto-approve tfplan
         env:
-          TF_VAR_api_key_value: ${{ secrets.API_KEY_VALUE }}
           TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
+
+      - name: Get Terraform outputs
+        id: tf_outputs
+        working-directory: infra
+        run: |
+          echo "api_key=$(terraform output -raw api_key_value)" >> $GITHUB_OUTPUT
+          echo "api_endpoint=$(terraform output -raw api_gateway_endpoint)" >> $GITHUB_OUTPUT
+          echo "s3_bucket=$(terraform output -raw s3_bucket_name)" >> $GITHUB_OUTPUT
+          echo "cf_distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
 
       - name: Build frontend
         run: npm run build --workspace=frontend
         env:
-          VITE_API_KEY: ${{ secrets.API_KEY_VALUE }}
-          VITE_API_ENDPOINT: ${{ secrets.API_GATEWAY_ENDPOINT }}
+          VITE_API_KEY: ${{ steps.tf_outputs.outputs.api_key }}
+          VITE_API_ENDPOINT: ${{ steps.tf_outputs.outputs.api_endpoint }}
 
       - name: Deploy to S3
-        run: aws s3 sync frontend/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+        run: aws s3 sync frontend/dist/ s3://${{ steps.tf_outputs.outputs.s3_bucket }} --delete
 
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ steps.tf_outputs.outputs.cf_distribution_id }} \
             --paths "/*"

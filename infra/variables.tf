@@ -22,13 +22,6 @@ variable "acm_certificate_arn" {
   default     = ""
 }
 
-variable "api_key_value" {
-  description = "API key value for authenticated upload requests"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
 variable "lambda_source_path" {
   description = "Path to the Lambda deployment package (zip file)"
   type        = string

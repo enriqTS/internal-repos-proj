@@ -190,7 +190,6 @@ resource "aws_api_gateway_stage" "prod" {
 resource "aws_api_gateway_api_key" "upload_key" {
   name    = "${var.bucket_name_prefix}-upload-key"
   enabled = true
-  value   = var.api_key_value
 }
 
 resource "aws_api_gateway_usage_plan" "upload_plan" {
