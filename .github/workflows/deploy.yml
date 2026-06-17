@@ -46,6 +46,14 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Build Lambda
+        run: |
+          npm run build --workspace=lambda
+          cd lambda/dist
+          cp ../package.json .
+          npm install --omit=dev
+          zip -r lambda.zip .
+
       - name: Terraform Init
         working-directory: infra
         run: terraform init
@@ -94,6 +102,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build Lambda
+        run: |
+          npm run build --workspace=lambda
+          cd lambda/dist
+          cp ../package.json .
+          npm install --omit=dev
+          zip -r lambda.zip .
 
       - name: Terraform Init
         working-directory: infra
