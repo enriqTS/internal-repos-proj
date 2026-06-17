@@ -148,7 +148,7 @@ jobs:
         run: |
           echo "Invoking Lambda to ensure global-index.json exists..."
           aws lambda invoke \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}" \
             --payload '{"action": "regenerate-index"}' \
             --cli-binary-format raw-in-base64-out \
             /tmp/lambda-response.json
