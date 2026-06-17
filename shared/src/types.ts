@@ -35,8 +35,8 @@ export interface UploadRequest {
   name: string;
   /** Required, comma-separated list of tags */
   tags: string;
-  /** Required, max 50,000 chars */
-  readme: string;
+  /** Optional, max 50,000 chars when provided */
+  readme?: string;
   /** Required, at least 1 file after filtering */
   files: FileEntry[];
 }
