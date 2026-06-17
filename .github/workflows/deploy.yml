@@ -52,7 +52,6 @@ jobs:
           cd lambda/dist
           cp ../package.json .
           npm install --omit=dev
-          zip -r lambda.zip .
 
       - name: Terraform Init
         working-directory: infra
@@ -118,7 +117,6 @@ jobs:
           cd lambda/dist
           cp ../package.json .
           npm install --omit=dev
-          zip -r lambda.zip .
 
       - name: Terraform Init
         working-directory: infra

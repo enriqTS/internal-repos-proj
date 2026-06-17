@@ -73,6 +73,16 @@ resource "aws_iam_role_policy" "lambda_logs_policy" {
 }
 
 # -----------------------------------------------------------------------------
+# Lambda Deployment Package
+# -----------------------------------------------------------------------------
+
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../lambda/dist"
+  output_path = "${path.module}/../lambda/dist/lambda.zip"
+}
+
+# -----------------------------------------------------------------------------
 # Lambda Function
 # -----------------------------------------------------------------------------
 
@@ -84,8 +94,8 @@ resource "aws_lambda_function" "upload_lambda" {
   memory_size   = 512
   timeout       = 30
 
-  filename         = var.lambda_source_path
-  source_code_hash = filebase64sha256(var.lambda_source_path)
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   environment {
     variables = {

@@ -22,8 +22,3 @@ variable "acm_certificate_arn" {
   default     = ""
 }
 
-variable "lambda_source_path" {
-  description = "Path to the Lambda deployment package (zip file)"
-  type        = string
-  default     = "../lambda/dist/lambda.zip"
-}

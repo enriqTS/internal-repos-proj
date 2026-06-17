@@ -3,6 +3,11 @@ node_modules
 .vscode
 .kiro
 
+# Build outputs
+lambda/dist
+frontend/dist
+shared/dist
+
 # Terraform
 infra/.terraform/
 infra/.terraform.lock.hcl
