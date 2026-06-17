@@ -124,6 +124,9 @@ jobs:
           echo "cf_distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
           echo "lambda_function_name=$(terraform output -raw lambda_function_name)" >> $GITHUB_OUTPUT
 
+      - name: Build shared
+        run: npm run build --workspace=shared
+
       - name: Build frontend
         run: npm run build --workspace=frontend
         env:
