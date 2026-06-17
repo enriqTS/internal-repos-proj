@@ -167,3 +167,52 @@ resource "aws_cloudfront_distribution" "frontend" {
     Project = "internal-repos"
   }
 }
+
+# ------------------------------------------------------------------------------
+# S3 Bucket - Staging (Presigned Upload)
+# ------------------------------------------------------------------------------
+
+resource "aws_s3_bucket" "staging" {
+  bucket = "${var.bucket_name_prefix}-staging"
+
+  tags = {
+    Name    = "internal-repos-staging"
+    Project = "internal-repos"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "staging" {
+  bucket = aws_s3_bucket.staging.id
+
+  rule {
+    id     = "expire-staging-uploads"
+    status = "Enabled"
+
+    filter {
+      prefix = "staging/"
+    }
+
+    expiration {
+      days = 1
+    }
+  }
+}
+
+resource "aws_s3_bucket_cors_configuration" "staging" {
+  bucket = aws_s3_bucket.staging.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT"]
+    allowed_origins = ["*"]
+    max_age_seconds = 3600
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "staging" {
+  bucket                  = aws_s3_bucket.staging.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
