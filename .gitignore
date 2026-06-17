@@ -1,0 +1,11 @@
+node_modules
+
+.vscode
+.kiro
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan

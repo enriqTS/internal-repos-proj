@@ -1,0 +1,117 @@
+name: Deploy Project Entry
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'projects/**'
+
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET: ${{ secrets.S3_BUCKET_NAME }}
+  LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+
+jobs:
+  deploy-projects:
+    name: Validate and Deploy Projects
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Identify changed project directories
+        id: changed-projects
+        run: |
+          # Get list of changed files under projects/ compared to previous commit
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- 'projects/')
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No project files changed."
+            echo "projects=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Extract unique project directory names
+          PROJECTS=$(echo "$CHANGED_FILES" | cut -d'/' -f2 | sort -u)
+          echo "Changed projects:"
+          echo "$PROJECTS"
+
+          # Store as JSON array for matrix or iteration
+          PROJECTS_JSON=$(echo "$PROJECTS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "projects=$PROJECTS_JSON" >> "$GITHUB_OUTPUT"
+
+      - name: Validate project directories
+        if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
+        run: |
+          PROJECTS='${{ steps.changed-projects.outputs.projects }}'
+          FAILED=0
+
+          for PROJECT in $(echo "$PROJECTS" | jq -r '.[]'); do
+            PROJECT_DIR="projects/$PROJECT"
+            echo "Validating $PROJECT_DIR..."
+
+            # Check readme.md exists
+            if [ ! -f "$PROJECT_DIR/readme.md" ]; then
+              echo "::error::Project '$PROJECT' is missing required file: readme.md"
+              FAILED=1
+            fi
+
+            # Check metadata.json exists
+            if [ ! -f "$PROJECT_DIR/metadata.json" ]; then
+              echo "::error::Project '$PROJECT' is missing required file: metadata.json"
+              FAILED=1
+            fi
+          done
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo "::error::Validation failed. Each project directory must contain both readme.md and metadata.json."
+            exit 1
+          fi
+
+          echo "All project directories validated successfully."
+
+      - name: Deploy project files to S3
+        if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
+        run: |
+          PROJECTS='${{ steps.changed-projects.outputs.projects }}'
+
+          for PROJECT in $(echo "$PROJECTS" | jq -r '.[]'); do
+            PROJECT_DIR="projects/$PROJECT"
+            S3_PATH="s3://$S3_BUCKET/projects/$PROJECT/"
+
+            echo "Deploying $PROJECT_DIR to $S3_PATH..."
+            aws s3 sync "$PROJECT_DIR" "$S3_PATH" --delete
+          done
+
+          echo "All projects deployed successfully."
+
+      - name: Regenerate search index
+        if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
+        run: |
+          echo "Invoking Lambda to regenerate search index..."
+          aws lambda invoke \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --payload '{"action": "regenerate-index"}' \
+            --cli-binary-format raw-in-base64-out \
+            /tmp/lambda-response.json
+
+          # Check for errors in the response
+          if grep -q '"errorMessage"' /tmp/lambda-response.json 2>/dev/null; then
+            echo "::error::Lambda invocation returned an error:"
+            cat /tmp/lambda-response.json
+            exit 1
+          fi
+
+          echo "Search index regenerated successfully."
+          cat /tmp/lambda-response.json
