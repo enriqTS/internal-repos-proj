@@ -11,6 +11,7 @@ shared/dist
 # Terraform
 infra/.terraform/
 infra/.terraform.lock.hcl
+infra/lambda.zip
 *.tfstate
 *.tfstate.backup
 *.tfplan

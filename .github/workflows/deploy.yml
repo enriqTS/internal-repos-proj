@@ -11,7 +11,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  NODE_VERSION: '24'
+  NODE_VERSION: '22'
   TERRAFORM_VERSION: '1.7'
 
 jobs:
@@ -63,7 +63,7 @@ jobs:
           TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
         run: |
-          terraform plan -out=tfplan -no-color 2>&1 | tee plan_output.txt
+          terraform plan -no-color 2>&1 | tee plan_output.txt
 
       - name: Post plan to job summary
         working-directory: infra
@@ -73,13 +73,6 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat plan_output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: infra/tfplan
-          retention-days: 1
 
   deploy:
     name: Deploy
@@ -122,15 +115,9 @@ jobs:
         working-directory: infra
         run: terraform init
 
-      - name: Download plan artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: infra
-
       - name: Terraform Apply
         working-directory: infra
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve
         env:
           TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
