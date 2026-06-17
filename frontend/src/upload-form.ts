@@ -211,6 +211,19 @@ export function renderUploadForm(container: HTMLElement): void {
   const filesGroup = createFileGroup('project-files', 'Project Files (select folder)');
   form.appendChild(filesGroup.wrapper);
 
+  // Wire up README autofill on file selection
+  filesGroup.input.addEventListener('change', () => {
+    const files = filesGroup.input.files;
+    if (files && files.length > 0) {
+      handleReadmeAutofill(files, readmeGroup.textarea, readmeNoticeContainer);
+    }
+  });
+
+  // Clear notices when user edits the readme textarea
+  readmeGroup.textarea.addEventListener('input', () => {
+    readmeNoticeContainer.innerHTML = '';
+  });
+
   // Submit button
   const submitBtn = document.createElement('button');
   submitBtn.type = 'submit';
