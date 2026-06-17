@@ -129,10 +129,26 @@ export function validateRequest(data: ParsedFormData): string | null {
   return null;
 }
 
+/** Standard CORS headers included in every response. */
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key,Authorization',
+  'Access-Control-Allow-Methods': 'OPTIONS,POST',
+};
+
 /**
  * Lambda handler entry point for the upload endpoint.
  */
 export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  // Handle preflight OPTIONS requests (belt-and-suspenders alongside API GW mock)
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: { ...CORS_HEADERS },
+      body: '',
+    };
+  }
+
   try {
     // Parse multipart form data
     const formData = await parseMultipartForm(event);
@@ -142,7 +158,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     if (validationError) {
       return {
         statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
         body: JSON.stringify({ error: validationError }),
       };
     }
@@ -154,7 +170,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
       body: JSON.stringify({
         message: 'Project uploaded successfully',
         path: `projects/${name}/`,
@@ -164,7 +180,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const message = err instanceof Error ? err.message : 'Internal server error';
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
       body: JSON.stringify({ error: message }),
     };
   }
