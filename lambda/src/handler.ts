@@ -83,9 +83,7 @@ export function validateRequest(data: ParsedFormData): string | null {
   if (!data.name || data.name.trim().length === 0) {
     missingFields.push('name');
   }
-  if (!data.readme || data.readme.trim().length === 0) {
-    missingFields.push('readme');
-  }
+  // readme is now optional — no required check
   if (!data.files || data.files.length === 0) {
     missingFields.push('files');
   }
@@ -106,8 +104,8 @@ export function validateRequest(data: ParsedFormData): string | null {
     return `Project name must be at most ${MAX_PROJECT_NAME_LENGTH} characters.`;
   }
 
-  // Validate readme length
-  if (data.readme!.length > MAX_README_LENGTH) {
+  // Validate readme length only if provided
+  if (data.readme && data.readme.length > MAX_README_LENGTH) {
     return `Readme content must be at most ${MAX_README_LENGTH} characters.`;
   }
 

@@ -94,14 +94,14 @@ describe('validateForm', () => {
   });
 
   describe('readme validation', () => {
-    it('returns error when readme is empty', () => {
+    it('accepts empty readme (field is optional)', () => {
       const errors = validateForm('project', '', '', createFileList(1));
-      expect(errors.readme).toBe('Readme content is required');
+      expect(errors.readme).toBeUndefined();
     });
 
-    it('returns error when readme is only whitespace', () => {
+    it('accepts whitespace-only readme (field is optional)', () => {
       const errors = validateForm('project', '', '   ', createFileList(1));
-      expect(errors.readme).toBe('Readme content is required');
+      expect(errors.readme).toBeUndefined();
     });
 
     it('returns error when readme exceeds 50,000 characters', () => {
@@ -144,8 +144,9 @@ describe('validateForm', () => {
     it('returns multiple errors simultaneously', () => {
       const errors = validateForm('', '', '', null);
       expect(errors.name).toBeDefined();
-      expect(errors.readme).toBeDefined();
       expect(errors.files).toBeDefined();
+      // readme is now optional, so no error for empty readme
+      expect(errors.readme).toBeUndefined();
     });
   });
 });

@@ -66,12 +66,12 @@ describe('validateRequest', () => {
     expect(result).toBe('Missing required fields: name');
   });
 
-  it('should return error for missing readme', () => {
+  it('should accept missing readme (optional field)', () => {
     const result = validateRequest({
       name: 'my-project',
       files: [{ path: 'file.txt', content: Buffer.from('hi') }],
     });
-    expect(result).toBe('Missing required fields: readme');
+    expect(result).toBeNull();
   });
 
   it('should return error for missing files', () => {
@@ -85,7 +85,7 @@ describe('validateRequest', () => {
 
   it('should return error listing multiple missing fields', () => {
     const result = validateRequest({ files: [] });
-    expect(result).toBe('Missing required fields: name, readme, files');
+    expect(result).toBe('Missing required fields: name, files');
   });
 
   it('should return error for invalid project name characters', () => {
@@ -228,7 +228,6 @@ describe('handler', () => {
     expect(result.statusCode).toBe(400);
     const responseBody = JSON.parse(result.body);
     expect(responseBody.error).toContain('Missing required fields');
-    expect(responseBody.error).toContain('readme');
     expect(responseBody.error).toContain('files');
   });
 

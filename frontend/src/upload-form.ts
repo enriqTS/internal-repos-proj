@@ -51,10 +51,8 @@ export function validateForm(
     }
   }
 
-  // Readme validation
-  if (!readme.trim()) {
-    errors.readme = 'Readme content is required';
-  } else if (readme.length > MAX_README_LENGTH) {
+  // Readme validation — only check length if provided
+  if (readme.length > MAX_README_LENGTH) {
     errors.readme = `Readme must be at most ${MAX_README_LENGTH.toLocaleString()} characters`;
   }
 
