@@ -65,6 +65,44 @@ export function validateForm(
 }
 
 /**
+ * Scans a FileList for a root-level README file using webkitRelativePath.
+ * Root level means the file's relative path has exactly one path separator
+ * (e.g., "folderName/README.md").
+ *
+ * Matches filenames case-insensitively: readme, readme.md, readme.txt
+ * Priority order: .md > .txt > no extension; ties broken by file list order.
+ *
+ * @returns The highest-priority matching File, or null if none found.
+ */
+export function detectReadmeFile(files: FileList): File | null {
+  const README_PATTERN = /^readme(\.(md|txt))?$/i;
+  const PRIORITY: Record<string, number> = { '.md': 0, '.txt': 1, '': 2 };
+
+  const candidates: Array<{ file: File; priority: number; index: number }> = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const relativePath = file.webkitRelativePath;
+    // Root level: exactly one path separator (e.g., "folderName/README.md")
+    const parts = relativePath.split('/');
+    if (parts.length !== 2) continue;
+
+    const filename = parts[1];
+    if (!README_PATTERN.test(filename)) continue;
+
+    const ext = filename.includes('.') ? filename.slice(filename.lastIndexOf('.')).toLowerCase() : '';
+    const priority = PRIORITY[ext] ?? 2;
+    candidates.push({ file, priority, index: i });
+  }
+
+  if (candidates.length === 0) return null;
+
+  // Sort by priority (lower = higher priority), then by original index (stable)
+  candidates.sort((a, b) => a.priority - b.priority || a.index - b.index);
+  return candidates[0].file;
+}
+
+/**
  * Render the upload form into the given container element.
  * Handles validation, submission, and response display.
  */
@@ -107,10 +145,15 @@ export function renderUploadForm(container: HTMLElement): void {
   const readmeGroup = createTextareaGroup('project-readme', 'Readme Content', {
     maxLength: MAX_README_LENGTH,
     placeholder: '# My Project\n\nDescribe your project here...',
-    required: true,
     rows: 12,
   });
   form.appendChild(readmeGroup.wrapper);
+
+  // Notice container for autofill/truncation messages
+  const readmeNoticeContainer = document.createElement('div');
+  readmeNoticeContainer.className = 'readme-notice-container';
+  readmeNoticeContainer.setAttribute('aria-live', 'polite');
+  form.appendChild(readmeNoticeContainer);
 
   // Files field (webkitdirectory)
   const filesGroup = createFileGroup('project-files', 'Project Files (select folder)');
