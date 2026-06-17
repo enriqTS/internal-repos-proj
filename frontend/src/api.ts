@@ -43,6 +43,11 @@ function getApiKey(): string {
 /**
  * Fetch the global search index (global-index.json) from CloudFront.
  * Returns the parsed SearchIndex on success, or an error message on failure.
+ *
+ * When no projects exist yet, the file may not be present in S3. CloudFront's
+ * custom error response returns index.html (HTML) with a 200 status in that case.
+ * We detect non-JSON responses and treat them as an empty index rather than
+ * surfacing a confusing parse error.
  */
 export async function fetchSearchIndex(): Promise<ApiResult<SearchIndex>> {
   try {
@@ -55,7 +60,16 @@ export async function fetchSearchIndex(): Promise<ApiResult<SearchIndex>> {
       };
     }
 
-    const data: SearchIndex = await response.json();
+    const text = await response.text();
+
+    // If the response isn't JSON (e.g. CloudFront served index.html for a missing
+    // S3 key), treat it as an empty index instead of throwing a parse error.
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json') && !text.trimStart().startsWith('[')) {
+      return { ok: true, data: [] };
+    }
+
+    const data: SearchIndex = JSON.parse(text);
     return { ok: true, data };
   } catch (err) {
     return {

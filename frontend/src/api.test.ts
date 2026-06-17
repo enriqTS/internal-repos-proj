@@ -35,7 +35,8 @@ describe('fetchSearchIndex', () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve(mockIndex),
+      text: () => Promise.resolve(JSON.stringify(mockIndex)),
+      headers: new Headers({ 'content-type': 'application/json' }),
     });
 
     const result = await fetchSearchIndex();
