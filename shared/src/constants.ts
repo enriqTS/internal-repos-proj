@@ -52,8 +52,11 @@ export const MAX_TAG_LENGTH = 32;
 /** Maximum length for readme content in characters */
 export const MAX_README_LENGTH = 50_000;
 
-/** Maximum total upload payload size in bytes (10 MB) */
-export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+/** Maximum client-side zip size in bytes (500 MB) */
+export const MAX_CLIENT_ZIP_SIZE = 500 * 1024 * 1024;
+
+/** Presigned URL expiration in seconds (15 minutes) */
+export const PRESIGNED_URL_EXPIRY = 15 * 60;
 
 /** Maximum artifact zip size in bytes (100 MB) */
 export const MAX_ARTIFACT_SIZE = 100 * 1024 * 1024;

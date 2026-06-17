@@ -50,3 +50,63 @@ export interface FileEntry {
   /** File content */
   content: Buffer;
 }
+
+/**
+ * Request body for POST /upload/initiate.
+ */
+export interface InitiateRequest {
+  /** Project name: 1-64 chars, /^[a-zA-Z0-9_-]+$/ */
+  name: string;
+  /** Comma-separated tags, max 10 tags, each max 32 chars */
+  tags?: string;
+  /** Optional readme content, max 50,000 chars */
+  readme?: string;
+}
+
+/**
+ * Response from POST /upload/initiate.
+ */
+export interface InitiateResponse {
+  /** UUID v4 identifying the upload session */
+  sessionId: string;
+  /** Presigned S3 PUT URL for uploading the zip */
+  uploadUrl: string;
+  /** ISO 8601 timestamp when the presigned URL expires (15 min from creation) */
+  expiresAt: string;
+}
+
+/**
+ * Request body for POST /upload/finalize.
+ */
+export interface FinalizeRequest {
+  /** UUID from the initiate response */
+  sessionId: string;
+}
+
+/**
+ * Response from POST /upload/finalize.
+ */
+export interface FinalizeResponse {
+  /** Success message */
+  message: string;
+  /** Project path, e.g. "projects/{name}/" */
+  path: string;
+  /** Optional warning, e.g. ".gitignore parse failure" */
+  warning?: string;
+}
+
+/**
+ * Metadata stored in S3 at staging/{sessionId}/metadata.json.
+ */
+export interface SessionMetadata {
+  /** UUID v4 identifying the upload session */
+  sessionId: string;
+  /** Validated project name */
+  name: string;
+  /** Comma-separated tags */
+  tags: string;
+  /** Readme content */
+  readme: string;
+  /** ISO 8601 timestamp of session creation */
+  createdAt: string;
+}
