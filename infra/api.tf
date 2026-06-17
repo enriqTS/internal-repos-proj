@@ -80,7 +80,7 @@ resource "aws_lambda_function" "upload_lambda" {
   function_name = "${var.bucket_name_prefix}-upload"
   role          = aws_iam_role.lambda_role.arn
   handler       = "handler.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   memory_size   = 512
   timeout       = 30
 
