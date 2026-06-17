@@ -4,49 +4,623 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Internal Repos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <style>
+      :root {
+        --color-bg: #f4f2ef;
+        --color-surface: #ffffff;
+        --color-surface-raised: #fafaf8;
+        --color-border: #e2dfd9;
+        --color-border-strong: #c9c4bc;
+        --color-text: #2c2a26;
+        --color-text-muted: #6b6660;
+        --color-accent: #d35c2e;
+        --color-accent-hover: #b84d24;
+        --color-accent-subtle: #fdf0eb;
+        --color-tag-bg: #eae7e2;
+        --color-tag-text: #4a4640;
+        --color-success: #3d8c5c;
+        --color-error: #c43d3d;
+        --color-code-bg: #2c2a26;
+        --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --shadow-sm: 0 1px 3px rgba(44, 42, 38, 0.06);
+        --shadow-md: 0 4px 12px rgba(44, 42, 38, 0.08);
+        --shadow-lg: 0 8px 24px rgba(44, 42, 38, 0.1);
+        --transition: 180ms ease;
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
+
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: var(--font-body);
+        font-weight: 400;
         line-height: 1.6;
-        color: #1a1a1a;
-        background: #f9fafb;
+        color: var(--color-text);
+        background: var(--color-bg);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+
+      /* ─── Header ─── */
       header {
-        background: #fff;
-        border-bottom: 1px solid #e5e7eb;
-        padding: 1rem 2rem;
+        background: var(--color-surface);
+        border-bottom: 1px solid var(--color-border);
+        padding: 0.875rem 2rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.92);
       }
+
       header h1 {
-        font-size: 1.25rem;
-        font-weight: 600;
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
       }
-      nav a {
-        margin-left: 1.5rem;
+
+      header h1 a {
         text-decoration: none;
-        color: #374151;
+        color: var(--color-text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      header h1 a::before {
+        content: '⬡';
+        color: var(--color-accent);
+        font-size: 1.2rem;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      nav a {
+        text-decoration: none;
+        color: var(--color-text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.4rem 0.75rem;
+        border-radius: var(--radius-sm);
+        transition: all var(--transition);
+        letter-spacing: 0.01em;
+      }
+
+      nav a:hover {
+        color: var(--color-accent);
+        background: var(--color-accent-subtle);
+      }
+
+      /* ─── Main Container ─── */
+      #app {
+        max-width: 860px;
+        margin: 2.5rem auto;
+        padding: 0 1.5rem;
+        animation: fadeIn 300ms ease;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* ─── Search View ─── */
+      h2 {
+        font-family: var(--font-body);
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--color-text);
+        margin-bottom: 1.25rem;
+        letter-spacing: -0.02em;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-family: var(--font-mono);
+        font-size: 0.875rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+        color: var(--color-text);
+        transition: all var(--transition);
+        outline: none;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .search-input::placeholder {
+        color: var(--color-text-muted);
+        opacity: 0.7;
+      }
+
+      .search-input:focus {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-subtle), var(--shadow-sm);
+      }
+
+      .results-container {
+        margin-top: 1.5rem;
+      }
+
+      .results-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+      }
+
+      .result-item {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        position: relative;
+      }
+
+      .result-item:hover {
+        border-color: var(--color-border-strong);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+      }
+
+      .result-item:active {
+        transform: translateY(0);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .result-name {
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-text);
+        margin-bottom: 0.25rem;
+      }
+
+      .result-description {
+        font-size: 0.875rem;
+        color: var(--color-text-muted);
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+      }
+
+      .result-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+      }
+
+      .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: var(--color-tag-bg);
+        color: var(--color-tag-text);
+        padding: 0.2rem 0.5rem;
+        border-radius: var(--radius-sm);
+        letter-spacing: 0.02em;
+      }
+
+      .no-results {
+        text-align: center;
+        color: var(--color-text-muted);
+        padding: 3rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .loading {
+        text-align: center;
+        color: var(--color-text-muted);
+        padding: 3rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .error {
+        text-align: center;
+        padding: 2rem;
+        color: var(--color-error);
+      }
+
+      .retry-btn {
+        margin-top: 0.75rem;
+        padding: 0.5rem 1.25rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 500;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+
+      .retry-btn:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+      }
+
+      /* ─── Upload Form ─── */
+      .upload-form-wrapper {
+        max-width: 580px;
+      }
+
+      .upload-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+      }
+
+      .form-group label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--color-text-muted);
+        font-family: var(--font-mono);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .form-group input[type="text"],
+      .form-group textarea {
+        padding: 0.65rem 0.85rem;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface);
+        color: var(--color-text);
+        transition: all var(--transition);
+        outline: none;
+      }
+
+      .form-group input[type="text"]:focus,
+      .form-group textarea:focus {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-subtle);
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 180px;
+        line-height: 1.5;
+      }
+
+      .form-group input[type="file"] {
+        font-family: var(--font-body);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+      }
+
+      .field-error {
+        font-size: 0.78rem;
+        color: var(--color-error);
+        font-weight: 500;
+        min-height: 1rem;
+      }
+
+      .upload-submit {
+        align-self: flex-start;
+        padding: 0.65rem 1.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #fff;
+        background: var(--color-accent);
+        border: none;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all var(--transition);
+        letter-spacing: 0.01em;
+      }
+
+      .upload-submit:hover {
+        background: var(--color-accent-hover);
+        box-shadow: var(--shadow-md);
+      }
+
+      .upload-submit:active {
+        transform: scale(0.98);
+      }
+
+      .upload-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .upload-status {
+        font-size: 0.85rem;
+        font-weight: 500;
+        padding: 0.5rem 0;
+        min-height: 1.5rem;
+      }
+
+      .upload-status--loading {
+        color: var(--color-text-muted);
+      }
+
+      .upload-status--success {
+        color: var(--color-success);
+      }
+
+      .upload-status--error {
+        color: var(--color-error);
+      }
+
+      /* ─── README Notices ─── */
+      .readme-notice-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-top: -0.75rem;
+      }
+
+      .readme-autofill-notice {
+        font-size: 0.78rem;
+        color: var(--color-success);
         font-weight: 500;
       }
-      nav a:hover {
-        color: #2563eb;
+
+      .readme-truncation-warning {
+        font-size: 0.78rem;
+        color: var(--color-accent);
+        font-weight: 500;
       }
-      #app {
-        max-width: 960px;
-        margin: 2rem auto;
-        padding: 0 1rem;
+
+      /* ─── Project Detail ─── */
+      .project-detail {
+        animation: fadeIn 300ms ease;
+      }
+
+      .project-metadata {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .project-name {
+        font-family: var(--font-mono);
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.5rem;
+      }
+
+      .project-description {
+        font-size: 1rem;
+        color: var(--color-text-muted);
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+      }
+
+      .project-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .project-date {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+        opacity: 0.8;
+      }
+
+      /* ─── Download Section ─── */
+      .project-download {
+        margin-bottom: 2rem;
+      }
+
+      .download-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.25rem;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #fff;
+        background: var(--color-text);
+        text-decoration: none;
+        border-radius: var(--radius-sm);
+        transition: all var(--transition);
+      }
+
+      .download-link:hover {
+        background: var(--color-accent);
+        box-shadow: var(--shadow-md);
+      }
+
+      .download-link.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: var(--color-tag-bg);
+        color: var(--color-text-muted);
+      }
+
+      .artifact-unavailable {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        margin-top: 0.5rem;
+      }
+
+      /* ─── README Content ─── */
+      .project-readme {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 2rem 2.5rem;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .readme-content h1,
+      .readme-content h2,
+      .readme-content h3,
+      .readme-content h4,
+      .readme-content h5,
+      .readme-content h6 {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--color-text);
+        margin-top: 1.75rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.01em;
+      }
+
+      .readme-content h1 { font-size: 1.5rem; }
+      .readme-content h2 { font-size: 1.25rem; padding-bottom: 0.375rem; border-bottom: 1px solid var(--color-border); }
+      .readme-content h3 { font-size: 1.1rem; }
+
+      .readme-content p {
+        margin-bottom: 0.75rem;
+        line-height: 1.7;
+      }
+
+      .readme-content a {
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-decoration-color: rgba(211, 92, 46, 0.3);
+        text-underline-offset: 2px;
+        transition: text-decoration-color var(--transition);
+      }
+
+      .readme-content a:hover {
+        text-decoration-color: var(--color-accent);
+      }
+
+      .readme-content code {
+        font-family: var(--font-mono);
+        font-size: 0.82em;
+        background: var(--color-tag-bg);
+        padding: 0.15em 0.4em;
+        border-radius: 3px;
+      }
+
+      .readme-content pre {
+        background: var(--color-code-bg);
+        color: #e8e6e1;
+        padding: 1.25rem 1.5rem;
+        border-radius: var(--radius-md);
+        overflow-x: auto;
+        margin: 1rem 0;
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+
+      .readme-content pre code {
+        background: none;
+        padding: 0;
+        border-radius: 0;
+        color: inherit;
+        font-size: inherit;
+      }
+
+      .readme-content ul,
+      .readme-content ol {
+        padding-left: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .readme-content li {
+        margin-bottom: 0.25rem;
+        line-height: 1.6;
+      }
+
+      .readme-content blockquote {
+        border-left: 3px solid var(--color-accent);
+        padding-left: 1rem;
+        margin: 1rem 0;
+        color: var(--color-text-muted);
+        font-style: italic;
+      }
+
+      .readme-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-sm);
+      }
+
+      .readme-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.875rem;
+      }
+
+      .readme-content th,
+      .readme-content td {
+        border: 1px solid var(--color-border);
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+      }
+
+      .readme-content th {
+        background: var(--color-surface-raised);
+        font-weight: 600;
+      }
+
+      .readme-content hr {
+        border: none;
+        border-top: 1px solid var(--color-border);
+        margin: 1.5rem 0;
+      }
+
+      .error-message {
+        text-align: center;
+        padding: 2rem;
+        color: var(--color-error);
+        font-weight: 500;
+      }
+
+      /* ─── Responsive ─── */
+      @media (max-width: 640px) {
+        header {
+          padding: 0.75rem 1rem;
+        }
+        #app {
+          margin: 1.5rem auto;
+          padding: 0 1rem;
+        }
+        .project-readme {
+          padding: 1.25rem 1.5rem;
+        }
+        nav a {
+          padding: 0.35rem 0.5rem;
+          font-size: 0.75rem;
+        }
       }
     </style>
   </head>
   <body>
     <header>
-      <h1><a href="#/" style="text-decoration:none;color:inherit;">Internal Repos</a></h1>
+      <h1><a href="#/">Internal Repos</a></h1>
       <nav aria-label="Main navigation">
         <a href="#/">Search</a>
         <a href="#/upload">Upload</a>
