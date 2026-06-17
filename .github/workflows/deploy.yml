@@ -135,10 +135,24 @@ jobs:
         run: npm run build --workspace=frontend
         env:
           VITE_API_KEY: ${{ steps.tf_outputs.outputs.api_key }}
-          VITE_API_ENDPOINT: ${{ steps.tf_outputs.outputs.api_endpoint }}
+          VITE_API_URL: ${{ steps.tf_outputs.outputs.api_endpoint }}
 
       - name: Deploy to S3
-        run: aws s3 sync frontend/dist/ s3://${{ steps.tf_outputs.outputs.s3_bucket }} --delete
+        run: |
+          aws s3 sync frontend/dist/ s3://${{ steps.tf_outputs.outputs.s3_bucket }} \
+            --delete \
+            --exclude "projects/*" \
+            --exclude "global-index.json"
+
+      - name: Regenerate search index
+        run: |
+          echo "Invoking Lambda to ensure global-index.json exists..."
+          aws lambda invoke \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --payload '{"action": "regenerate-index"}' \
+            --cli-binary-format raw-in-base64-out \
+            /tmp/lambda-response.json
+          cat /tmp/lambda-response.json
 
       - name: Invalidate CloudFront cache
         run: |
