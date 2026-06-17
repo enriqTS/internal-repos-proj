@@ -190,6 +190,13 @@ describe('renderUploadForm', () => {
     expect(fileInput.hasAttribute('webkitdirectory')).toBe(true);
   });
 
+  it('renders the readme textarea without the required attribute', () => {
+    renderUploadForm(container);
+    const readme = container.querySelector('#project-readme') as HTMLTextAreaElement;
+    expect(readme).not.toBeNull();
+    expect(readme.hasAttribute('required')).toBe(false);
+  });
+
   it('renders a submit button', () => {
     renderUploadForm(container);
     const btn = container.querySelector('button[type="submit"]');
