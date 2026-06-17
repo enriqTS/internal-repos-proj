@@ -60,10 +60,20 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra
-        run: terraform plan -out=tfplan
         env:
           TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
+        run: |
+          terraform plan -out=tfplan -no-color 2>&1 | tee plan_output.txt
+
+      - name: Post plan to job summary
+        working-directory: infra
+        run: |
+          echo '## Terraform Plan Output' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat plan_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4
