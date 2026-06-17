@@ -4,6 +4,7 @@ import {
   MAX_TAGS_COUNT,
   MAX_TAG_LENGTH,
   MAX_README_LENGTH,
+  DENY_LIST,
 } from 'shared/constants';
 import { submitUpload } from './api';
 
@@ -62,6 +63,66 @@ export function validateForm(
   }
 
   return errors;
+}
+
+/**
+ * Checks whether a relative file path matches any DENY_LIST pattern.
+ * Used client-side to pre-filter files before uploading, avoiding 413 errors
+ * from sending large build artifacts to the server.
+ *
+ * @param relativePath - Path relative to the project root (strips the top-level folder name)
+ */
+export function shouldExcludeFile(relativePath: string): boolean {
+  const segments = relativePath.split('/');
+  const basename = segments[segments.length - 1];
+
+  for (const pattern of DENY_LIST) {
+    // Directory pattern (ends with /)
+    if (pattern.endsWith('/')) {
+      const dirName = pattern.slice(0, -1);
+      if (segments.some((seg) => seg === dirName)) {
+        return true;
+      }
+      continue;
+    }
+
+    // Glob pattern with wildcard
+    if (pattern.includes('*')) {
+      const regex = new RegExp(
+        '^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$'
+      );
+      if (regex.test(basename)) {
+        return true;
+      }
+      continue;
+    }
+
+    // Exact match against basename
+    if (basename === pattern) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Filters a FileList, returning only files whose paths don't match the DENY_LIST.
+ * Strips the top-level directory name from webkitRelativePath before matching.
+ */
+export function filterFileList(files: FileList): File[] {
+  const result: File[] = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const relativePath = file.webkitRelativePath || file.name;
+    // Strip the top-level folder name (e.g., "MyProject/src/foo.ts" -> "src/foo.ts")
+    const parts = relativePath.split('/');
+    const pathWithinProject = parts.length > 1 ? parts.slice(1).join('/') : relativePath;
+    if (!shouldExcludeFile(pathWithinProject)) {
+      result.push(file);
+    }
+  }
+  return result;
 }
 
 /**
@@ -258,8 +319,16 @@ export function renderUploadForm(container: HTMLElement): void {
     formData.append('readme', readme);
 
     if (files) {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      // Filter files client-side to exclude build artifacts and denied patterns
+      const filteredFiles = filterFileList(files);
+
+      if (filteredFiles.length === 0) {
+        statusEl.textContent = 'No files remain after filtering out build artifacts and ignored patterns.';
+        statusEl.className = 'upload-status upload-status--error';
+        return;
+      }
+
+      for (const file of filteredFiles) {
         // Use webkitRelativePath for directory structure preservation
         const relativePath = file.webkitRelativePath || file.name;
         formData.append('files', file, relativePath);

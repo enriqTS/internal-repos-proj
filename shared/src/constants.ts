@@ -3,12 +3,33 @@
  * Uses glob-style pattern matching.
  */
 export const DENY_LIST: string[] = [
+  // Version control
   '.git/',
+  // Infrastructure
   '.terraform/',
+  // Dependencies
   'node_modules/',
+  'vendor/',
+  '.venv/',
+  'venv/',
+  // Build outputs
+  'dist/',
+  'build/',
+  'out/',
+  'target/',
+  '.next/',
+  '.nuxt/',
+  '.output/',
+  'bin/',
+  'obj/',
+  // Caches
   '__pycache__/',
+  '.cache/',
+  '.parcel-cache/',
+  // Env and secrets
   '.env',
   '.env.*',
+  // Compiled/temp files
   '*.pyc',
   '.DS_Store',
 ];
