@@ -102,6 +102,10 @@ jobs:
       - name: Regenerate search index
         if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
         run: |
+          if [ -z "$LAMBDA_FUNCTION_NAME" ]; then
+            echo "::error::LAMBDA_FUNCTION_NAME secret is not set. Please add it to your repository secrets."
+            exit 1
+          fi
           echo "Invoking Lambda to regenerate search index..."
           aws lambda invoke \
             --function-name "$LAMBDA_FUNCTION_NAME" \

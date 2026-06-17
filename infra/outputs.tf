@@ -28,3 +28,8 @@ output "api_key_value" {
   value       = aws_api_gateway_api_key.upload_key.value
   sensitive   = true
 }
+
+output "lambda_function_name" {
+  description = "The name of the Lambda function for project upload and index generation"
+  value       = aws_lambda_function.upload_lambda.function_name
+}
