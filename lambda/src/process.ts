@@ -188,7 +188,9 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       const metadata: ProjectMetadata = {
         name: sessionMeta.name,
         description: readmeContent.slice(0, 200) || 'No description provided',
-        tags: sessionMeta.tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
+        tags: hasUserTags(sessionMeta.tags)
+          ? sessionMeta.tags.split(',').map(t => t.trim()).filter(t => t.length > 0)
+          : autoTags,
         date: new Date().toISOString().split('T')[0],
       };
 
@@ -207,7 +209,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     await cleanupStagedFiles(stagingBucket, sessionId);
 
     // 11. Return success response
-    const warnings = [filterResult.warning, registryWarning, readmeWarning].filter(Boolean).join('; ');
+    const warnings = [filterResult.warning, registryWarning, readmeWarning, tagWarning].filter(Boolean).join('; ');
     const response: FinalizeResponse = {
       message: 'Project uploaded successfully',
       path: `projects/${sessionMeta.name}/`,
