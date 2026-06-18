@@ -1,3 +1,4 @@
+import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { FileEntry } from 'shared/types';
 import { MAX_README_LENGTH } from 'shared/constants';
 
@@ -17,6 +18,10 @@ const README_GENERATION_TIMEOUT_MS = 30_000;
 
 /** Bedrock model ID */
 const README_MODEL_ID = 'us.moonshotai.kimi-k2.5-0613-v1:0';
+
+// ─── Bedrock client singleton ─────────────────────────────────────────────────
+
+const bedrockClient = new BedrockRuntimeClient({});
 
 // ─── Classification data ──────────────────────────────────────────────────────
 
@@ -435,4 +440,82 @@ function getExtension(basename: string): string {
   const lastDot = basename.lastIndexOf('.');
   if (lastDot <= 0) return '';
   return basename.slice(lastDot);
+}
+
+// ─── Generate README result type ──────────────────────────────────────────────
+
+/** Result of README generation */
+export interface GenerateReadmeResult {
+  /** Generated README content, or empty string on failure */
+  readme: string;
+  /** Warning message if generation failed */
+  warning?: string;
+}
+
+// ─── Main orchestrator ────────────────────────────────────────────────────────
+
+/**
+ * Generate a README for the project using AI.
+ *
+ * Orchestrates the full flow:
+ * prioritizeFiles → buildPrompt → InvokeModelCommand → extractModelContent → validateReadmeOutput
+ *
+ * @param projectName - Project name from session metadata
+ * @param files - Filtered files from the upload
+ * @returns Generated README or empty string with warning on failure
+ */
+export async function generateReadme(
+  projectName: string,
+  files: FileEntry[]
+): Promise<GenerateReadmeResult> {
+  const abortController = new AbortController();
+  const timeout = setTimeout(() => abortController.abort(), README_GENERATION_TIMEOUT_MS);
+
+  try {
+    // Step 1: Prioritize files
+    const prioritization = prioritizeFiles(files);
+
+    // Step 2: Build prompt
+    const prompt = buildPrompt(projectName, prioritization);
+
+    // Step 3: Invoke Bedrock
+    const requestBody = JSON.stringify({
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: README_MAX_OUTPUT_TOKENS,
+    });
+
+    const command = new InvokeModelCommand({
+      modelId: README_MODEL_ID,
+      contentType: 'application/json',
+      accept: 'application/json',
+      body: requestBody,
+    });
+
+    const response = await bedrockClient.send(command, {
+      abortSignal: abortController.signal,
+    });
+
+    // Step 4: Parse response
+    const responseBody = new TextDecoder().decode(response.body);
+    const content = extractModelContent(responseBody);
+
+    if (!content) {
+      return { readme: '', warning: 'README generation produced empty content' };
+    }
+
+    // Step 5: Validate output
+    const validated = validateReadmeOutput(content);
+
+    if (!validated) {
+      return { readme: '', warning: 'README generation produced empty content' };
+    }
+
+    return { readme: validated };
+  } catch (err) {
+    const message = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    console.error('[generate-readme] Error:', message);
+    return { readme: '', warning: `README generation failed: ${message}` };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
