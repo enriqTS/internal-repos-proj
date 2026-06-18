@@ -137,7 +137,8 @@ jobs:
           aws s3 sync frontend/dist/ s3://${{ steps.tf_outputs.outputs.s3_bucket }} \
             --delete \
             --exclude "projects/*" \
-            --exclude "global-index.json"
+            --exclude "global-index.json" \
+            --exclude "tags.json"
 
       - name: Regenerate search index
         run: |
@@ -147,6 +148,16 @@ jobs:
             echo '[]' | aws s3 cp - "s3://${{ steps.tf_outputs.outputs.s3_bucket }}/global-index.json" --content-type "application/json"
           else
             echo "global-index.json already exists, skipping."
+          fi
+
+      - name: Ensure tag registry exists
+        run: |
+          echo "Ensuring tags.json exists..."
+          if ! aws s3 ls "s3://${{ steps.tf_outputs.outputs.s3_bucket }}/tags.json" 2>/dev/null; then
+            echo "Creating empty tag registry..."
+            echo '[]' | aws s3 cp - "s3://${{ steps.tf_outputs.outputs.s3_bucket }}/tags.json" --content-type "application/json"
+          else
+            echo "tags.json already exists, skipping."
           fi
 
       - name: Invalidate CloudFront cache
