@@ -38,3 +38,13 @@ output "process_lambda_function_name" {
   description = "The name of the processing Lambda function"
   value       = aws_lambda_function.process_lambda.function_name
 }
+
+output "staging_bucket_name" {
+  description = "The name of the S3 staging bucket for upload sessions"
+  value       = aws_s3_bucket.staging.id
+}
+
+output "staging_bucket_arn" {
+  description = "The ARN of the S3 staging bucket"
+  value       = aws_s3_bucket.staging.arn
+}
