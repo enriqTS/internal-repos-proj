@@ -1,4 +1,4 @@
-import type { SearchIndex, ProjectMetadata } from 'shared/types';
+import type { SearchIndex, ProjectMetadata, InitiateRequest, InitiateResponse, FinalizeResponse } from 'shared/types';
 
 /**
  * Typed API response wrapper.
@@ -8,15 +8,6 @@ import type { SearchIndex, ProjectMetadata } from 'shared/types';
 export type ApiResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
-
-/**
- * Upload response returned on successful project upload.
- */
-export interface UploadResponse {
-  message: string;
-  path: string;
-  warning?: string;
-}
 
 /**
  * Base URL for CloudFront-served static assets (search index, readmes, artifacts).
@@ -138,46 +129,98 @@ export async function fetchProjectMetadata(projectPath: string): Promise<ApiResu
 }
 
 /**
- * Submit a project upload via multipart/form-data to the API Gateway endpoint.
- * Includes the x-api-key header from build-time environment configuration.
- *
- * @param formData - FormData containing name, tags, readme, and files fields
+ * Initiate a presigned upload session.
+ * POST JSON to /upload/initiate with project metadata.
+ * Returns a session ID and presigned S3 URL on success.
  */
-export async function submitUpload(formData: FormData): Promise<ApiResult<UploadResponse>> {
+export async function initiateUpload(params: InitiateRequest): Promise<ApiResult<InitiateResponse>> {
   const apiUrl = getApiUrl();
   const apiKey = getApiKey();
-
-  if (!apiUrl) {
-    return { ok: false, error: 'Upload endpoint is not configured' };
-  }
-
-  if (!apiKey) {
-    return { ok: false, error: 'API key is not configured' };
-  }
+  if (!apiUrl) return { ok: false, error: 'Upload endpoint is not configured' };
+  if (!apiKey) return { ok: false, error: 'API key is not configured' };
 
   try {
-    const response = await fetch(`${apiUrl}/upload`, {
+    const response = await fetch(`${apiUrl}/upload/initiate`, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'x-api-key': apiKey,
       },
-      body: formData,
+      body: JSON.stringify(params),
     });
-
     const body = await response.json();
-
     if (!response.ok) {
-      const errorMessage = body.error ?? `Upload failed (HTTP ${response.status})`;
-      return { ok: false, error: errorMessage };
+      return { ok: false, error: body.error ?? `Upload initiation failed (HTTP ${response.status})` };
+    }
+    return { ok: true, data: body as InitiateResponse };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? `Upload initiation failed: ${err.message}` : 'Upload initiation failed' };
+  }
+}
+
+/**
+ * Finalize a presigned upload session after the zip has been uploaded to S3.
+ * POST JSON to /upload/finalize with the session ID.
+ */
+export async function finalizeUpload(sessionId: string): Promise<ApiResult<FinalizeResponse>> {
+  const apiUrl = getApiUrl();
+  const apiKey = getApiKey();
+  if (!apiUrl) return { ok: false, error: 'Upload endpoint is not configured' };
+  if (!apiKey) return { ok: false, error: 'API key is not configured' };
+
+  try {
+    const response = await fetch(`${apiUrl}/upload/finalize`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({ sessionId }),
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      return { ok: false, error: body.error ?? `Upload finalization failed (HTTP ${response.status})` };
+    }
+    return { ok: true, data: body as FinalizeResponse };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? `Upload finalization failed: ${err.message}` : 'Upload finalization failed' };
+  }
+}
+
+/**
+ * Upload a blob directly to S3 using a presigned PUT URL.
+ * Uses XMLHttpRequest to support upload progress tracking.
+ *
+ * @param url - Presigned S3 PUT URL
+ * @param blob - The zip file blob to upload
+ * @param onProgress - Optional callback receiving upload percentage (0-100)
+ */
+export function uploadToS3(url: string, blob: Blob, onProgress?: (pct: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Content-Type', 'application/zip');
+
+    if (onProgress) {
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      });
     }
 
-    return { ok: true, data: body as UploadResponse };
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error
-        ? `Upload failed: ${err.message}`
-        : 'Upload failed: unknown error',
-    };
-  }
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error(`S3 upload failed (HTTP ${xhr.status})`));
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      reject(new Error('S3 upload failed: network error'));
+    });
+
+    xhr.send(blob);
+  });
 }

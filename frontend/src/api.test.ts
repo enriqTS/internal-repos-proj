@@ -3,7 +3,9 @@ import {
   fetchSearchIndex,
   fetchProjectReadme,
   fetchProjectMetadata,
-  submitUpload,
+  initiateUpload,
+  finalizeUpload,
+  uploadToS3,
 } from './api';
 
 // Mock import.meta.env
@@ -148,8 +150,91 @@ describe('fetchProjectMetadata', () => {
   });
 });
 
-describe('submitUpload', () => {
-  it('sends upload with correct headers and returns success', async () => {
+describe('initiateUpload', () => {
+  it('sends JSON POST with correct headers and returns session data', async () => {
+    const mockResponse = {
+      sessionId: 'abc-123',
+      uploadUrl: 'https://s3.example.com/presigned',
+      expiresAt: '2024-01-01T00:15:00Z',
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await initiateUpload({ name: 'new-project', tags: 'test,demo', readme: '# Hello' });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual(mockResponse);
+    }
+
+    expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/upload/initiate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'test-api-key-123',
+      },
+      body: JSON.stringify({ name: 'new-project', tags: 'test,demo', readme: '# Hello' }),
+    });
+  });
+
+  it('returns error message from API on failure', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      json: () => Promise.resolve({ error: 'Invalid project name' }),
+    });
+
+    const result = await initiateUpload({ name: '!!invalid!!' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('Invalid project name');
+    }
+  });
+
+  it('returns error when API URL is not configured', async () => {
+    vi.stubEnv('VITE_API_URL', '');
+
+    const result = await initiateUpload({ name: 'test' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('Upload endpoint is not configured');
+    }
+
+    vi.stubEnv('VITE_API_URL', 'https://api.example.com');
+  });
+
+  it('returns error when API key is not configured', async () => {
+    vi.stubEnv('VITE_API_KEY', '');
+
+    const result = await initiateUpload({ name: 'test' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('API key is not configured');
+    }
+
+    vi.stubEnv('VITE_API_KEY', 'test-api-key-123');
+  });
+
+  it('returns error on network failure', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Connection refused'));
+
+    const result = await initiateUpload({ name: 'test' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('Connection refused');
+    }
+  });
+});
+
+describe('finalizeUpload', () => {
+  it('sends JSON POST with sessionId and returns finalize response', async () => {
     const mockResponse = {
       message: 'Project uploaded successfully',
       path: 'projects/new-project/',
@@ -160,84 +245,143 @@ describe('submitUpload', () => {
       json: () => Promise.resolve(mockResponse),
     });
 
-    const formData = new FormData();
-    formData.append('name', 'new-project');
-    formData.append('tags', 'test,demo');
-    formData.append('readme', '# New Project');
-
-    const result = await submitUpload(formData);
+    const result = await finalizeUpload('abc-123');
 
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data).toEqual(mockResponse);
     }
 
-    expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/upload', {
+    expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/upload/finalize', {
       method: 'POST',
-      headers: { 'x-api-key': 'test-api-key-123' },
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'test-api-key-123',
+      },
+      body: JSON.stringify({ sessionId: 'abc-123' }),
     });
   });
 
   it('returns error message from API on failure', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
-      status: 409,
-      json: () => Promise.resolve({ error: 'Project name already taken' }),
+      status: 404,
+      json: () => Promise.resolve({ error: 'Session not found' }),
     });
 
-    const formData = new FormData();
-    formData.append('name', 'existing-project');
-
-    const result = await submitUpload(formData);
+    const result = await finalizeUpload('nonexistent');
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('Project name already taken');
+      expect(result.error).toBe('Session not found');
     }
   });
 
   it('returns error when API URL is not configured', async () => {
     vi.stubEnv('VITE_API_URL', '');
 
-    const formData = new FormData();
-    const result = await submitUpload(formData);
+    const result = await finalizeUpload('abc-123');
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toBe('Upload endpoint is not configured');
     }
 
-    // Restore
     vi.stubEnv('VITE_API_URL', 'https://api.example.com');
   });
 
-  it('returns error when API key is not configured', async () => {
-    vi.stubEnv('VITE_API_KEY', '');
+  it('returns error on network failure', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Timeout'));
 
-    const formData = new FormData();
-    const result = await submitUpload(formData);
+    const result = await finalizeUpload('abc-123');
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('API key is not configured');
+      expect(result.error).toContain('Timeout');
     }
+  });
+});
 
-    // Restore
-    vi.stubEnv('VITE_API_KEY', 'test-api-key-123');
+describe('uploadToS3', () => {
+  let mockXhr: any;
+
+  beforeEach(() => {
+    mockXhr = {
+      open: vi.fn(),
+      setRequestHeader: vi.fn(),
+      send: vi.fn(),
+      upload: { addEventListener: vi.fn() },
+      addEventListener: vi.fn(),
+      status: 200,
+    };
+    vi.stubGlobal('XMLHttpRequest', vi.fn(() => mockXhr));
   });
 
-  it('returns error on network failure', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Connection refused'));
+  it('sends PUT request with correct content type', async () => {
+    mockXhr.send.mockImplementation(() => {
+      const loadHandler = mockXhr.addEventListener.mock.calls.find(
+        (c: any[]) => c[0] === 'load'
+      )?.[1];
+      loadHandler?.();
+    });
 
-    const formData = new FormData();
-    formData.append('name', 'test');
+    const blob = new Blob(['test'], { type: 'application/zip' });
+    await uploadToS3('https://s3.example.com/presigned', blob);
 
-    const result = await submitUpload(formData);
+    expect(mockXhr.open).toHaveBeenCalledWith('PUT', 'https://s3.example.com/presigned');
+    expect(mockXhr.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'application/zip');
+    expect(mockXhr.send).toHaveBeenCalledWith(blob);
+  });
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toContain('Connection refused');
-    }
+  it('reports progress via onProgress callback', async () => {
+    const onProgress = vi.fn();
+
+    mockXhr.send.mockImplementation(() => {
+      // Simulate progress event
+      const progressHandler = mockXhr.upload.addEventListener.mock.calls.find(
+        (c: any[]) => c[0] === 'progress'
+      )?.[1];
+      progressHandler?.({ lengthComputable: true, loaded: 50, total: 100 });
+
+      // Then resolve
+      const loadHandler = mockXhr.addEventListener.mock.calls.find(
+        (c: any[]) => c[0] === 'load'
+      )?.[1];
+      loadHandler?.();
+    });
+
+    const blob = new Blob(['test'], { type: 'application/zip' });
+    await uploadToS3('https://s3.example.com/presigned', blob, onProgress);
+
+    expect(onProgress).toHaveBeenCalledWith(50);
+  });
+
+  it('rejects on HTTP error status', async () => {
+    mockXhr.status = 403;
+    mockXhr.send.mockImplementation(() => {
+      const loadHandler = mockXhr.addEventListener.mock.calls.find(
+        (c: any[]) => c[0] === 'load'
+      )?.[1];
+      loadHandler?.();
+    });
+
+    const blob = new Blob(['test'], { type: 'application/zip' });
+    await expect(uploadToS3('https://s3.example.com/presigned', blob)).rejects.toThrow(
+      'S3 upload failed (HTTP 403)'
+    );
+  });
+
+  it('rejects on network error', async () => {
+    mockXhr.send.mockImplementation(() => {
+      const errorHandler = mockXhr.addEventListener.mock.calls.find(
+        (c: any[]) => c[0] === 'error'
+      )?.[1];
+      errorHandler?.();
+    });
+
+    const blob = new Blob(['test'], { type: 'application/zip' });
+    await expect(uploadToS3('https://s3.example.com/presigned', blob)).rejects.toThrow(
+      'S3 upload failed: network error'
+    );
   });
 });
