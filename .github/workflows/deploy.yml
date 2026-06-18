@@ -58,6 +58,8 @@ jobs:
         env:
           TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          TF_VAR_anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          TF_VAR_anthropic_workspace_id: ${{ secrets.ANTHROPIC_WORKSPACE_ID }}
         run: |
           terraform plan -no-color 2>&1 | tee plan_output.txt
 
@@ -113,6 +115,8 @@ jobs:
         env:
           TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          TF_VAR_anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          TF_VAR_anthropic_workspace_id: ${{ secrets.ANTHROPIC_WORKSPACE_ID }}
 
       - name: Get Terraform outputs
         id: tf_outputs
