@@ -210,6 +210,101 @@ export function trimPackageJson(content: string): string {
   }
 }
 
+// ─── Core prioritization function ─────────────────────────────────────────────
+
+/**
+ * Classify and select files within the token budget.
+ *
+ * Algorithm:
+ * 1. Classify all files; decode content as UTF-8 (skip files that fail)
+ * 2. Include all Tier_1 files with full content (package.json trimmed)
+ * 3. If Tier_1 alone exceeds budget, skip Tier_2 entirely
+ * 4. Otherwise, sort Tier_2 alphabetically (case-insensitive) and add until budget reached
+ * 5. Collect Tier_3 file paths as directory listing (counted toward budget)
+ *
+ * @param files - Filtered FileEntry[] from the upload
+ * @returns PrioritizationResult with included content and directory listing
+ */
+export function prioritizeFiles(files: FileEntry[]): PrioritizationResult {
+  const tier1Files: { path: string; content: string }[] = [];
+  const tier2Files: { path: string; content: string }[] = [];
+  const tier3Paths: string[] = [];
+
+  // Step 1: Classify all files and decode content
+  for (const file of files) {
+    const tier = classifyFile(file.path, file.content.length);
+
+    if (tier === 'skip') {
+      continue;
+    }
+
+    // Attempt to decode as UTF-8 text; skip silently if it fails
+    let textContent: string;
+    try {
+      textContent = file.content.toString('utf-8');
+      // Check for replacement characters indicating invalid UTF-8
+      // A simple heuristic: if decoding produces NULL bytes, it's likely binary
+      if (textContent.includes('\0')) {
+        continue;
+      }
+    } catch {
+      continue;
+    }
+
+    if (tier === 'tier1') {
+      // Trim package.json content
+      const content = file.path === 'package.json' ? trimPackageJson(textContent) : textContent;
+      tier1Files.push({ path: file.path, content });
+    } else if (tier === 'tier2') {
+      tier2Files.push({ path: file.path, content: textContent });
+    } else {
+      // tier3
+      tier3Paths.push(file.path);
+    }
+  }
+
+  // Step 2: Include all Tier_1 files regardless of budget
+  const includedFiles: PrioritizedFile[] = [];
+  let totalTokens = 0;
+
+  for (const f of tier1Files) {
+    includedFiles.push({ path: f.path, tier: 'tier1', content: f.content });
+    totalTokens += estimateTokens(f.content.length);
+  }
+
+  // Step 3: If Tier_1 exceeds budget, skip Tier_2 entirely
+  if (totalTokens < README_TOKEN_BUDGET) {
+    // Step 4: Sort Tier_2 case-insensitive alphabetically by path
+    tier2Files.sort((a, b) =>
+      a.path.toLowerCase().localeCompare(b.path.toLowerCase())
+    );
+
+    // Add Tier_2 files sequentially until next file would exceed budget
+    for (const f of tier2Files) {
+      const fileTokens = estimateTokens(f.content.length);
+      if (totalTokens + fileTokens > README_TOKEN_BUDGET) {
+        break;
+      }
+      includedFiles.push({ path: f.path, tier: 'tier2', content: f.content });
+      totalTokens += fileTokens;
+    }
+  }
+
+  // Step 5: Collect Tier_3 file paths as directory listing
+  // Count each path toward token budget using same ratio
+  const directoryListing: string[] = [];
+  for (const path of tier3Paths) {
+    const pathTokens = estimateTokens(path.length);
+    if (totalTokens + pathTokens > README_TOKEN_BUDGET) {
+      break;
+    }
+    directoryListing.push(path);
+    totalTokens += pathTokens;
+  }
+
+  return { includedFiles, directoryListing, totalTokens };
+}
+
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 /**
