@@ -13,6 +13,32 @@ import { invalidateSearchIndex } from './search-state';
 import JSZip from 'jszip';
 
 /**
+ * Sanitizes a raw folder name into a valid project name.
+ * - Replaces whitespace with hyphens
+ * - Replaces dots and other common separators with hyphens
+ * - Removes characters not allowed by PROJECT_NAME_REGEX (keeps alphanumeric, hyphens, underscores)
+ * - Collapses consecutive hyphens into one
+ * - Trims leading/trailing hyphens
+ * - Truncates to MAX_PROJECT_NAME_LENGTH
+ */
+export function sanitizeProjectName(raw: string): string {
+  let sanitized = raw
+    .trim()
+    .replace(/\s+/g, '-')         // whitespace → hyphen
+    .replace(/[.@#+]+/g, '-')     // common separators → hyphen
+    .replace(/[^a-zA-Z0-9_-]/g, '') // remove anything else invalid
+    .replace(/-{2,}/g, '-')       // collapse multiple hyphens
+    .replace(/^-+/, '')           // trim leading hyphens
+    .replace(/-+$/, '');          // trim trailing hyphens
+
+  if (sanitized.length > MAX_PROJECT_NAME_LENGTH) {
+    sanitized = sanitized.slice(0, MAX_PROJECT_NAME_LENGTH).replace(/-+$/, '');
+  }
+
+  return sanitized;
+}
+
+/**
  * Validation error messages returned by validateForm.
  */
 export interface ValidationErrors {
@@ -325,7 +351,7 @@ export function renderUploadForm(container: HTMLElement): void {
       if (!nameGroup.input.value.trim() && files[0].webkitRelativePath) {
         const folderName = files[0].webkitRelativePath.split('/')[0];
         if (folderName) {
-          nameGroup.input.value = folderName;
+          nameGroup.input.value = sanitizeProjectName(folderName);
         }
       }
 
