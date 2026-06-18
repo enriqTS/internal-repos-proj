@@ -6,24 +6,13 @@
 # IAM Policy for Bedrock InvokeModel (attached to existing lambda_role)
 # -----------------------------------------------------------------------------
 
-resource "aws_iam_role_policy" "lambda_bedrock_policy" {
-  name = "${var.bucket_name_prefix}-lambda-bedrock-policy"
+resource "aws_iam_role_policy" "lambda_tags_s3_policy" {
+  name = "${var.bucket_name_prefix}-lambda-tags-s3-policy"
   role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "bedrock:InvokeModel"
-        ]
-        Resource = [
-          "arn:aws:bedrock:*:*:model/us.moonshotai.kimi-k2.5-0613-v1:0",
-          "arn:aws:bedrock:*:*:inference-profile/us.moonshotai.kimi-k2.5-0613-v1:0",
-          "arn:aws:bedrock:*::foundation-model/moonshotai.kimi-k2.5-0613-v1:0"
-        ]
-      },
       {
         Effect = "Allow"
         Action = [
@@ -52,7 +41,9 @@ resource "aws_lambda_function" "suggest_tags_lambda" {
 
   environment {
     variables = {
-      BUCKET_NAME = aws_s3_bucket.frontend.id
+      BUCKET_NAME            = aws_s3_bucket.frontend.id
+      ANTHROPIC_API_KEY      = var.anthropic_api_key
+      ANTHROPIC_WORKSPACE_ID = var.anthropic_workspace_id
     }
   }
 
