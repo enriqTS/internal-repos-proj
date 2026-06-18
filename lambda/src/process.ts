@@ -7,6 +7,7 @@ import { writeProject, ProjectExistsError } from './s3-writer';
 import { regenerateIndex } from './index-generator';
 import { addTagsToRegistry } from './tag-registry';
 import { generateReadme } from './generate-readme';
+import { suggestTagsFromReadme } from './suggest-tags';
 import type { FinalizeRequest, FinalizeResponse, SessionMetadata, FileEntry, ProjectMetadata } from 'shared';
 
 const s3Client = new S3Client({});
@@ -143,6 +144,26 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       const result = await generateReadme(sessionMeta.name, filterResult.files);
       readmeContent = result.readme || 'No description provided';
       readmeWarning = result.warning;
+    }
+
+    // 6.75: Auto-tag from generated README (create mode only)
+    let autoTags: string[] = [];
+    let tagWarning: string | undefined;
+
+    if (
+      sessionMeta.mode !== 'replace' &&
+      !hasUserTags(sessionMeta.tags) &&
+      readmeContent &&
+      readmeContent.trim() &&
+      readmeContent !== 'No description provided'
+    ) {
+      try {
+        autoTags = await suggestTagsFromReadme(readmeContent);
+      } catch {
+        // Should not throw (suggestTagsFromReadme catches internally),
+        // but defensive catch for safety
+        tagWarning = 'Automatic tag suggestion was unsuccessful';
+      }
     }
 
     // 7. Generate artifact.zip
