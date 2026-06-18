@@ -29,7 +29,12 @@ output "api_key_value" {
   sensitive   = true
 }
 
-output "lambda_function_name" {
-  description = "The name of the Lambda function for project upload and index generation"
-  value       = aws_lambda_function.upload_lambda.function_name
+output "initiate_lambda_function_name" {
+  description = "The name of the initiate Lambda function"
+  value       = aws_lambda_function.initiate_lambda.function_name
+}
+
+output "process_lambda_function_name" {
+  description = "The name of the processing Lambda function"
+  value       = aws_lambda_function.process_lambda.function_name
 }

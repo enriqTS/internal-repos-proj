@@ -103,28 +103,53 @@ data "archive_file" "lambda_zip" {
 }
 
 # -----------------------------------------------------------------------------
-# Lambda Function
+# Lambda Functions
 # -----------------------------------------------------------------------------
 
-resource "aws_lambda_function" "upload_lambda" {
-  function_name = "${var.bucket_name_prefix}-upload"
+resource "aws_lambda_function" "initiate_lambda" {
+  function_name = "${var.bucket_name_prefix}-initiate"
   role          = aws_iam_role.lambda_role.arn
-  handler       = "handler.handler"
+  handler       = "initiate.handler"
   runtime       = "nodejs22.x"
-  memory_size   = 512
-  timeout       = 30
+  memory_size   = 256
+  timeout       = 10
 
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   environment {
     variables = {
-      BUCKET_NAME = aws_s3_bucket.frontend.id
+      BUCKET_NAME    = aws_s3_bucket.frontend.id
+      STAGING_BUCKET = aws_s3_bucket.staging.id
     }
   }
 
   tags = {
-    Name    = "${var.bucket_name_prefix}-upload-lambda"
+    Name    = "${var.bucket_name_prefix}-initiate-lambda"
+    Project = "internal-repos"
+  }
+}
+
+resource "aws_lambda_function" "process_lambda" {
+  function_name = "${var.bucket_name_prefix}-process"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "process.handler"
+  runtime       = "nodejs22.x"
+  memory_size   = 1024
+  timeout       = 120
+
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+
+  environment {
+    variables = {
+      BUCKET_NAME    = aws_s3_bucket.frontend.id
+      STAGING_BUCKET = aws_s3_bucket.staging.id
+    }
+  }
+
+  tags = {
+    Name    = "${var.bucket_name_prefix}-process-lambda"
     Project = "internal-repos"
   }
 }
@@ -149,38 +174,75 @@ resource "aws_api_gateway_resource" "upload" {
   path_part   = "upload"
 }
 
-resource "aws_api_gateway_method" "upload_post" {
+resource "aws_api_gateway_resource" "upload_initiate" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.upload.id
+  path_part   = "initiate"
+}
+
+resource "aws_api_gateway_resource" "upload_finalize" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.upload.id
+  path_part   = "finalize"
+}
+
+# -----------------------------------------------------------------------------
+# POST /upload/initiate → Initiate Lambda
+# -----------------------------------------------------------------------------
+
+resource "aws_api_gateway_method" "initiate_post" {
   rest_api_id      = aws_api_gateway_rest_api.api.id
-  resource_id      = aws_api_gateway_resource.upload.id
+  resource_id      = aws_api_gateway_resource.upload_initiate.id
   http_method      = "POST"
   authorization    = "NONE"
   api_key_required = true
 }
 
-resource "aws_api_gateway_integration" "lambda_integration" {
+resource "aws_api_gateway_integration" "initiate_integration" {
   rest_api_id             = aws_api_gateway_rest_api.api.id
-  resource_id             = aws_api_gateway_resource.upload.id
-  http_method             = aws_api_gateway_method.upload_post.http_method
+  resource_id             = aws_api_gateway_resource.upload_initiate.id
+  http_method             = aws_api_gateway_method.initiate_post.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.upload_lambda.invoke_arn
+  uri                     = aws_lambda_function.initiate_lambda.invoke_arn
 }
 
 # -----------------------------------------------------------------------------
-# CORS: OPTIONS method for preflight requests
+# POST /upload/finalize → Processing Lambda
 # -----------------------------------------------------------------------------
 
-resource "aws_api_gateway_method" "upload_options" {
+resource "aws_api_gateway_method" "finalize_post" {
+  rest_api_id      = aws_api_gateway_rest_api.api.id
+  resource_id      = aws_api_gateway_resource.upload_finalize.id
+  http_method      = "POST"
+  authorization    = "NONE"
+  api_key_required = true
+}
+
+resource "aws_api_gateway_integration" "finalize_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.upload_finalize.id
+  http_method             = aws_api_gateway_method.finalize_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.process_lambda.invoke_arn
+}
+
+# -----------------------------------------------------------------------------
+# CORS: OPTIONS on /upload/initiate
+# -----------------------------------------------------------------------------
+
+resource "aws_api_gateway_method" "initiate_options" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.upload.id
+  resource_id   = aws_api_gateway_resource.upload_initiate.id
   http_method   = "OPTIONS"
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "upload_options_integration" {
+resource "aws_api_gateway_integration" "initiate_options_integration" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.upload.id
-  http_method = aws_api_gateway_method.upload_options.http_method
+  resource_id = aws_api_gateway_resource.upload_initiate.id
+  http_method = aws_api_gateway_method.initiate_options.http_method
   type        = "MOCK"
 
   request_templates = {
@@ -188,10 +250,10 @@ resource "aws_api_gateway_integration" "upload_options_integration" {
   }
 }
 
-resource "aws_api_gateway_method_response" "upload_options_200" {
+resource "aws_api_gateway_method_response" "initiate_options_200" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.upload.id
-  http_method = aws_api_gateway_method.upload_options.http_method
+  resource_id = aws_api_gateway_resource.upload_initiate.id
+  http_method = aws_api_gateway_method.initiate_options.http_method
   status_code = "200"
 
   response_parameters = {
@@ -205,11 +267,11 @@ resource "aws_api_gateway_method_response" "upload_options_200" {
   }
 }
 
-resource "aws_api_gateway_integration_response" "upload_options_integration_response" {
+resource "aws_api_gateway_integration_response" "initiate_options_integration_response" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.upload.id
-  http_method = aws_api_gateway_method.upload_options.http_method
-  status_code = aws_api_gateway_method_response.upload_options_200.status_code
+  resource_id = aws_api_gateway_resource.upload_initiate.id
+  http_method = aws_api_gateway_method.initiate_options.http_method
+  status_code = aws_api_gateway_method_response.initiate_options_200.status_code
 
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Api-Key,Authorization'"
@@ -219,13 +281,73 @@ resource "aws_api_gateway_integration_response" "upload_options_integration_resp
 }
 
 # -----------------------------------------------------------------------------
-# Lambda Permission for API Gateway
+# CORS: OPTIONS on /upload/finalize
 # -----------------------------------------------------------------------------
 
-resource "aws_lambda_permission" "apigw_invoke" {
-  statement_id  = "AllowAPIGatewayInvoke"
+resource "aws_api_gateway_method" "finalize_options" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.upload_finalize.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "finalize_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.upload_finalize.id
+  http_method = aws_api_gateway_method.finalize_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "finalize_options_200" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.upload_finalize.id
+  http_method = aws_api_gateway_method.finalize_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "finalize_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.upload_finalize.id
+  http_method = aws_api_gateway_method.finalize_options.http_method
+  status_code = aws_api_gateway_method_response.finalize_options_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Api-Key,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,POST'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Lambda Permissions for API Gateway
+# -----------------------------------------------------------------------------
+
+resource "aws_lambda_permission" "apigw_invoke_initiate" {
+  statement_id  = "AllowAPIGatewayInvokeInitiate"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.upload_lambda.function_name
+  function_name = aws_lambda_function.initiate_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "apigw_invoke_process" {
+  statement_id  = "AllowAPIGatewayInvokeProcess"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.process_lambda.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
@@ -238,17 +360,25 @@ resource "aws_api_gateway_deployment" "api_deployment" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
   depends_on = [
-    aws_api_gateway_integration.lambda_integration
+    aws_api_gateway_integration.initiate_integration,
+    aws_api_gateway_integration.finalize_integration
   ]
 
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.upload.id,
-      aws_api_gateway_method.upload_post.id,
-      aws_api_gateway_integration.lambda_integration.id,
-      aws_api_gateway_method.upload_options.id,
-      aws_api_gateway_integration.upload_options_integration.id,
-      aws_api_gateway_integration_response.upload_options_integration_response.id,
+      aws_api_gateway_resource.upload_initiate.id,
+      aws_api_gateway_resource.upload_finalize.id,
+      aws_api_gateway_method.initiate_post.id,
+      aws_api_gateway_integration.initiate_integration.id,
+      aws_api_gateway_method.finalize_post.id,
+      aws_api_gateway_integration.finalize_integration.id,
+      aws_api_gateway_method.initiate_options.id,
+      aws_api_gateway_integration.initiate_options_integration.id,
+      aws_api_gateway_integration_response.initiate_options_integration_response.id,
+      aws_api_gateway_method.finalize_options.id,
+      aws_api_gateway_integration.finalize_options_integration.id,
+      aws_api_gateway_integration_response.finalize_options_integration_response.id,
     ]))
   }
 
