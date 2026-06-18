@@ -18,6 +18,7 @@ import {
 } from './api';
 import { createTagSelector, type TagSelectorAPI } from './tag-selector';
 import { filterFileList } from './upload-form';
+import { invalidateSearchIndex } from './main';
 import JSZip from 'jszip';
 
 /**
@@ -362,6 +363,8 @@ export async function renderEditForm(
         ? 'Project updated successfully (artifact replaced)!'
         : 'Project updated successfully!';
       statusEl.className = 'upload-status upload-status--success';
+
+      invalidateSearchIndex();
 
       setTimeout(() => {
         window.location.hash = `#/project/${encodeURIComponent(projectName)}`;
