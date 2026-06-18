@@ -229,6 +229,9 @@ export function uploadToS3(url: string, blob: Blob, onProgress?: (pct: number) =
  * Fetch the tag registry (tags.json) from CDN.
  * Returns the parsed tag list on success, an empty array on 404 (registry not yet created),
  * or an error message on other failures.
+ *
+ * Note: CloudFront may return index.html (HTML with 200 status) for missing S3 keys
+ * due to custom error responses. We detect non-JSON responses and treat them as empty.
  */
 export async function fetchTagRegistry(): Promise<ApiResult<string[]>> {
   try {
@@ -245,7 +248,16 @@ export async function fetchTagRegistry(): Promise<ApiResult<string[]>> {
       };
     }
 
-    const data: string[] = await response.json();
+    const text = await response.text();
+
+    // CloudFront may serve index.html for missing S3 keys (custom error response).
+    // Detect non-JSON responses and treat as empty registry.
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json') && !text.trimStart().startsWith('[')) {
+      return { ok: true, data: [] };
+    }
+
+    const data: string[] = JSON.parse(text);
     return { ok: true, data };
   } catch (err) {
     return {

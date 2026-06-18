@@ -292,22 +292,37 @@ export function renderUploadForm(container: HTMLElement): void {
   const filesGroup = createFileGroup('project-files', 'Project Files (select folder)');
   form.appendChild(filesGroup.wrapper);
 
+  // --- Tag suggestion logic ---
+  let suggestionTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Request tag suggestions from the Lambda if conditions are met:
+   * - README content is ≥50 characters
+   * - User hasn't manually interacted with the tag selector
+   */
+  function requestTagSuggestions(): void {
+    if (suggestionTimeout !== null) {
+      clearTimeout(suggestionTimeout);
+    }
+    const content = readmeGroup.textarea.value;
+    if (content.length >= 50 && tagSelector && !tagSelector.hasUserInteracted()) {
+      suggestionTimeout = setTimeout(() => {
+        suggestTags(content).then((result) => {
+          if (result.ok && result.data.length > 0 && tagSelector && !tagSelector.hasUserInteracted()) {
+            tagSelector.applySuggestions(result.data);
+          }
+        });
+      }, 500);
+    }
+  }
+
   // Wire up README autofill on file selection
   filesGroup.input.addEventListener('change', () => {
     const files = filesGroup.input.files;
     if (files && files.length > 0) {
       handleReadmeAutofill(files, readmeGroup.textarea, readmeNoticeContainer).then(() => {
-        // After autofill, if textarea has enough content and user hasn't interacted with tags, suggest tags
-        const content = readmeGroup.textarea.value;
-        if (content.length >= 50 && tagSelector && !tagSelector.hasUserInteracted()) {
-          setTimeout(() => {
-            suggestTags(content).then((result) => {
-              if (result.ok && result.data.length > 0) {
-                tagSelector!.applySuggestions(result.data);
-              }
-            });
-          }, 500);
-        }
+        // After autofill completes, trigger tag suggestions
+        requestTagSuggestions();
       });
     }
   });
@@ -317,24 +332,9 @@ export function renderUploadForm(container: HTMLElement): void {
     readmeNoticeContainer.innerHTML = '';
   });
 
-  // Debounced README suggestion: after 500ms of no typing and ≥50 chars, request tag suggestions
-  let suggestionTimeout: ReturnType<typeof setTimeout> | null = null;
+  // Debounced README suggestion on manual typing
   readmeGroup.textarea.addEventListener('input', () => {
-    if (suggestionTimeout !== null) {
-      clearTimeout(suggestionTimeout);
-    }
-    const content = readmeGroup.textarea.value;
-    if (content.length >= 50) {
-      suggestionTimeout = setTimeout(() => {
-        if (tagSelector && !tagSelector.hasUserInteracted()) {
-          suggestTags(content).then((result) => {
-            if (result.ok && result.data.length > 0) {
-              tagSelector!.applySuggestions(result.data);
-            }
-          });
-        }
-      }, 500);
-    }
+    requestTagSuggestions();
   });
 
   // Submit button
@@ -364,8 +364,20 @@ export function renderUploadForm(container: HTMLElement): void {
     }
 
     // Build structured TagInput[] from tag selector
-    const selectedTags = tagSelector!.getSelectedTags();
+    let selectedTags = tagSelector!.getSelectedTags();
     const newTags = tagSelector!.getNewTags();
+
+    // If no tags selected and README is available, attempt to get AI suggestions as fallback
+    if (selectedTags.length === 0 && readme.length >= 50) {
+      statusEl.textContent = 'Getting tag suggestions...';
+      statusEl.className = 'upload-status upload-status--loading';
+      const suggestResult = await suggestTags(readme);
+      if (suggestResult.ok && suggestResult.data.length > 0) {
+        tagSelector!.applySuggestions(suggestResult.data);
+        selectedTags = tagSelector!.getSelectedTags();
+      }
+    }
+
     const tagInputs: TagInput[] = selectedTags.map((t) => ({
       tag: t,
       isNew: newTags.includes(t),
