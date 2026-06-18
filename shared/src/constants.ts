@@ -60,3 +60,12 @@ export const PRESIGNED_URL_EXPIRY = 15 * 60;
 
 /** Maximum artifact zip size in bytes (100 MB) */
 export const MAX_ARTIFACT_SIZE = 100 * 1024 * 1024;
+
+/**
+ * Regex pattern for valid tag names.
+ * Allows lowercase alphanumeric characters, hyphens, and underscores only.
+ */
+export const TAG_PATTERN = /^[a-z0-9_-]+$/;
+
+/** Maximum number of entries in the tag registry */
+export const MAX_REGISTRY_SIZE = 500;
