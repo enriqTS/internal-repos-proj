@@ -1,4 +1,4 @@
-import type { SearchIndex, ProjectMetadata, InitiateRequest, InitiateResponse, FinalizeResponse } from 'shared/types';
+import type { SearchIndex, ProjectMetadata, InitiateRequest, InitiateResponse, FinalizeResponse, SuggestTagsResponse } from 'shared/types';
 
 /**
  * Typed API response wrapper.
@@ -223,4 +223,73 @@ export function uploadToS3(url: string, blob: Blob, onProgress?: (pct: number) =
 
     xhr.send(blob);
   });
+}
+
+/**
+ * Fetch the tag registry (tags.json) from CDN.
+ * Returns the parsed tag list on success, an empty array on 404 (registry not yet created),
+ * or an error message on other failures.
+ */
+export async function fetchTagRegistry(): Promise<ApiResult<string[]>> {
+  try {
+    const response = await fetch(`${getBaseUrl()}/tags.json`);
+
+    if (response.status === 404) {
+      return { ok: true, data: [] };
+    }
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: `Failed to load tag registry (HTTP ${response.status})`,
+      };
+    }
+
+    const data: string[] = await response.json();
+    return { ok: true, data };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error
+        ? `Failed to load tag registry: ${err.message}`
+        : 'Failed to load tag registry: unknown error',
+    };
+  }
+}
+
+/**
+ * Request AI tag suggestions based on README content.
+ * POST to /tags/suggest with the readme text; returns suggested tags from the registry.
+ */
+export async function suggestTags(readme: string): Promise<ApiResult<string[]>> {
+  const apiUrl = getApiUrl();
+  const apiKey = getApiKey();
+  if (!apiUrl) return { ok: false, error: 'API endpoint is not configured' };
+  if (!apiKey) return { ok: false, error: 'API key is not configured' };
+
+  try {
+    const response = await fetch(`${apiUrl}/tags/suggest`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({ readme }),
+    });
+
+    const body: SuggestTagsResponse = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: (body as any).error ?? `Tag suggestion failed (HTTP ${response.status})` };
+    }
+
+    return { ok: true, data: body.tags };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error
+        ? `Tag suggestion failed: ${err.message}`
+        : 'Tag suggestion failed: unknown error',
+    };
+  }
 }
