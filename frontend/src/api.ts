@@ -1,4 +1,4 @@
-import type { SearchIndex, ProjectMetadata, InitiateRequest, InitiateResponse, FinalizeResponse, SuggestTagsResponse } from 'shared/types';
+import type { SearchIndex, ProjectMetadata, InitiateRequest, InitiateResponse, FinalizeResponse, SuggestTagsResponse, EditResponse, DeleteResponse } from 'shared/types';
 
 /**
  * Typed API response wrapper.
@@ -304,4 +304,98 @@ export async function suggestTags(readme: string): Promise<ApiResult<string[]>> 
         : 'Tag suggestion failed: unknown error',
     };
   }
+}
+
+
+/**
+ * Update project metadata via PATCH /projects/{name}.
+ * Only sends the fields that need updating.
+ */
+export async function updateProject(
+  name: string,
+  updates: { name?: string; tags?: string[]; readme?: string }
+): Promise<ApiResult<EditResponse>> {
+  const apiUrl = getApiUrl();
+  const apiKey = getApiKey();
+  if (!apiUrl) return { ok: false, error: 'API endpoint is not configured' };
+  if (!apiKey) return { ok: false, error: 'API key is not configured' };
+
+  try {
+    const response = await fetch(`${apiUrl}/projects/${encodeURIComponent(name)}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify(updates),
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      return { ok: false, error: body.error ?? `Project update failed (HTTP ${response.status})` };
+    }
+    return { ok: true, data: body as EditResponse };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? `Project update failed: ${err.message}` : 'Project update failed' };
+  }
+}
+
+/**
+ * Delete a project via DELETE /projects/{name}.
+ */
+export async function deleteProject(name: string): Promise<ApiResult<DeleteResponse>> {
+  const apiUrl = getApiUrl();
+  const apiKey = getApiKey();
+  if (!apiUrl) return { ok: false, error: 'API endpoint is not configured' };
+  if (!apiKey) return { ok: false, error: 'API key is not configured' };
+
+  try {
+    const response = await fetch(`${apiUrl}/projects/${encodeURIComponent(name)}`, {
+      method: 'DELETE',
+      headers: {
+        'x-api-key': apiKey,
+      },
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      return { ok: false, error: body.error ?? `Project deletion failed (HTTP ${response.status})` };
+    }
+    return { ok: true, data: body as DeleteResponse };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? `Project deletion failed: ${err.message}` : 'Project deletion failed' };
+  }
+}
+
+/**
+ * Compute a minimal PATCH body by comparing original metadata with edited form values.
+ * Only includes fields that actually differ from the original.
+ *
+ * @param original - The current project metadata and readme
+ * @param edited - The edited form values
+ * @returns Object containing only the modified fields, or null if nothing changed
+ */
+export function computePatchBody(
+  original: { name: string; tags: string[]; readme: string },
+  edited: { name: string; tags: string[]; readme: string }
+): { name?: string; tags?: string[]; readme?: string } | null {
+  const patch: { name?: string; tags?: string[]; readme?: string } = {};
+
+  if (edited.name !== original.name) {
+    patch.name = edited.name;
+  }
+
+  // Compare tags as sorted arrays to detect content changes regardless of order
+  const originalTagsSorted = [...original.tags].sort();
+  const editedTagsSorted = [...edited.tags].sort();
+  if (
+    originalTagsSorted.length !== editedTagsSorted.length ||
+    originalTagsSorted.some((tag, i) => tag !== editedTagsSorted[i])
+  ) {
+    patch.tags = edited.tags;
+  }
+
+  if (edited.readme !== original.readme) {
+    patch.readme = edited.readme;
+  }
+
+  return Object.keys(patch).length > 0 ? patch : null;
 }

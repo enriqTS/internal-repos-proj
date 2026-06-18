@@ -385,3 +385,231 @@ describe('uploadToS3', () => {
     );
   });
 });
+
+
+import { updateProject, deleteProject, computePatchBody } from './api';
+
+describe('updateProject', () => {
+  it('sends PATCH request with correct headers and body', async () => {
+    const mockResponse = {
+      message: 'Project updated successfully',
+      metadata: { name: 'my-project', description: '', tags: ['web'], date: '2024-01-01' },
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await updateProject('my-project', { tags: ['web', 'api'] });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual(mockResponse);
+    }
+
+    expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/projects/my-project', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'test-api-key-123',
+      },
+      body: JSON.stringify({ tags: ['web', 'api'] }),
+    });
+  });
+
+  it('returns error message from API on failure', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: () => Promise.resolve({ error: 'Project not found: missing' }),
+    });
+
+    const result = await updateProject('missing', { readme: 'updated' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('Project not found: missing');
+    }
+  });
+
+  it('returns error when API URL is not configured', async () => {
+    vi.stubEnv('VITE_API_URL', '');
+
+    const result = await updateProject('test', { tags: ['a'] });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('API endpoint is not configured');
+    }
+
+    vi.stubEnv('VITE_API_URL', 'https://api.example.com');
+  });
+
+  it('returns error when API key is not configured', async () => {
+    vi.stubEnv('VITE_API_KEY', '');
+
+    const result = await updateProject('test', { tags: ['a'] });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('API key is not configured');
+    }
+
+    vi.stubEnv('VITE_API_KEY', 'test-api-key-123');
+  });
+
+  it('returns error on network failure', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+    const result = await updateProject('test', { readme: 'x' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('Network error');
+    }
+  });
+
+  it('encodes project name in URL', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ message: 'ok', metadata: {} }),
+    });
+
+    await updateProject('my project', { tags: ['test'] });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.example.com/projects/my%20project',
+      expect.any(Object)
+    );
+  });
+});
+
+describe('deleteProject', () => {
+  it('sends DELETE request with correct headers', async () => {
+    const mockResponse = {
+      message: 'Project deleted successfully',
+      name: 'old-project',
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await deleteProject('old-project');
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual(mockResponse);
+    }
+
+    expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/projects/old-project', {
+      method: 'DELETE',
+      headers: {
+        'x-api-key': 'test-api-key-123',
+      },
+    });
+  });
+
+  it('returns error message from API on failure', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: () => Promise.resolve({ error: 'Project not found: ghost' }),
+    });
+
+    const result = await deleteProject('ghost');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('Project not found: ghost');
+    }
+  });
+
+  it('returns error when API URL is not configured', async () => {
+    vi.stubEnv('VITE_API_URL', '');
+
+    const result = await deleteProject('test');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('API endpoint is not configured');
+    }
+
+    vi.stubEnv('VITE_API_URL', 'https://api.example.com');
+  });
+
+  it('returns error when API key is not configured', async () => {
+    vi.stubEnv('VITE_API_KEY', '');
+
+    const result = await deleteProject('test');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('API key is not configured');
+    }
+
+    vi.stubEnv('VITE_API_KEY', 'test-api-key-123');
+  });
+
+  it('returns error on network failure', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Timeout'));
+
+    const result = await deleteProject('test');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('Timeout');
+    }
+  });
+});
+
+describe('computePatchBody', () => {
+  const original = {
+    name: 'my-project',
+    tags: ['web', 'api'],
+    readme: '# My Project',
+  };
+
+  it('returns null when nothing changed', () => {
+    const edited = { ...original };
+    expect(computePatchBody(original, edited)).toBeNull();
+  });
+
+  it('detects name change', () => {
+    const edited = { ...original, name: 'new-name' };
+    expect(computePatchBody(original, edited)).toEqual({ name: 'new-name' });
+  });
+
+  it('detects tags change', () => {
+    const edited = { ...original, tags: ['web', 'api', 'new'] };
+    expect(computePatchBody(original, edited)).toEqual({ tags: ['web', 'api', 'new'] });
+  });
+
+  it('detects readme change', () => {
+    const edited = { ...original, readme: '# Updated' };
+    expect(computePatchBody(original, edited)).toEqual({ readme: '# Updated' });
+  });
+
+  it('returns multiple changed fields', () => {
+    const edited = { name: 'new-name', tags: ['solo'], readme: '# New' };
+    const result = computePatchBody(original, edited);
+    expect(result).toEqual({ name: 'new-name', tags: ['solo'], readme: '# New' });
+  });
+
+  it('treats same tags in different order as unchanged', () => {
+    const edited = { ...original, tags: ['api', 'web'] };
+    expect(computePatchBody(original, edited)).toBeNull();
+  });
+
+  it('detects tag removal', () => {
+    const edited = { ...original, tags: ['web'] };
+    expect(computePatchBody(original, edited)).toEqual({ tags: ['web'] });
+  });
+
+  it('detects tag addition', () => {
+    const edited = { ...original, tags: ['web', 'api', 'devops'] };
+    expect(computePatchBody(original, edited)).toEqual({ tags: ['web', 'api', 'devops'] });
+  });
+});
