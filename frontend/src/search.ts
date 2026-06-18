@@ -1,6 +1,8 @@
 import Fuse, { type IFuseOptions } from 'fuse.js';
 import type { ProjectIndexEntry, SearchIndex } from 'shared/types';
 import { createTagFilter, type TagFilterAPI } from './tag-filter';
+import { createPaginator, type PaginatorAPI } from './paginator';
+import { formatRelativeDate } from './relative-date';
 
 /**
  * Fuse.js configuration for fuzzy searching project entries.
@@ -100,7 +102,8 @@ export function debounce<T extends (...args: unknown[]) => void>(
 
 /**
  * Render search results into the given container element.
- * Displays project cards with name, description, and tags.
+ * Displays project cards with name, description, tags, relative date,
+ * and keyboard navigation support.
  * Shows a "No results found" message when results are empty.
  */
 export function renderResults(results: SearchResult[], container: HTMLElement): void {
@@ -122,6 +125,16 @@ export function renderResults(results: SearchResult[], container: HTMLElement): 
 
     const li = document.createElement('li');
     li.className = 'result-item';
+    li.setAttribute('tabindex', '0');
+    li.setAttribute('role', 'link');
+    li.setAttribute('aria-label', `View project ${item.name}`);
+
+    li.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location.hash = `#/project/${encodeURIComponent(item.name)}`;
+      }
+    });
 
     const nameEl = document.createElement('h3');
     nameEl.className = 'result-name';
@@ -140,9 +153,16 @@ export function renderResults(results: SearchResult[], container: HTMLElement): 
       tagsEl.appendChild(tagSpan);
     }
 
+    const dateEl = document.createElement('time');
+    dateEl.className = 'result-date';
+    dateEl.textContent = formatRelativeDate(item.date);
+    dateEl.setAttribute('title', item.date);
+    dateEl.setAttribute('datetime', item.date);
+
     li.appendChild(nameEl);
     li.appendChild(descEl);
     li.appendChild(tagsEl);
+    li.appendChild(dateEl);
     list.appendChild(li);
   }
 
@@ -151,7 +171,8 @@ export function renderResults(results: SearchResult[], container: HTMLElement): 
 
 /**
  * Set up the search functionality by wiring the search input to debounced search
- * and rendering results into the results container.
+ * and rendering results into the results container. Integrates pagination, tag filtering,
+ * relative dates, and keyboard navigation.
  *
  * @param inputElement - The search input element
  * @param resultsContainer - The container element for rendering results
@@ -164,6 +185,25 @@ export function setupSearch(
 ): void {
   let activeFilterTags: string[] = [];
   let tagFilter: TagFilterAPI | null = null;
+  let filteredResults: SearchResult[] = [];
+
+  // Create a container for the paginator and append it after the results
+  const paginatorContainer = document.createElement('div');
+  paginatorContainer.className = 'paginator-container';
+  resultsContainer.insertAdjacentElement('afterend', paginatorContainer);
+
+  const paginator: PaginatorAPI = createPaginator({
+    container: paginatorContainer,
+    onPageChange: (_page: number) => {
+      // Re-render results for the new page
+      const { start, end } = paginator.getSliceRange();
+      const pageResults = filteredResults.slice(start, end);
+      renderResults(pageResults, resultsContainer);
+
+      // Scroll to top of results container
+      resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+  });
 
   if (filterContainer) {
     tagFilter = createTagFilter({
@@ -182,8 +222,15 @@ export function setupSearch(
   const performSearch = () => {
     const query = inputElement.value.trim();
     const results = search(query);
-    const filtered = filterByTags(results, activeFilterTags);
-    renderResults(filtered, resultsContainer);
+    filteredResults = filterByTags(results, activeFilterTags);
+
+    // Reset paginator to page 1 on query/filter change
+    paginator.update(filteredResults.length, 1);
+
+    // Slice results for the current page
+    const { start, end } = paginator.getSliceRange();
+    const pageResults = filteredResults.slice(start, end);
+    renderResults(pageResults, resultsContainer);
   };
 
   const debouncedSearch = debounce(performSearch, 200);
