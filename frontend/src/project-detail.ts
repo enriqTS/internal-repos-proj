@@ -61,6 +61,13 @@ export async function renderProjectDetail(
 ): Promise<void> {
   container.innerHTML = '';
 
+  // Back navigation link — rendered before fetch so it's always visible
+  const backLink = document.createElement('a');
+  backLink.href = '#/';
+  backLink.className = 'back-link';
+  backLink.textContent = '← Back to search';
+  container.appendChild(backLink);
+
   // Fetch metadata first — if it fails, we can't show project details
   const metadataResult = await fetchProjectMetadata(projectPath);
 
