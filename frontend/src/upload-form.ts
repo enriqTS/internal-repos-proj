@@ -317,10 +317,18 @@ export function renderUploadForm(container: HTMLElement): void {
     }
   }
 
-  // Wire up README autofill on file selection
+  // Wire up README autofill and project name autofill on file selection
   filesGroup.input.addEventListener('change', () => {
     const files = filesGroup.input.files;
     if (files && files.length > 0) {
+      // Auto-fill project name from folder name if empty
+      if (!nameGroup.input.value.trim() && files[0].webkitRelativePath) {
+        const folderName = files[0].webkitRelativePath.split('/')[0];
+        if (folderName) {
+          nameGroup.input.value = folderName;
+        }
+      }
+
       handleReadmeAutofill(files, readmeGroup.textarea, readmeNoticeContainer).then(() => {
         // After autofill completes, trigger tag suggestions
         requestTagSuggestions();
