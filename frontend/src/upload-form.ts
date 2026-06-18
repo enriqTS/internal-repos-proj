@@ -9,6 +9,7 @@ import {
 import type { TagInput } from 'shared/types';
 import { initiateUpload, uploadToS3, finalizeUpload, fetchTagRegistry, suggestTags } from './api';
 import { createTagSelector, type TagSelectorAPI } from './tag-selector';
+import { invalidateSearchIndex } from './main';
 import JSZip from 'jszip';
 
 /**
@@ -453,6 +454,7 @@ export function renderUploadForm(container: HTMLElement): void {
     }
 
     // 7. Success
+    invalidateSearchIndex();
     statusEl.textContent = finalizeResult.data.warning
       ? `Project uploaded successfully. Warning: ${finalizeResult.data.warning}`
       : 'Project uploaded successfully!';

@@ -1,4 +1,5 @@
 import { deleteProject } from './api';
+import { invalidateSearchIndex } from './main';
 
 /**
  * Show a delete confirmation dialog as a modal overlay.
@@ -119,6 +120,7 @@ export function showDeleteDialog(projectName: string): void {
     if (result.ok) {
       statusEl.className = 'delete-dialog-status delete-dialog-status--success';
       statusEl.textContent = `Project "${projectName}" has been deleted.`;
+      invalidateSearchIndex();
       // Navigate to home after a brief delay
       setTimeout(() => {
         closeDialog(overlay);
