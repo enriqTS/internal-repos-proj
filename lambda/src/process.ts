@@ -19,6 +19,15 @@ const CORS_HEADERS = {
 };
 
 /**
+ * Check if the session metadata tags field contains any non-empty user-provided tags.
+ * The tags field is a comma-separated string. Returns true if at least one
+ * non-whitespace tag exists after splitting.
+ */
+export function hasUserTags(tags: string): boolean {
+  return tags.split(',').some(t => t.trim().length > 0);
+}
+
+/**
  * Lambda handler for POST /upload/finalize.
  * Downloads staged zip from S3, processes it (filter, archive, write), and cleans up.
  */
