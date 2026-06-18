@@ -31,118 +31,88 @@ describe('validateForm', () => {
 
   describe('project name validation', () => {
     it('returns error when name is empty', () => {
-      const errors = validateForm('', '', 'some readme', createFileList(1));
+      const errors = validateForm('', 'some readme', createFileList(1));
       expect(errors.name).toBe('Project name is required');
     });
 
     it('returns error when name is only whitespace', () => {
-      const errors = validateForm('   ', '', 'some readme', createFileList(1));
+      const errors = validateForm('   ', 'some readme', createFileList(1));
       expect(errors.name).toBe('Project name is required');
     });
 
     it('returns error when name exceeds 64 characters', () => {
       const longName = 'a'.repeat(65);
-      const errors = validateForm(longName, '', 'some readme', createFileList(1));
+      const errors = validateForm(longName, 'some readme', createFileList(1));
       expect(errors.name).toContain('at most 64 characters');
     });
 
     it('returns error when name has invalid characters', () => {
-      const errors = validateForm('my project!', '', 'some readme', createFileList(1));
+      const errors = validateForm('my project!', 'some readme', createFileList(1));
       expect(errors.name).toContain('alphanumeric');
     });
 
     it('accepts valid names with hyphens and underscores', () => {
-      const errors = validateForm('my-project_01', '', 'some readme', createFileList(1));
+      const errors = validateForm('my-project_01', 'some readme', createFileList(1));
       expect(errors.name).toBeUndefined();
     });
 
     it('accepts a name at exactly 64 characters', () => {
       const name = 'a'.repeat(64);
-      const errors = validateForm(name, '', 'some readme', createFileList(1));
+      const errors = validateForm(name, 'some readme', createFileList(1));
       expect(errors.name).toBeUndefined();
-    });
-  });
-
-  describe('tags validation', () => {
-    it('allows empty tags', () => {
-      const errors = validateForm('project', '', 'readme', createFileList(1));
-      expect(errors.tags).toBeUndefined();
-    });
-
-    it('returns error when more than 10 tags', () => {
-      const tags = Array.from({ length: 11 }, (_, i) => `tag${i}`).join(', ');
-      const errors = validateForm('project', tags, 'readme', createFileList(1));
-      expect(errors.tags).toContain('Maximum 10 tags');
-    });
-
-    it('returns error when a tag exceeds 32 characters', () => {
-      const longTag = 'a'.repeat(33);
-      const errors = validateForm('project', longTag, 'readme', createFileList(1));
-      expect(errors.tags).toContain('at most 32 characters');
-    });
-
-    it('accepts 10 valid tags', () => {
-      const tags = Array.from({ length: 10 }, (_, i) => `tag${i}`).join(', ');
-      const errors = validateForm('project', tags, 'readme', createFileList(1));
-      expect(errors.tags).toBeUndefined();
-    });
-
-    it('ignores empty tag entries from extra commas', () => {
-      const errors = validateForm('project', 'tag1,,tag2,', 'readme', createFileList(1));
-      expect(errors.tags).toBeUndefined();
     });
   });
 
   describe('readme validation', () => {
     it('accepts empty readme (field is optional)', () => {
-      const errors = validateForm('project', '', '', createFileList(1));
+      const errors = validateForm('project', '', createFileList(1));
       expect(errors.readme).toBeUndefined();
     });
 
     it('accepts whitespace-only readme (field is optional)', () => {
-      const errors = validateForm('project', '', '   ', createFileList(1));
+      const errors = validateForm('project', '   ', createFileList(1));
       expect(errors.readme).toBeUndefined();
     });
 
     it('returns error when readme exceeds 50,000 characters', () => {
       const longReadme = 'x'.repeat(50_001);
-      const errors = validateForm('project', '', longReadme, createFileList(1));
+      const errors = validateForm('project', longReadme, createFileList(1));
       expect(errors.readme).toContain('at most');
       expect(errors.readme).toContain('characters');
     });
 
     it('accepts readme at exactly 50,000 characters', () => {
       const readme = 'x'.repeat(50_000);
-      const errors = validateForm('project', '', readme, createFileList(1));
+      const errors = validateForm('project', readme, createFileList(1));
       expect(errors.readme).toBeUndefined();
     });
   });
 
   describe('files validation', () => {
     it('returns error when files is null', () => {
-      const errors = validateForm('project', '', 'readme', null);
+      const errors = validateForm('project', 'readme', null);
       expect(errors.files).toBe('At least one file must be selected');
     });
 
     it('returns error when no files selected', () => {
-      const errors = validateForm('project', '', 'readme', createFileList(0));
+      const errors = validateForm('project', 'readme', createFileList(0));
       expect(errors.files).toBe('At least one file must be selected');
     });
 
     it('accepts when files are selected', () => {
-      const errors = validateForm('project', '', 'readme', createFileList(1));
+      const errors = validateForm('project', 'readme', createFileList(1));
       expect(errors.files).toBeUndefined();
     });
   });
 
   describe('combined validation', () => {
     it('returns no errors for fully valid input', () => {
-      const errors = validateForm('my-project', 'tag1, tag2', '# Readme', createFileList(2));
+      const errors = validateForm('my-project', '# Readme', createFileList(2));
       expect(Object.keys(errors)).toHaveLength(0);
     });
 
     it('returns multiple errors simultaneously', () => {
-      const errors = validateForm('', '', '', null);
+      const errors = validateForm('', '', null);
       expect(errors.name).toBeDefined();
       expect(errors.files).toBeDefined();
       // readme is now optional, so no error for empty readme
@@ -155,7 +125,23 @@ vi.mock('./api', () => ({
   initiateUpload: vi.fn(),
   uploadToS3: vi.fn(),
   finalizeUpload: vi.fn(),
+  fetchTagRegistry: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
+  suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
 }));
+
+vi.mock('./tag-selector', () => {
+  const mockTagSelector = {
+    setAvailableTags: vi.fn(),
+    applySuggestions: vi.fn(),
+    getSelectedTags: vi.fn(() => []),
+    getNewTags: vi.fn(() => []),
+    hasUserInteracted: vi.fn(() => false),
+    destroy: vi.fn(),
+  };
+  return {
+    createTagSelector: vi.fn(() => mockTagSelector),
+  };
+});
 
 vi.mock('jszip', () => {
   const mockGenerateAsync = vi.fn(() => Promise.resolve(new Blob(['fake-zip'], { type: 'application/zip' })));
@@ -211,9 +197,9 @@ describe('renderUploadForm', () => {
     expect(nameInput).not.toBeNull();
     expect(nameInput.type).toBe('text');
 
-    // Check for tags input
-    const tagsInput = container.querySelector('#project-tags') as HTMLInputElement;
-    expect(tagsInput).not.toBeNull();
+    // Check for tag selector container
+    const tagSelectorContainer = container.querySelector('.tag-selector-container');
+    expect(tagSelectorContainer).not.toBeNull();
 
     // Check for readme textarea
     const readme = container.querySelector('#project-readme') as HTMLTextAreaElement;
@@ -292,7 +278,7 @@ describe('renderUploadForm', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Verify the full sequence was called
-    expect(mockedInitiate).toHaveBeenCalledWith({ name: 'test-project', tags: '', readme: '# Test Project' });
+    expect(mockedInitiate).toHaveBeenCalledWith({ name: 'test-project', tags: [], readme: '# Test Project' });
     expect(mockedUploadToS3).toHaveBeenCalledWith('https://s3.example.com/presigned', expect.any(Blob), expect.any(Function));
     expect(mockedFinalize).toHaveBeenCalledWith('sess-123');
 

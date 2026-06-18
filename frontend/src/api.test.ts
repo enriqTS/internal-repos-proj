@@ -163,7 +163,7 @@ describe('initiateUpload', () => {
       json: () => Promise.resolve(mockResponse),
     });
 
-    const result = await initiateUpload({ name: 'new-project', tags: 'test,demo', readme: '# Hello' });
+    const result = await initiateUpload({ name: 'new-project', tags: [{ tag: 'test', isNew: false }, { tag: 'demo', isNew: false }], readme: '# Hello' });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -176,7 +176,7 @@ describe('initiateUpload', () => {
         'Content-Type': 'application/json',
         'x-api-key': 'test-api-key-123',
       },
-      body: JSON.stringify({ name: 'new-project', tags: 'test,demo', readme: '# Hello' }),
+      body: JSON.stringify({ name: 'new-project', tags: [{ tag: 'test', isNew: false }, { tag: 'demo', isNew: false }], readme: '# Hello' }),
     });
   });
 

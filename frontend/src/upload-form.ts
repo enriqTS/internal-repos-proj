@@ -2,12 +2,13 @@ import {
   PROJECT_NAME_REGEX,
   MAX_PROJECT_NAME_LENGTH,
   MAX_TAGS_COUNT,
-  MAX_TAG_LENGTH,
   MAX_README_LENGTH,
   MAX_CLIENT_ZIP_SIZE,
   DENY_LIST,
 } from 'shared/constants';
-import { initiateUpload, uploadToS3, finalizeUpload } from './api';
+import type { TagInput } from 'shared/types';
+import { initiateUpload, uploadToS3, finalizeUpload, fetchTagRegistry, suggestTags } from './api';
+import { createTagSelector, type TagSelectorAPI } from './tag-selector';
 import JSZip from 'jszip';
 
 /**
@@ -15,7 +16,6 @@ import JSZip from 'jszip';
  */
 export interface ValidationErrors {
   name?: string;
-  tags?: string;
   readme?: string;
   files?: string;
 }
@@ -23,10 +23,10 @@ export interface ValidationErrors {
 /**
  * Validate the upload form fields client-side before submission.
  * Returns an object with field-specific error messages, or an empty object if valid.
+ * Note: Tags validation is handled by the TagSelector component itself.
  */
 export function validateForm(
   name: string,
-  tags: string,
   readme: string,
   files: FileList | null,
 ): ValidationErrors {
@@ -39,19 +39,6 @@ export function validateForm(
     errors.name = `Project name must be at most ${MAX_PROJECT_NAME_LENGTH} characters`;
   } else if (!PROJECT_NAME_REGEX.test(name)) {
     errors.name = 'Project name may only contain alphanumeric characters, hyphens, and underscores';
-  }
-
-  // Tags validation
-  if (tags.trim()) {
-    const tagList = tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0);
-    if (tagList.length > MAX_TAGS_COUNT) {
-      errors.tags = `Maximum ${MAX_TAGS_COUNT} tags allowed`;
-    } else {
-      const longTag = tagList.find((t) => t.length > MAX_TAG_LENGTH);
-      if (longTag) {
-        errors.tags = `Each tag must be at most ${MAX_TAG_LENGTH} characters`;
-      }
-    }
   }
 
   // Readme validation — only check length if provided
@@ -250,11 +237,42 @@ export function renderUploadForm(container: HTMLElement): void {
   });
   form.appendChild(nameGroup.wrapper);
 
-  // Tags field
-  const tagsGroup = createFieldGroup('project-tags', 'Tags (comma-separated)', 'text', {
-    placeholder: 'tag1, tag2, tag3',
+  // Tags field — Tag Selector component
+  const tagsGroupWrapper = document.createElement('div');
+  tagsGroupWrapper.className = 'form-group';
+
+  const tagsLabel = document.createElement('label');
+  tagsLabel.textContent = 'Tags';
+  tagsGroupWrapper.appendChild(tagsLabel);
+
+  const tagSelectorContainer = document.createElement('div');
+  tagSelectorContainer.className = 'tag-selector-container';
+  tagsGroupWrapper.appendChild(tagSelectorContainer);
+
+  const tagWarningEl = document.createElement('span');
+  tagWarningEl.className = 'field-warning';
+  tagWarningEl.setAttribute('aria-live', 'polite');
+  tagsGroupWrapper.appendChild(tagWarningEl);
+
+  form.appendChild(tagsGroupWrapper);
+
+  // Create the Tag Selector component
+  let tagSelector: TagSelectorAPI | null = null;
+  tagSelector = createTagSelector({
+    container: tagSelectorContainer,
+    onChange: () => {},
+    maxTags: MAX_TAGS_COUNT,
   });
-  form.appendChild(tagsGroup.wrapper);
+
+  // Fetch tag registry on form load
+  fetchTagRegistry().then((result) => {
+    if (result.ok) {
+      tagSelector!.setAvailableTags(result.data);
+    } else {
+      // Non-404 error — show warning in the tag selector area
+      tagWarningEl.textContent = 'Existing tag suggestions unavailable';
+    }
+  });
 
   // Readme field (textarea)
   const readmeGroup = createTextareaGroup('project-readme', 'Readme Content', {
@@ -287,6 +305,26 @@ export function renderUploadForm(container: HTMLElement): void {
     readmeNoticeContainer.innerHTML = '';
   });
 
+  // Debounced README suggestion: after 500ms of no typing and ≥50 chars, request tag suggestions
+  let suggestionTimeout: ReturnType<typeof setTimeout> | null = null;
+  readmeGroup.textarea.addEventListener('input', () => {
+    if (suggestionTimeout !== null) {
+      clearTimeout(suggestionTimeout);
+    }
+    const content = readmeGroup.textarea.value;
+    if (content.length >= 50) {
+      suggestionTimeout = setTimeout(() => {
+        if (tagSelector && !tagSelector.hasUserInteracted()) {
+          suggestTags(content).then((result) => {
+            if (result.ok && result.data.length > 0) {
+              tagSelector!.applySuggestions(result.data);
+            }
+          });
+        }
+      }, 500);
+    }
+  });
+
   // Submit button
   const submitBtn = document.createElement('button');
   submitBtn.type = 'submit';
@@ -303,16 +341,23 @@ export function renderUploadForm(container: HTMLElement): void {
     clearFieldErrors(form);
 
     const name = nameGroup.input.value;
-    const tags = tagsGroup.input.value;
     const readme = readmeGroup.textarea.value;
     const files = filesGroup.input.files;
 
-    // Client-side validation
-    const errors = validateForm(name, tags, readme, files);
+    // Client-side validation (tags handled by TagSelector component)
+    const errors = validateForm(name, readme, files);
     if (Object.keys(errors).length > 0) {
-      showFieldErrors(errors, nameGroup, tagsGroup, readmeGroup, filesGroup);
+      showFieldErrors(errors, nameGroup, readmeGroup, filesGroup);
       return;
     }
+
+    // Build structured TagInput[] from tag selector
+    const selectedTags = tagSelector!.getSelectedTags();
+    const newTags = tagSelector!.getNewTags();
+    const tagInputs: TagInput[] = selectedTags.map((t) => ({
+      tag: t,
+      isNew: newTags.includes(t),
+    }));
 
     // 1. Filter files client-side
     const filteredFiles = filterFileList(files!);
@@ -347,9 +392,9 @@ export function renderUploadForm(container: HTMLElement): void {
       return;
     }
 
-    // 4. Initiate upload
+    // 4. Initiate upload with structured tags
     statusEl.textContent = 'Initiating upload...';
-    const initiateResult = await initiateUpload({ name: name.trim(), tags: tags.trim(), readme });
+    const initiateResult = await initiateUpload({ name: name.trim(), tags: tagInputs, readme });
     if (!initiateResult.ok) {
       statusEl.textContent = initiateResult.error;
       statusEl.className = 'upload-status upload-status--error';
@@ -508,12 +553,10 @@ function createFileGroup(id: string, labelText: string): FileFieldGroup {
 function showFieldErrors(
   errors: ValidationErrors,
   nameGroup: FieldGroup,
-  tagsGroup: FieldGroup,
   readmeGroup: TextareaGroup,
   filesGroup: FileFieldGroup,
 ): void {
   if (errors.name) nameGroup.errorEl.textContent = errors.name;
-  if (errors.tags) tagsGroup.errorEl.textContent = errors.tags;
   if (errors.readme) readmeGroup.errorEl.textContent = errors.readme;
   if (errors.files) filesGroup.errorEl.textContent = errors.files;
 }
