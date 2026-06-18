@@ -14,6 +14,10 @@ vi.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: vi.fn(() => Promise.resolve('https://presigned-url.example.com')),
 }));
 
+vi.mock('./tag-registry', () => ({
+  getTagRegistry: vi.fn(() => Promise.resolve(['web', 'api', 'frontend', 'backend'])),
+}));
+
 import { handler } from './initiate';
 
 function makeEvent(body: object, method = 'POST'): any {
@@ -39,7 +43,11 @@ describe('initiate handler', () => {
     notFoundErr.$metadata = { httpStatusCode: 404 };
     mockSend.mockRejectedValueOnce(notFoundErr).mockResolvedValueOnce({});
 
-    const result = await handler(makeEvent({ name: 'my-project', tags: 'web,api', readme: 'Hello' }));
+    const result = await handler(makeEvent({
+      name: 'my-project',
+      tags: [{ tag: 'web', isNew: false }, { tag: 'api', isNew: false }],
+      readme: 'Hello',
+    }));
 
     expect(result.statusCode).toBe(200);
     const body = JSON.parse(result.body);
@@ -49,7 +57,7 @@ describe('initiate handler', () => {
   });
 
   it('returns 400 when name is missing', async () => {
-    const result = await handler(makeEvent({ tags: 'web' }));
+    const result = await handler(makeEvent({ tags: [{ tag: 'web', isNew: false }] }));
 
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
@@ -68,7 +76,7 @@ describe('initiate handler', () => {
     // HeadObjectCommand succeeds → project exists
     mockSend.mockResolvedValueOnce({});
 
-    const result = await handler(makeEvent({ name: 'existing-project' }));
+    const result = await handler(makeEvent({ name: 'existing-project', tags: [{ tag: 'web', isNew: false }] }));
 
     expect(result.statusCode).toBe(409);
     const body = JSON.parse(result.body);
