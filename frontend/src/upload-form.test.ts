@@ -151,12 +151,49 @@ describe('validateForm', () => {
   });
 });
 
+vi.mock('./api', () => ({
+  initiateUpload: vi.fn(),
+  uploadToS3: vi.fn(),
+  finalizeUpload: vi.fn(),
+}));
+
+vi.mock('jszip', () => {
+  const mockGenerateAsync = vi.fn(() => Promise.resolve(new Blob(['fake-zip'], { type: 'application/zip' })));
+  const mockFile = vi.fn();
+  return {
+    default: vi.fn(() => ({
+      file: mockFile,
+      generateAsync: mockGenerateAsync,
+    })),
+  };
+});
+
+function createMockFile(name: string, relativePath: string): File {
+  const file = new File(['content'], name, { type: 'text/plain' });
+  Object.defineProperty(file, 'webkitRelativePath', { value: relativePath, writable: false });
+  return file;
+}
+
+function createMockFileList(files: File[]): FileList {
+  const fileList = Object.create(null);
+  for (let i = 0; i < files.length; i++) {
+    fileList[i] = files[i];
+  }
+  fileList.length = files.length;
+  fileList.item = (index: number) => files[index] ?? null;
+  fileList[Symbol.iterator] = function* () {
+    for (const f of files) yield f;
+  };
+  return fileList as unknown as FileList;
+}
+
 describe('renderUploadForm', () => {
   let container: HTMLElement;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -219,11 +256,20 @@ describe('renderUploadForm', () => {
     expect(errorTexts.length).toBeGreaterThan(0);
   });
 
-  it('shows success message and clears form on successful upload', async () => {
-    const apiModule = await import('./api');
-    vi.spyOn(apiModule, 'submitUpload').mockResolvedValueOnce({
+  it('shows success message on successful upload (initiate → S3 → finalize)', async () => {
+    const { initiateUpload, uploadToS3, finalizeUpload } = await import('./api');
+    const mockedInitiate = vi.mocked(initiateUpload);
+    const mockedUploadToS3 = vi.mocked(uploadToS3);
+    const mockedFinalize = vi.mocked(finalizeUpload);
+
+    mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { message: 'Project uploaded successfully', path: 'projects/test/' },
+      data: { sessionId: 'sess-123', uploadUrl: 'https://s3.example.com/presigned', expiresAt: '2025-01-01T00:15:00Z' },
+    });
+    mockedUploadToS3.mockResolvedValueOnce(undefined);
+    mockedFinalize.mockResolvedValueOnce({
+      ok: true,
+      data: { message: 'Project uploaded successfully!', path: 'projects/test-project/' },
     });
 
     renderUploadForm(container);
@@ -232,31 +278,34 @@ describe('renderUploadForm', () => {
     const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
     const fileInput = container.querySelector('#project-files') as HTMLInputElement;
 
-    // Fill in valid data
     nameInput.value = 'test-project';
     readmeArea.value = '# Test Project';
 
-    // Mock the files property
-    const file = new File(['content'], 'test.txt', { type: 'text/plain' });
-    Object.defineProperty(fileInput, 'files', {
-      value: { 0: file, length: 1, item: () => file },
-      configurable: true,
-    });
+    const mockFiles = createMockFileList([
+      createMockFile('main.ts', 'my-project/src/main.ts'),
+    ]);
+    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
-    // Wait for async operations
     await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Verify the full sequence was called
+    expect(mockedInitiate).toHaveBeenCalledWith({ name: 'test-project', tags: '', readme: '# Test Project' });
+    expect(mockedUploadToS3).toHaveBeenCalledWith('https://s3.example.com/presigned', expect.any(Blob), expect.any(Function));
+    expect(mockedFinalize).toHaveBeenCalledWith('sess-123');
 
     const statusEl = container.querySelector('.upload-status');
     expect(statusEl!.textContent).toContain('uploaded successfully');
     expect(statusEl!.classList.contains('upload-status--success')).toBe(true);
   });
 
-  it('shows error message on API error response', async () => {
-    const apiModule = await import('./api');
-    vi.spyOn(apiModule, 'submitUpload').mockResolvedValueOnce({
+  it('shows error message when initiate fails', async () => {
+    const { initiateUpload } = await import('./api');
+    const mockedInitiate = vi.mocked(initiateUpload);
+
+    mockedInitiate.mockResolvedValueOnce({
       ok: false,
       error: 'Project name already taken',
     });
@@ -270,11 +319,10 @@ describe('renderUploadForm', () => {
     nameInput.value = 'existing-project';
     readmeArea.value = '# Readme';
 
-    const file = new File(['content'], 'test.txt', { type: 'text/plain' });
-    Object.defineProperty(fileInput, 'files', {
-      value: { 0: file, length: 1, item: () => file },
-      configurable: true,
-    });
+    const mockFiles = createMockFileList([
+      createMockFile('file.ts', 'my-project/file.ts'),
+    ]);
+    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -287,12 +335,23 @@ describe('renderUploadForm', () => {
   });
 
   it('disables submit button during upload', async () => {
-    const apiModule = await import('./api');
-    let resolveUpload!: (value: any) => void;
-    const uploadPromise = new Promise((resolve) => {
-      resolveUpload = resolve;
+    const { initiateUpload, uploadToS3, finalizeUpload } = await import('./api');
+    const mockedInitiate = vi.mocked(initiateUpload);
+    const mockedUploadToS3 = vi.mocked(uploadToS3);
+    const mockedFinalize = vi.mocked(finalizeUpload);
+
+    let resolveS3!: () => void;
+    const s3Promise = new Promise<void>((resolve) => { resolveS3 = resolve; });
+
+    mockedInitiate.mockResolvedValueOnce({
+      ok: true,
+      data: { sessionId: 'sess-456', uploadUrl: 'https://s3.example.com/put', expiresAt: '2025-01-01T00:15:00Z' },
     });
-    vi.spyOn(apiModule, 'submitUpload').mockReturnValueOnce(uploadPromise as any);
+    mockedUploadToS3.mockReturnValueOnce(s3Promise);
+    mockedFinalize.mockResolvedValueOnce({
+      ok: true,
+      data: { message: 'Success', path: 'projects/my-project/' },
+    });
 
     renderUploadForm(container);
 
@@ -304,27 +363,168 @@ describe('renderUploadForm', () => {
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
-    const file = new File(['content'], 'test.txt', { type: 'text/plain' });
-    Object.defineProperty(fileInput, 'files', {
-      value: { 0: file, length: 1, item: () => file },
-      configurable: true,
-    });
+    const mockFiles = createMockFileList([
+      createMockFile('index.ts', 'my-project/index.ts'),
+    ]);
+    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     // During upload, button should be disabled
     expect(submitBtn.disabled).toBe(true);
     expect(submitBtn.textContent).toBe('Uploading...');
 
-    // Resolve the upload
-    resolveUpload({ ok: true, data: { message: 'Success', path: 'projects/my-project/' } });
+    // Resolve the S3 upload
+    resolveS3();
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // After upload, button should be re-enabled
     expect(submitBtn.disabled).toBe(false);
     expect(submitBtn.textContent).toBe('Upload Project');
+  });
+
+  it('shows error when all files are filtered out by DENY_LIST', async () => {
+    renderUploadForm(container);
+
+    const nameInput = container.querySelector('#project-name') as HTMLInputElement;
+    const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
+    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
+
+    nameInput.value = 'my-project';
+    readmeArea.value = '# Test';
+
+    // All files match DENY_LIST patterns (node_modules/, .git/)
+    const mockFiles = createMockFileList([
+      createMockFile('package.json', 'my-project/node_modules/package.json'),
+      createMockFile('config', 'my-project/.git/config'),
+    ]);
+    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+
+    const form = container.querySelector('form')!;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const statusEl = container.querySelector('.upload-status');
+    expect(statusEl!.textContent).toContain('No files remain after filtering');
+    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+  });
+
+  it('shows error when S3 upload fails', async () => {
+    const { initiateUpload, uploadToS3 } = await import('./api');
+    const mockedInitiate = vi.mocked(initiateUpload);
+    const mockedUploadToS3 = vi.mocked(uploadToS3);
+
+    mockedInitiate.mockResolvedValueOnce({
+      ok: true,
+      data: { sessionId: 'sess-789', uploadUrl: 'https://s3.example.com/put', expiresAt: '2025-01-01T00:15:00Z' },
+    });
+    mockedUploadToS3.mockRejectedValueOnce(new Error('S3 upload failed (HTTP 403)'));
+
+    renderUploadForm(container);
+
+    const nameInput = container.querySelector('#project-name') as HTMLInputElement;
+    const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
+    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
+
+    nameInput.value = 'my-project';
+    readmeArea.value = '# Test';
+
+    const mockFiles = createMockFileList([
+      createMockFile('app.ts', 'my-project/app.ts'),
+    ]);
+    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+
+    const form = container.querySelector('form')!;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const statusEl = container.querySelector('.upload-status');
+    expect(statusEl!.textContent).toContain('S3 upload failed');
+    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+
+    // Button should be re-enabled after error
+    const submitBtn = container.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(submitBtn.disabled).toBe(false);
+  });
+
+  it('shows error when finalize fails', async () => {
+    const { initiateUpload, uploadToS3, finalizeUpload } = await import('./api');
+    const mockedInitiate = vi.mocked(initiateUpload);
+    const mockedUploadToS3 = vi.mocked(uploadToS3);
+    const mockedFinalize = vi.mocked(finalizeUpload);
+
+    mockedInitiate.mockResolvedValueOnce({
+      ok: true,
+      data: { sessionId: 'sess-abc', uploadUrl: 'https://s3.example.com/put', expiresAt: '2025-01-01T00:15:00Z' },
+    });
+    mockedUploadToS3.mockResolvedValueOnce(undefined);
+    mockedFinalize.mockResolvedValueOnce({
+      ok: false,
+      error: 'Upload finalization failed (HTTP 500)',
+    });
+
+    renderUploadForm(container);
+
+    const nameInput = container.querySelector('#project-name') as HTMLInputElement;
+    const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
+    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
+
+    nameInput.value = 'my-project';
+    readmeArea.value = '# Test';
+
+    const mockFiles = createMockFileList([
+      createMockFile('app.ts', 'my-project/app.ts'),
+    ]);
+    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+
+    const form = container.querySelector('form')!;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const statusEl = container.querySelector('.upload-status');
+    expect(statusEl!.textContent).toBe('Upload finalization failed (HTTP 500)');
+    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+  });
+
+  it('shows error when zip exceeds MAX_CLIENT_ZIP_SIZE', async () => {
+    // Override the JSZip mock to return a blob that exceeds size limit
+    const JSZip = (await import('jszip')).default;
+    const mockInstance = new JSZip();
+    // 500 MB + 1 byte
+    const oversizedBlob = new Blob([new ArrayBuffer(500 * 1024 * 1024 + 1)]);
+    vi.mocked(mockInstance.generateAsync).mockResolvedValueOnce(oversizedBlob);
+
+    renderUploadForm(container);
+
+    const nameInput = container.querySelector('#project-name') as HTMLInputElement;
+    const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
+    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
+
+    nameInput.value = 'my-project';
+    readmeArea.value = '# Test';
+
+    const mockFiles = createMockFileList([
+      createMockFile('big-file.bin', 'my-project/big-file.bin'),
+    ]);
+    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+
+    const form = container.querySelector('form')!;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const statusEl = container.querySelector('.upload-status');
+    expect(statusEl!.textContent).toContain('too large');
+    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+
+    // initiateUpload should NOT have been called
+    const { initiateUpload } = await import('./api');
+    expect(initiateUpload).not.toHaveBeenCalled();
   });
 });
