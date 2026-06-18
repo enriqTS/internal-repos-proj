@@ -1,15 +1,10 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { getAIClient, MODEL_ID } from './ai-client';
 import { getTagRegistry } from './tag-registry';
 import type { SuggestTagsRequest, SuggestTagsResponse } from 'shared';
 
-const bedrockClient = new BedrockRuntimeClient({});
-
 /** Maximum characters of README content sent to the model. */
 const MAX_README_INPUT_LENGTH = 10_000;
-
-/** Bedrock model ID for Kimi K2.5 */
-const MODEL_ID = 'us.moonshotai.kimi-k2.5-0613-v1:0';
 
 /** Standard CORS headers included in every response. */
 const CORS_HEADERS = {
@@ -62,41 +57,29 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
-    // 4. Build prompt and invoke Bedrock
+    // 4. Build prompt and invoke AI model
     const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing a "tags" field with an array of up to 10 suggested tags. Only suggest tags from the available tags list.`;
 
-    const requestBody = JSON.stringify({
-      messages: [{ role: 'user', content: prompt }],
+    console.log(`[suggest-tags] Invoking model: ${MODEL_ID}`);
+
+    const client = getAIClient();
+    const message = await client.messages.create({
+      model: MODEL_ID,
       max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    console.log(`[suggest-tags] Invoking Bedrock model: ${MODEL_ID}`);
+    console.log('[suggest-tags] Model response received');
 
-    const command = new InvokeModelCommand({
-      modelId: MODEL_ID,
-      contentType: 'application/json',
-      accept: 'application/json',
-      body: requestBody,
-    });
+    // 5. Extract text content from the model response
+    const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
 
-    const response = await bedrockClient.send(command);
-    console.log('[suggest-tags] Bedrock response received');
-
-    // 5. Parse model response
-    const responseBody = new TextDecoder().decode(response.body);
-    console.log(`[suggest-tags] Raw response: ${responseBody.slice(0, 500)}`);
-    const modelOutput = JSON.parse(responseBody);
-
-    // Extract the text content from the model response
-    let content: string;
-    if (modelOutput.choices && modelOutput.choices[0]?.message?.content) {
-      content = modelOutput.choices[0].message.content;
-    } else if (modelOutput.content && typeof modelOutput.content === 'string') {
-      content = modelOutput.content;
-    } else if (modelOutput.completion) {
-      content = modelOutput.completion;
-    } else {
-      content = responseBody;
+    if (!content) {
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        body: JSON.stringify({ tags: [] } satisfies SuggestTagsResponse),
+      };
     }
 
     // 6. Extract JSON from the content (handle markdown code blocks)
