@@ -6,12 +6,112 @@ import type { SuggestTagsRequest, SuggestTagsResponse } from 'shared';
 /** Maximum characters of README content sent to the model. */
 const MAX_README_INPUT_LENGTH = 10_000;
 
+/** Timeout in milliseconds for the AI model invocation in suggestTagsFromReadme. */
+const SUGGEST_TAGS_TIMEOUT_MS = 10_000;
+
 /** Standard CORS headers included in every response. */
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key,Authorization',
   'Access-Control-Allow-Methods': 'OPTIONS,POST',
 };
+
+/**
+ * Suggest tags for a project based on its README content.
+ * Designed for direct invocation within the Finalize_Lambda (no HTTP).
+ *
+ * - Returns [] immediately if readme is empty, undefined, or whitespace-only
+ * - Truncates README to 10,000 characters
+ * - Fetches the current tag registry
+ * - Invokes the AI model with the same prompt format as the handler
+ * - Parses response and filters to registry-only tags
+ * - Enforces a 10-second timeout via AbortController
+ * - Returns empty array on any error (never throws)
+ *
+ * @param readme - The README content to analyze
+ * @returns Array of suggested tag strings (0-10 items, all from registry)
+ */
+export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
+  try {
+    // Early return if readme is empty, undefined, or whitespace-only
+    if (!readme || !readme.trim()) {
+      return [];
+    }
+
+    // Truncate README to 10,000 characters
+    const readmeContent = readme.slice(0, MAX_README_INPUT_LENGTH);
+    console.log(`[suggest-tags] suggestTagsFromReadme: README length: ${readmeContent.length} chars`);
+
+    // Fetch current tag registry
+    const registryTags = await getTagRegistry();
+    console.log(`[suggest-tags] suggestTagsFromReadme: Registry has ${registryTags.length} tags`);
+
+    if (registryTags.length === 0) {
+      console.log('[suggest-tags] suggestTagsFromReadme: Empty registry, returning no suggestions');
+      return [];
+    }
+
+    // Build prompt (same format as the handler)
+    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing a "tags" field with an array of up to 10 suggested tags. Only suggest tags from the available tags list.`;
+
+    console.log(`[suggest-tags] suggestTagsFromReadme: Invoking model: ${MODEL_ID}`);
+
+    // Set up 10-second AbortController timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), SUGGEST_TAGS_TIMEOUT_MS);
+
+    try {
+      const client = getAIClient();
+      const response = await client.chat.completions.create(
+        {
+          model: MODEL_ID,
+          max_tokens: 1024,
+          messages: [{ role: 'user', content: prompt }],
+        },
+        { signal: controller.signal }
+      );
+
+      console.log('[suggest-tags] suggestTagsFromReadme: Model response received');
+
+      // Extract text content from the model response
+      const content = response.choices[0]?.message?.content ?? null;
+
+      if (!content) {
+        return [];
+      }
+
+      // Extract JSON from the content (handle markdown code blocks)
+      const jsonMatch = content.match(/\{[\s\S]*"tags"[\s\S]*\}/);
+      if (!jsonMatch) {
+        return [];
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      if (!parsed.tags || !Array.isArray(parsed.tags)) {
+        return [];
+      }
+
+      // Filter to only tags present in registry (case-insensitive), cap at 10
+      const registryLower = new Set(registryTags.map((t) => t.toLowerCase()));
+      const suggestedTags: string[] = parsed.tags
+        .filter((tag: unknown): tag is string => typeof tag === 'string')
+        .map((tag: string) => tag.toLowerCase())
+        .filter((tag: string) => registryLower.has(tag))
+        .slice(0, 10);
+
+      console.log(`[suggest-tags] suggestTagsFromReadme: Suggesting ${suggestedTags.length} tags: ${suggestedTags.join(', ')}`);
+
+      return suggestedTags;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  } catch (err) {
+    // Log the error for CloudWatch visibility, then return empty array (never throws)
+    console.error('[suggest-tags] suggestTagsFromReadme error:', err instanceof Error ? `${err.name}: ${err.message}` : err);
+    return [];
+  }
+}
 
 /**
  * Lambda handler for POST /tags/suggest.
