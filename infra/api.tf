@@ -361,7 +361,8 @@ resource "aws_api_gateway_deployment" "api_deployment" {
 
   depends_on = [
     aws_api_gateway_integration.initiate_integration,
-    aws_api_gateway_integration.finalize_integration
+    aws_api_gateway_integration.finalize_integration,
+    aws_api_gateway_integration.suggest_tags_integration
   ]
 
   triggers = {
@@ -379,6 +380,13 @@ resource "aws_api_gateway_deployment" "api_deployment" {
       aws_api_gateway_method.finalize_options.id,
       aws_api_gateway_integration.finalize_options_integration.id,
       aws_api_gateway_integration_response.finalize_options_integration_response.id,
+      aws_api_gateway_resource.tags.id,
+      aws_api_gateway_resource.tags_suggest.id,
+      aws_api_gateway_method.suggest_tags_post.id,
+      aws_api_gateway_integration.suggest_tags_integration.id,
+      aws_api_gateway_method.suggest_tags_options.id,
+      aws_api_gateway_integration.suggest_tags_options_integration.id,
+      aws_api_gateway_integration_response.suggest_tags_options_integration_response.id,
     ]))
   }
 
