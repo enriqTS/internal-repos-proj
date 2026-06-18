@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockSend } = vi.hoisted(() => ({
+const { mockSend, mockGenerateReadme, mockSuggestTagsFromReadme, mockAddTagsToRegistry } = vi.hoisted(() => ({
   mockSend: vi.fn(),
+  mockGenerateReadme: vi.fn(),
+  mockSuggestTagsFromReadme: vi.fn(),
+  mockAddTagsToRegistry: vi.fn(),
 }));
 
 vi.mock('@aws-sdk/client-s3', () => ({
   S3Client: vi.fn(() => ({ send: mockSend })),
   GetObjectCommand: vi.fn(),
   DeleteObjectCommand: vi.fn(),
+  PutObjectCommand: vi.fn(),
 }));
 
 vi.mock('./filter', () => ({
@@ -29,7 +33,21 @@ vi.mock('./index-generator', () => ({
   regenerateIndex: vi.fn(() => Promise.resolve()),
 }));
 
+vi.mock('./generate-readme', () => ({
+  generateReadme: mockGenerateReadme,
+}));
+
+vi.mock('./suggest-tags', () => ({
+  suggestTagsFromReadme: mockSuggestTagsFromReadme,
+}));
+
+vi.mock('./tag-registry', () => ({
+  addTagsToRegistry: mockAddTagsToRegistry,
+  getTagRegistry: vi.fn(() => Promise.resolve(['react', 'typescript', 'node'])),
+}));
+
 import { handler } from './process';
+import { writeProject } from './s3-writer';
 
 function makeEvent(body: object, method = 'POST'): any {
   return {
@@ -119,5 +137,208 @@ describe('process handler', () => {
 
     expect(result.statusCode).toBe(200);
     expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', '*');
+  });
+});
+
+
+describe('process handler - auto-tag integration', () => {
+  /** Helper to set up S3 mock for a given session metadata */
+  function setupS3Mock(metadata: object) {
+    let callCount = 0;
+    mockSend.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // metadata.json
+        return {
+          Body: { transformToString: () => Promise.resolve(JSON.stringify(metadata)) },
+        };
+      }
+      if (callCount === 2) {
+        // upload.zip - minimal valid zip
+        const zipBytes = new Uint8Array([
+          0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
+          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+          0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ]);
+        return {
+          Body: { transformToByteArray: () => Promise.resolve(zipBytes) },
+        };
+      }
+      // cleanup deletes / PutObject commands
+      return Promise.resolve({});
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.BUCKET_NAME = 'test-frontend-bucket';
+    process.env.STAGING_BUCKET = 'test-staging-bucket';
+    mockGenerateReadme.mockResolvedValue({ readme: '' });
+    mockSuggestTagsFromReadme.mockResolvedValue([]);
+    mockAddTagsToRegistry.mockResolvedValue([]);
+  });
+
+  it('auto-tags project when no readme and no tags in create mode', async () => {
+    const metadata = {
+      sessionId: 'session-1',
+      name: 'my-project',
+      tags: '',
+      readme: '',
+      createdAt: '2024-01-01T00:00:00.000Z',
+    };
+    setupS3Mock(metadata);
+
+    // README generation produces a valid readme
+    mockGenerateReadme.mockResolvedValue({ readme: '# My Project\nA cool project' });
+    // Tag suggestion returns auto-tags
+    mockSuggestTagsFromReadme.mockResolvedValue(['react', 'typescript']);
+
+    const result = await handler(makeEvent({ sessionId: 'session-1' }));
+
+    expect(result.statusCode).toBe(200);
+    // suggestTagsFromReadme should be called with the generated readme
+    expect(mockSuggestTagsFromReadme).toHaveBeenCalledWith('# My Project\nA cool project');
+    // writeProject should have been called with auto-tags in metadata
+    expect(writeProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          tags: ['react', 'typescript'],
+        }),
+      })
+    );
+  });
+
+  it('skips auto-tagging when user provides tags', async () => {
+    const metadata = {
+      sessionId: 'session-2',
+      name: 'tagged-project',
+      tags: 'python, flask',
+      readme: '',
+      createdAt: '2024-01-01T00:00:00.000Z',
+    };
+    setupS3Mock(metadata);
+
+    mockGenerateReadme.mockResolvedValue({ readme: '# Tagged Project\nSome readme' });
+
+    const result = await handler(makeEvent({ sessionId: 'session-2' }));
+
+    expect(result.statusCode).toBe(200);
+    // suggestTagsFromReadme should NOT be called because user provided tags
+    expect(mockSuggestTagsFromReadme).not.toHaveBeenCalled();
+    // writeProject should have user-provided tags
+    expect(writeProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          tags: ['python', 'flask'],
+        }),
+      })
+    );
+  });
+
+  it('skips auto-tagging in replace mode regardless of tags/readme', async () => {
+    const metadata = {
+      sessionId: 'session-3',
+      name: 'replace-project',
+      tags: '',
+      readme: '',
+      mode: 'replace',
+      createdAt: '2024-01-01T00:00:00.000Z',
+    };
+    setupS3Mock(metadata);
+
+    const result = await handler(makeEvent({ sessionId: 'session-3' }));
+
+    expect(result.statusCode).toBe(200);
+    // In replace mode, neither generateReadme nor suggestTagsFromReadme should be called
+    expect(mockGenerateReadme).not.toHaveBeenCalled();
+    expect(mockSuggestTagsFromReadme).not.toHaveBeenCalled();
+  });
+
+  it('skips auto-tagging when README generation fails (fallback text)', async () => {
+    const metadata = {
+      sessionId: 'session-4',
+      name: 'fallback-project',
+      tags: '',
+      readme: '',
+      createdAt: '2024-01-01T00:00:00.000Z',
+    };
+    setupS3Mock(metadata);
+
+    // README generation fails: returns empty string which becomes 'No description provided'
+    mockGenerateReadme.mockResolvedValue({
+      readme: '',
+      warning: 'README generation failed: AbortError: The operation was aborted',
+    });
+
+    const result = await handler(makeEvent({ sessionId: 'session-4' }));
+
+    expect(result.statusCode).toBe(200);
+    // Auto-tagging should be skipped because readmeContent is "No description provided"
+    expect(mockSuggestTagsFromReadme).not.toHaveBeenCalled();
+    // writeProject should have empty tags
+    expect(writeProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          tags: [],
+        }),
+      })
+    );
+  });
+
+  it('does NOT call addTagsToRegistry with auto-suggested tags', async () => {
+    const metadata = {
+      sessionId: 'session-5',
+      name: 'no-registry-update',
+      tags: '',
+      readme: '',
+      createdAt: '2024-01-01T00:00:00.000Z',
+    };
+    setupS3Mock(metadata);
+
+    mockGenerateReadme.mockResolvedValue({ readme: '# Project\nSome content' });
+    mockSuggestTagsFromReadme.mockResolvedValue(['react', 'node']);
+
+    const result = await handler(makeEvent({ sessionId: 'session-5' }));
+
+    expect(result.statusCode).toBe(200);
+    // addTagsToRegistry should NOT be called since there are no newTags in metadata
+    // and auto-suggested tags should never be added to the registry
+    expect(mockAddTagsToRegistry).not.toHaveBeenCalled();
+  });
+
+  it('handles both README gen and tag suggestion failure with fallback content and both warnings', async () => {
+    const metadata = {
+      sessionId: 'session-6',
+      name: 'double-fail',
+      tags: '',
+      readme: '',
+      createdAt: '2024-01-01T00:00:00.000Z',
+    };
+    setupS3Mock(metadata);
+
+    // README generation returns a warning but produces some readme content
+    // The readme is non-empty so auto-tagging will be attempted
+    mockGenerateReadme.mockResolvedValue({
+      readme: '# Fallback Content',
+      warning: 'README generation failed: timeout',
+    });
+    // Tag suggestion throws (defensive catch in process.ts)
+    mockSuggestTagsFromReadme.mockRejectedValue(new Error('AI model timeout'));
+
+    const result = await handler(makeEvent({ sessionId: 'session-6' }));
+
+    expect(result.statusCode).toBe(200);
+    const body = JSON.parse(result.body);
+    // Both warnings should be present in the response
+    expect(body.warning).toContain('README generation failed: timeout');
+    expect(body.warning).toContain('Automatic tag suggestion was unsuccessful');
+    // Project still created successfully with empty tags
+    expect(writeProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          tags: [],
+        }),
+      })
+    );
   });
 });
