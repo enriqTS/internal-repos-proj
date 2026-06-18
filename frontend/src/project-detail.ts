@@ -3,6 +3,7 @@ import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
 import type { ProjectMetadata } from 'shared/types';
 import { fetchProjectReadme, fetchProjectMetadata } from './api';
+import { showDeleteDialog } from './delete-dialog';
 
 /**
  * Configure marked with highlight.js for syntax highlighting in code blocks.
@@ -119,7 +120,7 @@ function renderMetadataError(container: HTMLElement): void {
 }
 
 /**
- * Render the project metadata section (name, description, tags, date).
+ * Render the project metadata section (name, description, tags, date, actions).
  */
 function renderMetadata(metadata: ProjectMetadata): HTMLElement {
   const section = document.createElement('section');
@@ -150,6 +151,27 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
   dateEl.textContent = metadata.date;
   dateEl.setAttribute('datetime', metadata.date);
   section.appendChild(dateEl);
+
+  // Project actions (Edit and Delete buttons)
+  const actionsEl = document.createElement('div');
+  actionsEl.className = 'project-actions';
+
+  const editBtn = document.createElement('a');
+  editBtn.className = 'project-edit-btn';
+  editBtn.href = `#/project/${encodeURIComponent(metadata.name)}/edit`;
+  editBtn.textContent = 'Edit';
+  actionsEl.appendChild(editBtn);
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
+  deleteBtn.className = 'project-delete-btn';
+  deleteBtn.textContent = 'Delete';
+  deleteBtn.addEventListener('click', () => {
+    showDeleteDialog(metadata.name);
+  });
+  actionsEl.appendChild(deleteBtn);
+
+  section.appendChild(actionsEl);
 
   return section;
 }
