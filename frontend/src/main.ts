@@ -29,8 +29,12 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
   const resultsContainer = document.createElement('div');
   resultsContainer.className = 'results-container';
 
+  const filterContainer = document.createElement('div');
+  filterContainer.className = 'tag-filter-container';
+
   container.appendChild(heading);
   container.appendChild(input);
+  container.appendChild(filterContainer);
   container.appendChild(resultsContainer);
 
   if (!searchIndexLoaded) {
@@ -61,7 +65,7 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
   }
 
   // Wire search input to the search module
-  setupSearch(input, resultsContainer);
+  setupSearch(input, resultsContainer, filterContainer);
 
   // Make result items navigable to project detail
   resultsContainer.addEventListener('click', (e) => {

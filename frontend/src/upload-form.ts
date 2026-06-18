@@ -296,7 +296,19 @@ export function renderUploadForm(container: HTMLElement): void {
   filesGroup.input.addEventListener('change', () => {
     const files = filesGroup.input.files;
     if (files && files.length > 0) {
-      handleReadmeAutofill(files, readmeGroup.textarea, readmeNoticeContainer);
+      handleReadmeAutofill(files, readmeGroup.textarea, readmeNoticeContainer).then(() => {
+        // After autofill, if textarea has enough content and user hasn't interacted with tags, suggest tags
+        const content = readmeGroup.textarea.value;
+        if (content.length >= 50 && tagSelector && !tagSelector.hasUserInteracted()) {
+          setTimeout(() => {
+            suggestTags(content).then((result) => {
+              if (result.ok && result.data.length > 0) {
+                tagSelector!.applySuggestions(result.data);
+              }
+            });
+          }, 500);
+        }
+      });
     }
   });
 

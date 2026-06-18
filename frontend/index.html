@@ -599,6 +599,175 @@
         font-weight: 500;
       }
 
+      /* ─── Tag Selector (Upload Form) ─── */
+      .tag-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .tag-selector-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+      }
+
+      .tag-selector-item {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 500;
+        background: var(--color-surface);
+        color: var(--color-tag-text);
+        padding: 0.3rem 0.6rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all var(--transition);
+        letter-spacing: 0.02em;
+      }
+
+      .tag-selector-item:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+      }
+
+      .tag-selector-item--selected {
+        background: var(--color-accent);
+        color: #fff;
+        border-color: var(--color-accent);
+      }
+
+      .tag-selector-item--selected:hover {
+        background: var(--color-accent-hover);
+        color: #fff;
+      }
+
+      .tag-selector-item--suggested {
+        border-style: dashed;
+      }
+
+      .tag-selector-item:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        border-color: var(--color-border);
+        color: var(--color-text-muted);
+      }
+
+      .tag-selector-limit-msg {
+        font-size: 0.75rem;
+        color: var(--color-accent);
+        font-weight: 500;
+      }
+
+      .tag-selector-add {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+      }
+
+      .tag-selector-add-btn {
+        align-self: flex-start;
+        background: none;
+        border: none;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--color-accent);
+        cursor: pointer;
+        padding: 0.2rem 0;
+        transition: color var(--transition);
+      }
+
+      .tag-selector-add-btn:hover {
+        color: var(--color-accent-hover);
+      }
+
+      .tag-selector-add-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      .tag-selector-add-input {
+        padding: 0.45rem 0.65rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface);
+        color: var(--color-text);
+        outline: none;
+        transition: all var(--transition);
+      }
+
+      .tag-selector-add-input:focus {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-subtle);
+      }
+
+      .tag-selector-add-submit {
+        padding: 0.45rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #fff;
+        background: var(--color-accent);
+        border: none;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+
+      .tag-selector-add-submit:hover {
+        background: var(--color-accent-hover);
+      }
+
+      .tag-selector-error {
+        font-size: 0.75rem;
+        color: var(--color-error);
+        font-weight: 500;
+      }
+
+      /* ─── Tag Filter (Search Page) ─── */
+      .tag-filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        margin-top: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .tag-filter-item {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: var(--color-tag-bg);
+        color: var(--color-tag-text);
+        padding: 0.25rem 0.55rem;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all var(--transition);
+        letter-spacing: 0.02em;
+      }
+
+      .tag-filter-item:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+      }
+
+      .tag-filter--active {
+        background: var(--color-accent);
+        color: #fff;
+        border-color: var(--color-accent);
+      }
+
+      .tag-filter--active:hover {
+        background: var(--color-accent-hover);
+        border-color: var(--color-accent-hover);
+        color: #fff;
+      }
+
       /* ─── Responsive ─── */
       @media (max-width: 640px) {
         header {
