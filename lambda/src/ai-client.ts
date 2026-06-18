@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-export const MODEL_ID = "moonshotai.kimi-k2.5-0613-v1:0";
+export const MODEL_ID = "moonshotai.kimi-k2.5";
 
 let clientInstance: Anthropic | null = null;
 
