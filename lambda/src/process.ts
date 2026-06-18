@@ -5,6 +5,7 @@ import { filterFiles, AllFilesFilteredError } from './filter';
 import { createArtifactZip, ArtifactTooLargeError } from './archiver-wrapper';
 import { writeProject, ProjectExistsError } from './s3-writer';
 import { regenerateIndex } from './index-generator';
+import { addTagsToRegistry } from './tag-registry';
 import type { FinalizeRequest, FinalizeResponse, SessionMetadata, FileEntry, ProjectMetadata } from 'shared';
 
 const s3Client = new S3Client({});
@@ -114,10 +115,20 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     // 5. Apply server-side filtering
     const filterResult = filterFiles(files);
 
-    // 6. Generate artifact.zip
+    // 6. Persist new tags to the registry (best-effort)
+    let registryWarning: string | undefined;
+    if (sessionMeta.newTags && sessionMeta.newTags.length > 0) {
+      try {
+        await addTagsToRegistry(sessionMeta.newTags);
+      } catch {
+        registryWarning = 'Tag registry could not be updated';
+      }
+    }
+
+    // 7. Generate artifact.zip
     const artifact = await createArtifactZip(filterResult.files);
 
-    // 7. Write project to frontend bucket
+    // 8. Write project to frontend bucket
     const metadata: ProjectMetadata = {
       name: sessionMeta.name,
       description: sessionMeta.readme.slice(0, 200) || 'No description provided',
@@ -132,17 +143,18 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       artifact,
     });
 
-    // 8. Regenerate search index
+    // 9. Regenerate search index
     await regenerateIndex();
 
-    // 9. Cleanup staged files
+    // 10. Cleanup staged files
     await cleanupStagedFiles(stagingBucket, sessionId);
 
-    // 10. Return success response
+    // 11. Return success response
+    const warnings = [filterResult.warning, registryWarning].filter(Boolean).join('; ');
     const response: FinalizeResponse = {
       message: 'Project uploaded successfully',
       path: `projects/${sessionMeta.name}/`,
-      ...(filterResult.warning ? { warning: filterResult.warning } : {}),
+      ...(warnings ? { warning: warnings } : {}),
     };
 
     return {
