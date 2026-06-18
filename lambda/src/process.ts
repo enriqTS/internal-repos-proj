@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { S3Client, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import JSZip from 'jszip';
 import { filterFiles, AllFilesFilteredError } from './filter';
 import { createArtifactZip, ArtifactTooLargeError } from './archiver-wrapper';
@@ -128,23 +128,39 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     // 7. Generate artifact.zip
     const artifact = await createArtifactZip(filterResult.files);
 
-    // 8. Write project to frontend bucket
-    const metadata: ProjectMetadata = {
-      name: sessionMeta.name,
-      description: sessionMeta.readme.slice(0, 200) || 'No description provided',
-      tags: sessionMeta.tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
-      date: new Date().toISOString().split('T')[0],
-    };
+    // 8. Write project to frontend bucket (behavior depends on mode)
+    const frontendBucket = process.env.BUCKET_NAME!;
 
-    await writeProject({
-      name: sessionMeta.name,
-      readme: sessionMeta.readme,
-      metadata,
-      artifact,
-    });
+    if (sessionMeta.mode === 'replace') {
+      // Replace mode: overwrite only artifact.zip, preserve metadata.json and readme.md
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: frontendBucket,
+          Key: `projects/${sessionMeta.name}/artifact.zip`,
+          Body: artifact,
+          ContentType: 'application/zip',
+        })
+      );
+      // Do NOT regenerate search index in replace mode
+    } else {
+      // Create mode: write full project (readme, metadata, artifact)
+      const metadata: ProjectMetadata = {
+        name: sessionMeta.name,
+        description: sessionMeta.readme.slice(0, 200) || 'No description provided',
+        tags: sessionMeta.tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
+        date: new Date().toISOString().split('T')[0],
+      };
 
-    // 9. Regenerate search index
-    await regenerateIndex();
+      await writeProject({
+        name: sessionMeta.name,
+        readme: sessionMeta.readme,
+        metadata,
+        artifact,
+      });
+
+      // 9. Regenerate search index (only for create mode)
+      await regenerateIndex();
+    }
 
     // 10. Cleanup staged files
     await cleanupStagedFiles(stagingBucket, sessionId);

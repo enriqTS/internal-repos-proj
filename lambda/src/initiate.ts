@@ -69,17 +69,30 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     const name = body.name.trim();
+    const mode = (body as any).mode === 'replace' ? 'replace' : 'create';
     const frontendBucket = process.env.BUCKET_NAME!;
     const stagingBucket = process.env.STAGING_BUCKET!;
 
-    // 5. Check project doesn't already exist
+    // 5. Check project existence based on mode
     const exists = await projectExists(frontendBucket, name);
-    if (exists) {
-      return {
-        statusCode: 409,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        body: JSON.stringify({ error: `Project name already taken: ${name}` }),
-      };
+    if (mode === 'replace') {
+      // In replace mode, the project MUST exist
+      if (!exists) {
+        return {
+          statusCode: 404,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          body: JSON.stringify({ error: `Project not found: ${name}` }),
+        };
+      }
+    } else {
+      // In create mode, the project must NOT exist
+      if (exists) {
+        return {
+          statusCode: 409,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          body: JSON.stringify({ error: `Project name already taken: ${name}` }),
+        };
+      }
     }
 
     // 6. Generate UUID v4 session ID
@@ -97,6 +110,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       readme: body.readme ?? '',
       createdAt: new Date().toISOString(),
       ...(newTags.length > 0 && { newTags }),
+      ...(mode === 'replace' && { mode: 'replace' as const }),
     };
 
     await s3Client.send(
