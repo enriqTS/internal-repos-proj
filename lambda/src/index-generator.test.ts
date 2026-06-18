@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import fc from 'fast-check';
 
 // Use vi.hoisted so the mock fn is available when vi.mock factory runs
 const mockSend = vi.hoisted(() => vi.fn());
@@ -383,5 +384,84 @@ describe('index-generator', () => {
     const result = await regenerateIndex();
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('valid-proj');
+  });
+});
+
+
+/**
+ * Bug Condition Exploration Test - Stale Index After Mutation
+ *
+ * **Validates: Requirements 1.1, 1.2, 1.3, 1.4, 2.4**
+ *
+ * This test asserts that regenerateIndex() writes `global-index.json` with
+ * `CacheControl: 'no-cache, must-revalidate'` so CloudFront revalidates on each request.
+ *
+ * EXPECTED TO FAIL on unfixed code — failure proves the bug exists:
+ * the PutObjectCommand is called WITHOUT a CacheControl header.
+ */
+describe('Bug Condition: CacheControl header on global-index.json', () => {
+  beforeEach(() => {
+    mockSend.mockReset();
+    process.env.BUCKET_NAME = 'my-test-bucket';
+  });
+
+  afterEach(() => {
+    delete process.env.BUCKET_NAME;
+  });
+
+  it('regenerateIndex() MUST include CacheControl on PutObjectCommand for global-index.json', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.array(
+          fc.record({
+            name: fc.string({ minLength: 1, maxLength: 30 }).filter(s => /^[a-z0-9-]+$/.test(s)),
+            description: fc.string({ minLength: 1, maxLength: 100 }),
+            tags: fc.array(fc.string({ minLength: 1, maxLength: 20 }), { minLength: 0, maxLength: 5 }),
+            date: fc.date({ min: new Date('2020-01-01'), max: new Date('2025-12-31') }).map(d => d.toISOString().split('T')[0]),
+          }),
+          { minLength: 0, maxLength: 5 },
+        ),
+        async (projects) => {
+          mockSend.mockReset();
+
+          const metadataKeys = projects.map(p => `projects/${p.name}/metadata.json`);
+
+          mockSend.mockImplementation((command: any) => {
+            if (command._type === 'ListObjectsV2') {
+              return Promise.resolve({
+                Contents: metadataKeys.map(Key => ({ Key })),
+                IsTruncated: false,
+              });
+            }
+            if (command._type === 'GetObject') {
+              const key = command.Key as string;
+              const project = projects.find(p => `projects/${p.name}/metadata.json` === key);
+              if (project) {
+                return Promise.resolve({
+                  Body: {
+                    transformToString: () => Promise.resolve(JSON.stringify(project)),
+                  },
+                });
+              }
+              return Promise.reject(new Error('Not found'));
+            }
+            if (command._type === 'PutObject') {
+              return Promise.resolve({});
+            }
+            return Promise.resolve({});
+          });
+
+          await regenerateIndex();
+
+          // Find the PutObjectCommand call for global-index.json
+          const putCall = mockSend.mock.calls.find(
+            (c) => c[0]._type === 'PutObject' && c[0].Key === 'global-index.json'
+          );
+          expect(putCall).toBeDefined();
+          expect(putCall![0].CacheControl).toBe('no-cache, must-revalidate');
+        },
+      ),
+      { numRuns: 20 },
+    );
   });
 });
