@@ -1,5 +1,6 @@
 import Fuse, { type IFuseOptions } from 'fuse.js';
 import type { ProjectIndexEntry, SearchIndex } from 'shared/types';
+import { createTagFilter, type TagFilterAPI } from './tag-filter';
 
 /**
  * Fuse.js configuration for fuzzy searching project entries.
@@ -57,6 +58,19 @@ function getAllProjectsSortedByDate(): SearchResult[] {
   return [...indexData]
     .sort((a, b) => b.date.localeCompare(a.date))
     .map((item) => ({ item }));
+}
+
+/**
+ * Filter search results by active tags using AND logic.
+ * Returns only results whose tags include ALL of the active filter tags.
+ */
+export function filterByTags(results: SearchResult[], activeTags: string[]): SearchResult[] {
+  if (activeTags.length === 0) {
+    return results;
+  }
+  return results.filter((result) =>
+    activeTags.every((tag) => result.item.tags.includes(tag)),
+  );
 }
 
 /**
@@ -141,15 +155,35 @@ export function renderResults(results: SearchResult[], container: HTMLElement): 
  *
  * @param inputElement - The search input element
  * @param resultsContainer - The container element for rendering results
+ * @param filterContainer - Optional container element for the tag filter component
  */
 export function setupSearch(
   inputElement: HTMLInputElement,
   resultsContainer: HTMLElement,
+  filterContainer?: HTMLElement,
 ): void {
+  let activeFilterTags: string[] = [];
+  let tagFilter: TagFilterAPI | null = null;
+
+  if (filterContainer) {
+    tagFilter = createTagFilter({
+      container: filterContainer,
+      onFilterChange: (tags: string[]) => {
+        activeFilterTags = tags;
+        performSearch();
+      },
+    });
+
+    // Extract unique tags from the index and pass to the tag filter
+    const uniqueTags = [...new Set(indexData.flatMap((p) => p.tags))];
+    tagFilter.setTags(uniqueTags);
+  }
+
   const performSearch = () => {
     const query = inputElement.value.trim();
     const results = search(query);
-    renderResults(results, resultsContainer);
+    const filtered = filterByTags(results, activeFilterTags);
+    renderResults(filtered, resultsContainer);
   };
 
   const debouncedSearch = debounce(performSearch, 200);
