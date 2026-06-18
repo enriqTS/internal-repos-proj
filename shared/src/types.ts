@@ -28,6 +28,17 @@ export interface ProjectMetadata {
 }
 
 /**
+ * Represents a single tag input in a structured upload request.
+ * Tags can be references to existing registry entries or newly created tags.
+ */
+export interface TagInput {
+  /** The tag string (lowercase, alphanumeric + hyphens + underscores) */
+  tag: string;
+  /** Whether this is a new tag not yet in the registry */
+  isNew: boolean;
+}
+
+/**
  * Represents the upload request validated by the Lambda handler.
  */
 export interface UploadRequest {
@@ -57,8 +68,8 @@ export interface FileEntry {
 export interface InitiateRequest {
   /** Project name: 1-64 chars, /^[a-zA-Z0-9_-]+$/ */
   name: string;
-  /** Comma-separated tags, max 10 tags, each max 32 chars */
-  tags?: string;
+  /** Structured tag inputs — each tag is either an existing reference or a new tag */
+  tags?: TagInput[];
   /** Optional readme content, max 50,000 chars */
   readme?: string;
 }
@@ -109,4 +120,22 @@ export interface SessionMetadata {
   readme: string;
   /** ISO 8601 timestamp of session creation */
   createdAt: string;
+  /** Tags that need to be added to the registry during finalize */
+  newTags?: string[];
+}
+
+/**
+ * Request body for POST /tags/suggest.
+ */
+export interface SuggestTagsRequest {
+  /** README content to analyze for tag suggestions */
+  readme: string;
+}
+
+/**
+ * Response from POST /tags/suggest.
+ */
+export interface SuggestTagsResponse {
+  /** Array of suggested tags (all exist in the tag registry) */
+  tags: string[];
 }
