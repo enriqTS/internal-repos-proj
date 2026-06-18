@@ -489,15 +489,9 @@ export function renderUploadForm(container: HTMLElement): void {
       return;
     }
 
-    // 7. Success
+    // 7. Success — redirect to project list
     invalidateSearchIndex();
-    statusEl.textContent = finalizeResult.data.warning
-      ? `Project uploaded successfully. Warning: ${finalizeResult.data.warning}`
-      : 'Project uploaded successfully!';
-    statusEl.className = 'upload-status upload-status--success';
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Upload Project';
-    form.reset();
+    window.location.hash = '#/';
   });
 
   wrapper.appendChild(form);
