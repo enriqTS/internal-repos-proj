@@ -122,17 +122,20 @@ describe('Bug Condition: searchIndexLoaded reset after mutations', () => {
       if (form) {
         const nameInput = document.querySelector('#project-name') as HTMLInputElement;
         const readmeArea = document.querySelector('#project-readme') as HTMLTextAreaElement;
-        const fileInput = document.querySelector('#project-files') as HTMLInputElement;
+        // The drop-zone component creates a hidden file input inside .drop-zone
+        const fileInput = document.querySelector('.drop-zone input[type="file"]') as HTMLInputElement;
 
         if (nameInput) nameInput.value = 'test-project';
         if (readmeArea) readmeArea.value = '# Test';
 
-        // Mock the file input
+        // Mock the file input and trigger the drop-zone's change handler
         if (fileInput) {
           const mockFile = new File(['content'], 'main.ts', { type: 'text/plain' });
           Object.defineProperty(mockFile, 'webkitRelativePath', { value: 'proj/main.ts' });
           const fileList = createMockFileList([mockFile]);
           Object.defineProperty(fileInput, 'files', { value: fileList, configurable: true });
+          fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+          await new Promise(r => setTimeout(r, 50));
         }
 
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
