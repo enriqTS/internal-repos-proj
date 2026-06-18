@@ -4,9 +4,11 @@ import {
   MAX_TAGS_COUNT,
   MAX_TAG_LENGTH,
   MAX_README_LENGTH,
+  MAX_CLIENT_ZIP_SIZE,
   DENY_LIST,
 } from 'shared/constants';
-import { submitUpload } from './api';
+import { initiateUpload, uploadToS3, finalizeUpload } from './api';
+import JSZip from 'jszip';
 
 /**
  * Validation error messages returned by validateForm.
@@ -312,53 +314,83 @@ export function renderUploadForm(container: HTMLElement): void {
       return;
     }
 
-    // Build FormData
-    const formData = new FormData();
-    formData.append('name', name.trim());
-    formData.append('tags', tags.trim());
-    formData.append('readme', readme);
-
-    if (files) {
-      // Filter files client-side to exclude build artifacts and denied patterns
-      const filteredFiles = filterFileList(files);
-
-      if (filteredFiles.length === 0) {
-        statusEl.textContent = 'No files remain after filtering out build artifacts and ignored patterns.';
-        statusEl.className = 'upload-status upload-status--error';
-        return;
-      }
-
-      for (const file of filteredFiles) {
-        // Use webkitRelativePath for directory structure preservation
-        const relativePath = file.webkitRelativePath || file.name;
-        formData.append('files', file, relativePath);
-      }
+    // 1. Filter files client-side
+    const filteredFiles = filterFileList(files!);
+    if (filteredFiles.length === 0) {
+      statusEl.textContent = 'No files remain after filtering out build artifacts and ignored patterns.';
+      statusEl.className = 'upload-status upload-status--error';
+      return;
     }
 
-    // Show loading state
+    // Disable submit while processing
     submitBtn.disabled = true;
     submitBtn.textContent = 'Uploading...';
-    statusEl.textContent = 'Uploading project...';
+
+    // 2. Create zip client-side
+    statusEl.textContent = 'Zipping files...';
     statusEl.className = 'upload-status upload-status--loading';
+    const zip = new JSZip();
+    for (const file of filteredFiles) {
+      const relativePath = file.webkitRelativePath || file.name;
+      const parts = relativePath.split('/');
+      const pathWithinProject = parts.length > 1 ? parts.slice(1).join('/') : relativePath;
+      zip.file(pathWithinProject, file);
+    }
+    const blob = await zip.generateAsync({ type: 'blob' });
 
-    const result = await submitUpload(formData);
+    // 3. Check size
+    if (blob.size > MAX_CLIENT_ZIP_SIZE) {
+      statusEl.textContent = 'Project is too large to upload (exceeds 500 MB limit).';
+      statusEl.className = 'upload-status upload-status--error';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Upload Project';
+      return;
+    }
 
-    // Reset button state
+    // 4. Initiate upload
+    statusEl.textContent = 'Initiating upload...';
+    const initiateResult = await initiateUpload({ name: name.trim(), tags: tags.trim(), readme });
+    if (!initiateResult.ok) {
+      statusEl.textContent = initiateResult.error;
+      statusEl.className = 'upload-status upload-status--error';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Upload Project';
+      return;
+    }
+
+    // 5. Upload to S3 with progress
+    statusEl.textContent = 'Uploading... 0%';
+    try {
+      await uploadToS3(initiateResult.data.uploadUrl, blob, (pct) => {
+        statusEl.textContent = `Uploading... ${pct}%`;
+      });
+    } catch (err) {
+      statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
+      statusEl.className = 'upload-status upload-status--error';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Upload Project';
+      return;
+    }
+
+    // 6. Finalize
+    statusEl.textContent = 'Processing...';
+    const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
+    if (!finalizeResult.ok) {
+      statusEl.textContent = finalizeResult.error;
+      statusEl.className = 'upload-status upload-status--error';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Upload Project';
+      return;
+    }
+
+    // 7. Success
+    statusEl.textContent = finalizeResult.data.warning
+      ? `Project uploaded successfully. Warning: ${finalizeResult.data.warning}`
+      : 'Project uploaded successfully!';
+    statusEl.className = 'upload-status upload-status--success';
     submitBtn.disabled = false;
     submitBtn.textContent = 'Upload Project';
-
-    if (result.ok) {
-      // Success: show confirmation and clear form
-      statusEl.textContent = result.data.warning
-        ? `Project uploaded successfully. Warning: ${result.data.warning}`
-        : 'Project uploaded successfully!';
-      statusEl.className = 'upload-status upload-status--success';
-      form.reset();
-    } else {
-      // Error: show appropriate message
-      statusEl.textContent = result.error;
-      statusEl.className = 'upload-status upload-status--error';
-    }
+    form.reset();
   });
 
   wrapper.appendChild(form);
