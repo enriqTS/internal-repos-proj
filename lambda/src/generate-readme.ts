@@ -1,6 +1,6 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { FileEntry } from 'shared/types';
 import { MAX_README_LENGTH } from 'shared/constants';
+import { getAIClient, MODEL_ID } from './ai-client';
 
 // ─── Module-local constants ───────────────────────────────────────────────────
 
@@ -13,15 +13,8 @@ const CHARS_PER_TOKEN = 4;
 /** Maximum tokens for model output */
 const README_MAX_OUTPUT_TOKENS = 4096;
 
-/** Bedrock invocation timeout in milliseconds */
+/** Model invocation timeout in milliseconds */
 const README_GENERATION_TIMEOUT_MS = 30_000;
-
-/** Bedrock model ID */
-const README_MODEL_ID = 'us.moonshotai.kimi-k2.5-0613-v1:0';
-
-// ─── Bedrock client singleton ─────────────────────────────────────────────────
-
-const bedrockClient = new BedrockRuntimeClient({});
 
 // ─── Classification data ──────────────────────────────────────────────────────
 
@@ -368,32 +361,18 @@ export function prioritizeFiles(files: FileEntry[]): PrioritizationResult {
 // ─── Response extraction ──────────────────────────────────────────────────────
 
 /**
- * Extract text content from a Bedrock response body, checking fields in order.
- * Returns null instead of falling back to raw responseBody when no field matches.
+ * Extract text content from an Anthropic message response.
+ * Returns the text field of the first content block if it has type "text",
+ * or null if the content array is empty or the first block has no text.
  *
- * @param responseBody - Raw JSON string from Bedrock response
+ * @param message - Structured message object with content array
  * @returns Extracted text content or null if no valid content found
  */
-export function extractModelContent(responseBody: string): string | null {
-  try {
-    const modelOutput = JSON.parse(responseBody);
-
-    if (modelOutput.choices && modelOutput.choices[0]?.message?.content) {
-      return modelOutput.choices[0].message.content;
-    }
-
-    if (modelOutput.content && typeof modelOutput.content === 'string') {
-      return modelOutput.content;
-    }
-
-    if (modelOutput.completion) {
-      return modelOutput.completion;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
+export function extractModelContent(message: { content: Array<{ type: string; text?: string }> }): string | null {
+  if (message.content.length === 0) return null;
+  const block = message.content[0];
+  if (block.type === 'text' && block.text) return block.text;
+  return null;
 }
 
 // ─── Output validation ────────────────────────────────────────────────────────
@@ -458,7 +437,7 @@ export interface GenerateReadmeResult {
  * Generate a README for the project using AI.
  *
  * Orchestrates the full flow:
- * prioritizeFiles → buildPrompt → InvokeModelCommand → extractModelContent → validateReadmeOutput
+ * prioritizeFiles → buildPrompt → client.messages.create → extractModelContent → validateReadmeOutput
  *
  * @param projectName - Project name from session metadata
  * @param files - Filtered files from the upload
@@ -478,26 +457,19 @@ export async function generateReadme(
     // Step 2: Build prompt
     const prompt = buildPrompt(projectName, prioritization);
 
-    // Step 3: Invoke Bedrock
-    const requestBody = JSON.stringify({
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: README_MAX_OUTPUT_TOKENS,
-    });
+    // Step 3: Invoke model via Anthropic SDK
+    const client = getAIClient();
+    const message = await client.messages.create(
+      {
+        model: MODEL_ID,
+        max_tokens: README_MAX_OUTPUT_TOKENS,
+        messages: [{ role: 'user', content: prompt }],
+      },
+      { signal: abortController.signal }
+    );
 
-    const command = new InvokeModelCommand({
-      modelId: README_MODEL_ID,
-      contentType: 'application/json',
-      accept: 'application/json',
-      body: requestBody,
-    });
-
-    const response = await bedrockClient.send(command, {
-      abortSignal: abortController.signal,
-    });
-
-    // Step 4: Parse response
-    const responseBody = new TextDecoder().decode(response.body);
-    const content = extractModelContent(responseBody);
+    // Step 4: Extract content from structured response
+    const content = extractModelContent(message);
 
     if (!content) {
       return { readme: '', warning: 'README generation produced empty content' };
