@@ -458,7 +458,7 @@ describe('Bug Condition: CacheControl header on global-index.json', () => {
             (c) => c[0]._type === 'PutObject' && c[0].Key === 'global-index.json'
           );
           expect(putCall).toBeDefined();
-          expect(putCall![0].CacheControl).toBe('no-cache, must-revalidate');
+          expect(putCall![0].CacheControl).toBe('max-age=0, no-cache, must-revalidate');
         },
       ),
       { numRuns: 20 },

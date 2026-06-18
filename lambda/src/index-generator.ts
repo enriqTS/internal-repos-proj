@@ -141,7 +141,7 @@ export async function regenerateIndex(): Promise<SearchIndex> {
         Key: 'global-index.json',
         Body: JSON.stringify(entries),
         ContentType: 'application/json',
-        CacheControl: 'no-cache, must-revalidate',
+        CacheControl: 'max-age=0, no-cache, must-revalidate',
       })
     );
   } catch (err) {
