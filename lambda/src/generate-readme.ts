@@ -210,6 +210,61 @@ export function trimPackageJson(content: string): string {
   }
 }
 
+// ─── Prompt construction ──────────────────────────────────────────────────────
+
+/**
+ * Build the model prompt from prioritized files.
+ *
+ * Structure (in order):
+ * 1. System instruction (README sections directive, no-fabrication rule)
+ * 2. Project name
+ * 3. For each included file: file path header + full text content
+ * 4. Directory listing section with Tier_3 file paths
+ *
+ * @param projectName - The project name from session metadata
+ * @param prioritization - Result from prioritizeFiles()
+ * @returns The complete prompt string for the model
+ */
+export function buildPrompt(projectName: string, prioritization: PrioritizationResult): string {
+  const parts: string[] = [];
+
+  // 1. System instruction
+  parts.push(
+    `You are a technical documentation expert. Generate a markdown README for the project described below.` +
+    `\n\nThe README must contain the following sections in order:` +
+    `\n- Project title` +
+    `\n- Description` +
+    `\n- Key features` +
+    `\n- Technology stack` +
+    `\n- Project structure overview` +
+    `\n- Setup/usage instructions (omit this section entirely if the provided files do not contain sufficient information to determine setup or usage steps)` +
+    `\n\nIMPORTANT: Base the README only on the provided file content. Do not fabricate features, dependencies, or any information not present in the files.`
+  );
+
+  // 2. Project name
+  parts.push(`\n\n# Project: ${projectName}`);
+
+  // 3. Included files with path headers and content
+  if (prioritization.includedFiles.length > 0) {
+    parts.push(`\n\n## File Contents\n`);
+    for (const file of prioritization.includedFiles) {
+      if (file.content !== undefined) {
+        parts.push(`\n### ${file.path}\n\`\`\`\n${file.content}\n\`\`\``);
+      }
+    }
+  }
+
+  // 4. Directory listing
+  if (prioritization.directoryListing.length > 0) {
+    parts.push(`\n\n## Directory Listing\n`);
+    for (const path of prioritization.directoryListing) {
+      parts.push(`\n${path}`);
+    }
+  }
+
+  return parts.join('');
+}
+
 // ─── Core prioritization function ─────────────────────────────────────────────
 
 /**
@@ -303,6 +358,71 @@ export function prioritizeFiles(files: FileEntry[]): PrioritizationResult {
   }
 
   return { includedFiles, directoryListing, totalTokens };
+}
+
+// ─── Response extraction ──────────────────────────────────────────────────────
+
+/**
+ * Extract text content from a Bedrock response body, checking fields in order.
+ * Returns null instead of falling back to raw responseBody when no field matches.
+ *
+ * @param responseBody - Raw JSON string from Bedrock response
+ * @returns Extracted text content or null if no valid content found
+ */
+export function extractModelContent(responseBody: string): string | null {
+  try {
+    const modelOutput = JSON.parse(responseBody);
+
+    if (modelOutput.choices && modelOutput.choices[0]?.message?.content) {
+      return modelOutput.choices[0].message.content;
+    }
+
+    if (modelOutput.content && typeof modelOutput.content === 'string') {
+      return modelOutput.content;
+    }
+
+    if (modelOutput.completion) {
+      return modelOutput.completion;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Output validation ────────────────────────────────────────────────────────
+
+/**
+ * Validate and truncate generated README content.
+ * - Rejects empty/whitespace-only content (returns null)
+ * - Returns content as-is if ≤ MAX_README_LENGTH and has non-whitespace
+ * - Truncates at last newline at or before MAX_README_LENGTH boundary if too long
+ * - Falls back to hard truncation at MAX_README_LENGTH if no newline found
+ *
+ * @param content - Raw model output
+ * @returns Validated content or null if invalid
+ */
+export function validateReadmeOutput(content: string): string | null {
+  // Reject empty or whitespace-only content
+  if (!content || !content.trim()) {
+    return null;
+  }
+
+  // Content within limit — return as-is
+  if (content.length <= MAX_README_LENGTH) {
+    return content;
+  }
+
+  // Content exceeds limit — truncate at last newline at or before boundary
+  const boundary = content.lastIndexOf('\n', MAX_README_LENGTH);
+
+  if (boundary >= 1) {
+    return content.slice(0, boundary);
+  }
+
+  // No newline found within boundary — hard truncate at exactly MAX_README_LENGTH
+  return content.slice(0, MAX_README_LENGTH);
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
