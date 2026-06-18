@@ -143,6 +143,12 @@ vi.mock('./tag-selector', () => {
   };
 });
 
+vi.mock('./search-state', () => ({
+  invalidateSearchIndex: vi.fn(),
+  searchIndexLoaded: false,
+  markSearchIndexLoaded: vi.fn(),
+}));
+
 vi.mock('jszip', () => {
   const mockGenerateAsync = vi.fn(() => Promise.resolve(new Blob(['fake-zip'], { type: 'application/zip' })));
   const mockFile = vi.fn();
@@ -242,8 +248,9 @@ describe('renderUploadForm', () => {
     expect(errorTexts.length).toBeGreaterThan(0);
   });
 
-  it('shows success message on successful upload (initiate → S3 → finalize)', async () => {
+  it('redirects to project list on successful upload (initiate → S3 → finalize)', async () => {
     const { initiateUpload, uploadToS3, finalizeUpload } = await import('./api');
+    const { invalidateSearchIndex } = await import('./search-state');
     const mockedInitiate = vi.mocked(initiateUpload);
     const mockedUploadToS3 = vi.mocked(uploadToS3);
     const mockedFinalize = vi.mocked(finalizeUpload);
@@ -282,9 +289,16 @@ describe('renderUploadForm', () => {
     expect(mockedUploadToS3).toHaveBeenCalledWith('https://s3.example.com/presigned', expect.any(Blob), expect.any(Function));
     expect(mockedFinalize).toHaveBeenCalledWith('sess-123');
 
+    // Verify redirect to project list
+    expect(window.location.hash).toBe('#/');
+
+    // Verify search index was invalidated
+    expect(invalidateSearchIndex).toHaveBeenCalled();
+
+    // Verify no success message was displayed
     const statusEl = container.querySelector('.upload-status');
-    expect(statusEl!.textContent).toContain('uploaded successfully');
-    expect(statusEl!.classList.contains('upload-status--success')).toBe(true);
+    expect(statusEl!.textContent).not.toContain('uploaded successfully');
+    expect(statusEl!.classList.contains('upload-status--success')).toBe(false);
   });
 
   it('shows error message when initiate fails', async () => {
@@ -367,9 +381,9 @@ describe('renderUploadForm', () => {
     resolveS3();
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // After upload, button should be re-enabled
-    expect(submitBtn.disabled).toBe(false);
-    expect(submitBtn.textContent).toBe('Upload Project');
+    // After successful upload, page redirects — button state doesn't matter
+    // but we verify the redirect happened
+    expect(window.location.hash).toBe('#/');
   });
 
   it('shows error when all files are filtered out by DENY_LIST', async () => {
