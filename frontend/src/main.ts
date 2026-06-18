@@ -16,6 +16,10 @@ import { renderEditForm } from './edit-form';
  */
 let searchIndexLoaded = false;
 
+export function invalidateSearchIndex(): void {
+  searchIndexLoaded = false;
+}
+
 async function renderSearchView(_params: Record<string, string>, container: HTMLElement): Promise<void> {
   // Create search UI structure
   const heading = document.createElement('h2');
