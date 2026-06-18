@@ -6,6 +6,7 @@ import {
   MAX_README_LENGTH,
   TAG_PATTERN,
   TagInput,
+  EditRequest,
 } from 'shared';
 
 /**
@@ -87,6 +88,57 @@ export function validateTagInputs(tags: TagInput[], registry: string[]): string 
       if (!registryLower.includes(tagLower)) {
         return `Tag '${tag}' does not exist in the registry.`;
       }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Validate an EditRequest object for the PATCH /projects/{name} endpoint.
+ * Returns an error message string if invalid, or null if valid.
+ */
+export function validateEditRequest(data: EditRequest): string | null {
+  // At least one updatable field must be present
+  if (data.name === undefined && data.tags === undefined && data.readme === undefined) {
+    return 'At least one field (name, tags, readme) must be provided';
+  }
+
+  // Validate name if provided
+  if (data.name !== undefined) {
+    if (data.name.length === 0) {
+      return 'Project name must be at least 1 character.';
+    }
+    if (data.name.length > MAX_PROJECT_NAME_LENGTH) {
+      return `Project name must be at most ${MAX_PROJECT_NAME_LENGTH} characters.`;
+    }
+    if (!PROJECT_NAME_REGEX.test(data.name)) {
+      return 'Invalid project name. Allowed characters: alphanumeric, hyphens, and underscores.';
+    }
+  }
+
+  // Validate tags if provided
+  if (data.tags !== undefined) {
+    if (data.tags.length > MAX_TAGS_COUNT) {
+      return `Maximum of ${MAX_TAGS_COUNT} tags allowed.`;
+    }
+    for (const tag of data.tags) {
+      if (tag.length === 0) {
+        return 'Each tag must be at least 1 character.';
+      }
+      if (tag.length > MAX_TAG_LENGTH) {
+        return `Each tag must be at most ${MAX_TAG_LENGTH} characters.`;
+      }
+      if (!TAG_PATTERN.test(tag)) {
+        return 'Tags must contain only lowercase alphanumeric characters, hyphens, and underscores.';
+      }
+    }
+  }
+
+  // Validate readme if provided
+  if (data.readme !== undefined) {
+    if (data.readme.length > MAX_README_LENGTH) {
+      return `Readme content must be at most ${MAX_README_LENGTH} characters.`;
     }
   }
 
