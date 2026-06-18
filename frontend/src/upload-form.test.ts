@@ -160,6 +160,59 @@ vi.mock('jszip', () => {
   };
 });
 
+// Mock drop-zone to expose onFiles callback for testing
+let capturedOnFiles: ((files: FileList) => void) | null = null;
+vi.mock('./drop-zone', () => ({
+  createDropZone: vi.fn((opts: { container: HTMLElement; onFiles: (files: FileList) => void }) => {
+    capturedOnFiles = opts.onFiles;
+    return {
+      getFiles: vi.fn(() => null),
+      reset: vi.fn(),
+      destroy: vi.fn(),
+    };
+  }),
+}));
+
+// Mock readme-preview to provide a controllable textarea
+vi.mock('./readme-preview', () => ({
+  createReadmePreview: vi.fn((opts: { container: HTMLElement; textareaId?: string; maxLength?: number; placeholder?: string; rows?: number }) => {
+    const textarea = document.createElement('textarea');
+    if (opts.textareaId) textarea.id = opts.textareaId;
+    if (opts.maxLength) textarea.maxLength = opts.maxLength;
+    if (opts.placeholder) textarea.placeholder = opts.placeholder;
+    if (opts.rows) textarea.rows = opts.rows;
+    opts.container.appendChild(textarea);
+    return {
+      getValue: () => textarea.value,
+      setValue: (content: string) => { textarea.value = content; },
+      getTextarea: () => textarea,
+      setEditMode: vi.fn(),
+      setPreviewMode: vi.fn(),
+      getMode: () => 'edit' as const,
+      destroy: vi.fn(),
+    };
+  }),
+}));
+
+// Mock marked and highlight.js
+vi.mock('marked', () => ({
+  Marked: vi.fn(() => ({
+    parse: vi.fn((content: string) => `<p>${content}</p>`),
+  })),
+}));
+
+vi.mock('marked-highlight', () => ({
+  markedHighlight: vi.fn(() => ({})),
+}));
+
+vi.mock('highlight.js', () => ({
+  default: {
+    getLanguage: vi.fn(() => null),
+    highlight: vi.fn(() => ({ value: '' })),
+    highlightAuto: vi.fn(() => ({ value: '' })),
+  },
+}));
+
 function createMockFile(name: string, relativePath: string): File {
   const file = new File(['content'], name, { type: 'text/plain' });
   Object.defineProperty(file, 'webkitRelativePath', { value: relativePath, writable: false });
@@ -185,6 +238,7 @@ describe('renderUploadForm', () => {
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
+    capturedOnFiles = null;
     vi.clearAllMocks();
   });
 
@@ -207,16 +261,14 @@ describe('renderUploadForm', () => {
     const tagSelectorContainer = container.querySelector('.tag-selector-container');
     expect(tagSelectorContainer).not.toBeNull();
 
-    // Check for readme textarea
+    // Check for readme textarea (created by readme-preview mock)
     const readme = container.querySelector('#project-readme') as HTMLTextAreaElement;
     expect(readme).not.toBeNull();
     expect(readme.tagName).toBe('TEXTAREA');
 
-    // Check for file input with webkitdirectory
-    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
-    expect(fileInput).not.toBeNull();
-    expect(fileInput.type).toBe('file');
-    expect(fileInput.hasAttribute('webkitdirectory')).toBe(true);
+    // Check for drop zone container
+    const dropZoneContainer = container.querySelector('.drop-zone-container');
+    expect(dropZoneContainer).not.toBeNull();
   });
 
   it('renders the readme textarea without the required attribute', () => {
@@ -233,11 +285,31 @@ describe('renderUploadForm', () => {
     expect(btn!.textContent).toBe('Upload Project');
   });
 
+  it('renders form elements in correct order: drop-zone, name, tags, submit, status, readme', () => {
+    renderUploadForm(container);
+    const form = container.querySelector('form')!;
+    const children = Array.from(form.children);
+
+    // Find indices of key elements
+    const dropZoneIdx = children.findIndex(el => el.classList.contains('drop-zone-container'));
+    const nameIdx = children.findIndex(el => el.querySelector('#project-name'));
+    const tagsIdx = children.findIndex(el => el.querySelector('.tag-selector-container'));
+    const submitIdx = children.findIndex(el => el.tagName === 'BUTTON' && (el as HTMLButtonElement).type === 'submit');
+    const statusIdx = children.findIndex(el => el.classList.contains('upload-status'));
+    const readmeIdx = children.findIndex(el => el.querySelector('#project-readme'));
+
+    expect(dropZoneIdx).toBeLessThan(nameIdx);
+    expect(nameIdx).toBeLessThan(tagsIdx);
+    expect(tagsIdx).toBeLessThan(submitIdx);
+    expect(submitIdx).toBeLessThan(statusIdx);
+    expect(statusIdx).toBeLessThan(readmeIdx);
+  });
+
   it('shows validation errors on invalid submission', async () => {
     renderUploadForm(container);
     const form = container.querySelector('form')!;
 
-    // Submit with empty fields
+    // Submit with empty fields (no files selected via drop zone)
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
     // Wait for async handler
@@ -269,15 +341,15 @@ describe('renderUploadForm', () => {
 
     const nameInput = container.querySelector('#project-name') as HTMLInputElement;
     const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
-    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
 
     nameInput.value = 'test-project';
     readmeArea.value = '# Test Project';
 
+    // Simulate file selection via drop zone
     const mockFiles = createMockFileList([
       createMockFile('main.ts', 'my-project/src/main.ts'),
     ]);
-    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+    capturedOnFiles!(mockFiles);
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -314,15 +386,15 @@ describe('renderUploadForm', () => {
 
     const nameInput = container.querySelector('#project-name') as HTMLInputElement;
     const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
-    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
 
     nameInput.value = 'existing-project';
     readmeArea.value = '# Readme';
 
+    // Simulate file selection via drop zone
     const mockFiles = createMockFileList([
       createMockFile('file.ts', 'my-project/file.ts'),
     ]);
-    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+    capturedOnFiles!(mockFiles);
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -357,16 +429,16 @@ describe('renderUploadForm', () => {
 
     const nameInput = container.querySelector('#project-name') as HTMLInputElement;
     const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
-    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
     const submitBtn = container.querySelector('button[type="submit"]') as HTMLButtonElement;
 
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
+    // Simulate file selection via drop zone
     const mockFiles = createMockFileList([
       createMockFile('index.ts', 'my-project/index.ts'),
     ]);
-    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+    capturedOnFiles!(mockFiles);
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -391,7 +463,6 @@ describe('renderUploadForm', () => {
 
     const nameInput = container.querySelector('#project-name') as HTMLInputElement;
     const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
-    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
 
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
@@ -401,7 +472,7 @@ describe('renderUploadForm', () => {
       createMockFile('package.json', 'my-project/node_modules/package.json'),
       createMockFile('config', 'my-project/.git/config'),
     ]);
-    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+    capturedOnFiles!(mockFiles);
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -428,15 +499,15 @@ describe('renderUploadForm', () => {
 
     const nameInput = container.querySelector('#project-name') as HTMLInputElement;
     const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
-    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
 
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
+    // Simulate file selection via drop zone
     const mockFiles = createMockFileList([
       createMockFile('app.ts', 'my-project/app.ts'),
     ]);
-    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+    capturedOnFiles!(mockFiles);
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -472,15 +543,15 @@ describe('renderUploadForm', () => {
 
     const nameInput = container.querySelector('#project-name') as HTMLInputElement;
     const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
-    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
 
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
+    // Simulate file selection via drop zone
     const mockFiles = createMockFileList([
       createMockFile('app.ts', 'my-project/app.ts'),
     ]);
-    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+    capturedOnFiles!(mockFiles);
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -504,15 +575,15 @@ describe('renderUploadForm', () => {
 
     const nameInput = container.querySelector('#project-name') as HTMLInputElement;
     const readmeArea = container.querySelector('#project-readme') as HTMLTextAreaElement;
-    const fileInput = container.querySelector('#project-files') as HTMLInputElement;
 
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
+    // Simulate file selection via drop zone
     const mockFiles = createMockFileList([
       createMockFile('big-file.bin', 'my-project/big-file.bin'),
     ]);
-    Object.defineProperty(fileInput, 'files', { value: mockFiles, configurable: true });
+    capturedOnFiles!(mockFiles);
 
     const form = container.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));

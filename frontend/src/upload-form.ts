@@ -9,7 +9,12 @@ import {
 import type { TagInput } from 'shared/types';
 import { initiateUpload, uploadToS3, finalizeUpload, fetchTagRegistry, suggestTags } from './api';
 import { createTagSelector, type TagSelectorAPI } from './tag-selector';
+import { createDropZone } from './drop-zone';
+import { createReadmePreview, type ReadmePreviewAPI } from './readme-preview';
 import { invalidateSearchIndex } from './search-state';
+import { Marked } from 'marked';
+import { markedHighlight } from 'marked-highlight';
+import hljs from 'highlight.js';
 import JSZip from 'jszip';
 
 /**
@@ -188,14 +193,14 @@ export function detectReadmeFile(files: FileList): File | null {
  */
 export async function handleReadmeAutofill(
   files: FileList,
-  textarea: HTMLTextAreaElement,
+  readmePreview: ReadmePreviewAPI,
   noticeContainer: HTMLDivElement,
 ): Promise<void> {
   // Clear any previous notices
   noticeContainer.innerHTML = '';
 
   // Only autofill if textarea is empty/whitespace
-  if (textarea.value.trim().length > 0) return;
+  if (readmePreview.getValue().trim().length > 0) return;
 
   const readmeFile = detectReadmeFile(files);
   if (!readmeFile) return;
@@ -214,7 +219,7 @@ export async function handleReadmeAutofill(
     truncated = true;
   }
 
-  textarea.value = content;
+  readmePreview.setValue(content);
 
   // Show autofill notice
   const notice = document.createElement('span');
@@ -240,6 +245,19 @@ export async function handleReadmeAutofill(
 export function renderUploadForm(container: HTMLElement): void {
   container.innerHTML = '';
 
+  // Configure marked with highlight.js for syntax highlighting
+  const markedInstance = new Marked(
+    markedHighlight({
+      langPrefix: 'hljs language-',
+      highlight(code: string, lang: string) {
+        if (lang && hljs.getLanguage(lang)) {
+          return hljs.highlight(code, { language: lang }).value;
+        }
+        return hljs.highlightAuto(code).value;
+      },
+    }),
+  );
+
   const wrapper = document.createElement('div');
   wrapper.className = 'upload-form-wrapper';
 
@@ -247,18 +265,25 @@ export function renderUploadForm(container: HTMLElement): void {
   heading.textContent = 'Upload Project';
   wrapper.appendChild(heading);
 
-  // Status message area
-  const statusEl = document.createElement('div');
-  statusEl.className = 'upload-status';
-  statusEl.setAttribute('role', 'alert');
-  statusEl.setAttribute('aria-live', 'polite');
-  wrapper.appendChild(statusEl);
-
   const form = document.createElement('form');
   form.className = 'upload-form';
   form.noValidate = true;
 
-  // Project name field
+  // --- 1. Drop Zone (first element) ---
+  const dropZoneContainer = document.createElement('div');
+  dropZoneContainer.className = 'form-group drop-zone-container';
+  form.appendChild(dropZoneContainer);
+
+  // Files error element (shown on validation failure)
+  const filesErrorEl = document.createElement('span');
+  filesErrorEl.className = 'field-error';
+  filesErrorEl.setAttribute('aria-live', 'polite');
+  dropZoneContainer.appendChild(filesErrorEl);
+
+  // Track selected files
+  let selectedFiles: FileList | null = null;
+
+  // --- 2. Project Name field ---
   const nameGroup = createFieldGroup('project-name', 'Project Name', 'text', {
     maxLength: MAX_PROJECT_NAME_LENGTH,
     placeholder: 'my-project-name',
@@ -266,7 +291,7 @@ export function renderUploadForm(container: HTMLElement): void {
   });
   form.appendChild(nameGroup.wrapper);
 
-  // Tags field — Tag Selector component
+  // --- 3. Tags field — Tag Selector component ---
   const tagsGroupWrapper = document.createElement('div');
   tagsGroupWrapper.className = 'form-group';
 
@@ -303,23 +328,53 @@ export function renderUploadForm(container: HTMLElement): void {
     }
   });
 
-  // Readme field (textarea)
-  const readmeGroup = createTextareaGroup('project-readme', 'Readme Content', {
+  // --- 4. Submit button ---
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'submit';
+  submitBtn.className = 'upload-submit';
+  submitBtn.textContent = 'Upload Project';
+  form.appendChild(submitBtn);
+
+  // --- 5. Status message area ---
+  const statusEl = document.createElement('div');
+  statusEl.className = 'upload-status';
+  statusEl.setAttribute('role', 'alert');
+  statusEl.setAttribute('aria-live', 'polite');
+  form.appendChild(statusEl);
+
+  // --- 6. Readme (with preview toggle) ---
+  const readmeGroupWrapper = document.createElement('div');
+  readmeGroupWrapper.className = 'form-group';
+
+  const readmeLabel = document.createElement('label');
+  readmeLabel.textContent = 'Readme Content';
+  readmeGroupWrapper.appendChild(readmeLabel);
+
+  const readmePreviewContainer = document.createElement('div');
+  readmeGroupWrapper.appendChild(readmePreviewContainer);
+
+  const readmeErrorEl = document.createElement('span');
+  readmeErrorEl.className = 'field-error';
+  readmeErrorEl.setAttribute('aria-live', 'polite');
+  readmeGroupWrapper.appendChild(readmeErrorEl);
+
+  form.appendChild(readmeGroupWrapper);
+
+  // Create the Readme Preview component
+  const readmePreview: ReadmePreviewAPI = createReadmePreview({
+    container: readmePreviewContainer,
+    markedInstance,
+    textareaId: 'project-readme',
     maxLength: MAX_README_LENGTH,
     placeholder: '# My Project\n\nDescribe your project here...',
     rows: 12,
   });
-  form.appendChild(readmeGroup.wrapper);
 
-  // Notice container for autofill/truncation messages
+  // --- 7. Readme notice container ---
   const readmeNoticeContainer = document.createElement('div');
   readmeNoticeContainer.className = 'readme-notice-container';
   readmeNoticeContainer.setAttribute('aria-live', 'polite');
   form.appendChild(readmeNoticeContainer);
-
-  // Files field (webkitdirectory)
-  const filesGroup = createFileGroup('project-files', 'Project Files (select folder)');
-  form.appendChild(filesGroup.wrapper);
 
   // --- Tag suggestion logic ---
   let suggestionTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -333,7 +388,7 @@ export function renderUploadForm(container: HTMLElement): void {
     if (suggestionTimeout !== null) {
       clearTimeout(suggestionTimeout);
     }
-    const content = readmeGroup.textarea.value;
+    const content = readmePreview.getValue();
     if (content.length >= 50 && tagSelector && !tagSelector.hasUserInteracted()) {
       suggestionTimeout = setTimeout(() => {
         suggestTags(content).then((result) => {
@@ -345,42 +400,38 @@ export function renderUploadForm(container: HTMLElement): void {
     }
   }
 
-  // Wire up README autofill and project name autofill on file selection
-  filesGroup.input.addEventListener('change', () => {
-    const files = filesGroup.input.files;
-    if (files && files.length > 0) {
+  // --- Wire Drop Zone ---
+  const dropZone = createDropZone({
+    container: dropZoneContainer,
+    onFiles: (files: FileList) => {
+      selectedFiles = files;
+
       // Auto-fill project name from folder name if empty
-      if (!nameGroup.input.value.trim() && files[0].webkitRelativePath) {
+      if (!nameGroup.input.value.trim() && files.length > 0 && files[0].webkitRelativePath) {
         const folderName = files[0].webkitRelativePath.split('/')[0];
         if (folderName) {
           nameGroup.input.value = sanitizeProjectName(folderName);
         }
       }
 
-      handleReadmeAutofill(files, readmeGroup.textarea, readmeNoticeContainer).then(() => {
+      handleReadmeAutofill(files, readmePreview, readmeNoticeContainer).then(() => {
         // After autofill completes, trigger tag suggestions
         requestTagSuggestions();
       });
-    }
+    },
   });
 
   // Clear notices when user edits the readme textarea
-  readmeGroup.textarea.addEventListener('input', () => {
+  readmePreview.getTextarea().addEventListener('input', () => {
     readmeNoticeContainer.innerHTML = '';
   });
 
   // Debounced README suggestion on manual typing
-  readmeGroup.textarea.addEventListener('input', () => {
+  readmePreview.getTextarea().addEventListener('input', () => {
     requestTagSuggestions();
   });
 
-  // Submit button
-  const submitBtn = document.createElement('button');
-  submitBtn.type = 'submit';
-  submitBtn.className = 'upload-submit';
-  submitBtn.textContent = 'Upload Project';
-  form.appendChild(submitBtn);
-
+  // --- Form submission handler ---
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -390,13 +441,15 @@ export function renderUploadForm(container: HTMLElement): void {
     clearFieldErrors(form);
 
     const name = nameGroup.input.value;
-    const readme = readmeGroup.textarea.value;
-    const files = filesGroup.input.files;
+    const readme = readmePreview.getValue();
+    const files = selectedFiles;
 
     // Client-side validation (tags handled by TagSelector component)
     const errors = validateForm(name, readme, files);
     if (Object.keys(errors).length > 0) {
-      showFieldErrors(errors, nameGroup, readmeGroup, filesGroup);
+      if (errors.name) nameGroup.errorEl.textContent = errors.name;
+      if (errors.readme) readmeErrorEl.textContent = errors.readme;
+      if (errors.files) filesErrorEl.textContent = errors.files;
       return;
     }
 
@@ -604,17 +657,6 @@ function createFileGroup(id: string, labelText: string): FileFieldGroup {
   wrapper.appendChild(errorEl);
 
   return { wrapper, input, errorEl };
-}
-
-function showFieldErrors(
-  errors: ValidationErrors,
-  nameGroup: FieldGroup,
-  readmeGroup: TextareaGroup,
-  filesGroup: FileFieldGroup,
-): void {
-  if (errors.name) nameGroup.errorEl.textContent = errors.name;
-  if (errors.readme) readmeGroup.errorEl.textContent = errors.readme;
-  if (errors.files) filesGroup.errorEl.textContent = errors.files;
 }
 
 function clearFieldErrors(form: HTMLFormElement): void {
