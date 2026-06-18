@@ -208,3 +208,210 @@ describe('Bug Condition: searchIndexLoaded reset after mutations', () => {
     expect(result.fetchCallCountAfterMutation).toBeGreaterThan(0);
   });
 });
+
+
+/**
+ * Preservation Property Tests - Unchanged Behavior for Non-Mutation Flows (Frontend)
+ *
+ * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5**
+ *
+ * These tests establish baseline behavior on UNFIXED code.
+ * They verify that:
+ * - On first page load, fetchSearchIndex() is called
+ * - After initial load succeeds, subsequent renders skip re-fetch
+ * - Failed mutations do NOT reset searchIndexLoaded
+ *
+ * EXPECTED TO PASS on unfixed code — this confirms baseline behavior to preserve.
+ */
+describe('Preservation: Index loading behavior for non-mutation flows', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    vi.resetModules();
+  });
+
+  it('on first page load, fetchSearchIndex is called (searchIndexLoaded starts false)', async () => {
+    const { fetchSearchIndex } = await import('./api');
+    const mockedFetch = vi.mocked(fetchSearchIndex);
+    mockedFetch.mockResolvedValue({ ok: true, data: [] });
+
+    window.location.hash = '#/';
+    await import('./main');
+    await new Promise(r => setTimeout(r, 50));
+
+    // First load should always trigger fetchSearchIndex
+    expect(mockedFetch).toHaveBeenCalled();
+  });
+
+  it('after initial load succeeds, subsequent home navigations skip re-fetch', async () => {
+    const { fetchSearchIndex } = await import('./api');
+    const mockedFetch = vi.mocked(fetchSearchIndex);
+    mockedFetch.mockResolvedValue({ ok: true, data: [] });
+
+    window.location.hash = '#/';
+    await import('./main');
+    await new Promise(r => setTimeout(r, 50));
+
+    const callCountAfterFirstLoad = mockedFetch.mock.calls.length;
+    expect(callCountAfterFirstLoad).toBeGreaterThanOrEqual(1);
+
+    // Navigate away and back to home
+    window.location.hash = '#/upload';
+    await new Promise(r => setTimeout(r, 50));
+    window.location.hash = '#/';
+    await new Promise(r => setTimeout(r, 50));
+
+    // Should NOT have called fetchSearchIndex again (flag stays true)
+    expect(mockedFetch.mock.calls.length).toBe(callCountAfterFirstLoad);
+  });
+
+  it('for all non-mutation interactions, index loading behavior is unchanged (property-based)', async () => {
+    // Property: for any sequence of non-mutation navigations (home, search, project detail),
+    // fetchSearchIndex is called exactly once (on the first home page render)
+    await fc.assert(
+      fc.asyncProperty(
+        // Generate sequences of non-mutation navigation actions
+        fc.array(
+          fc.oneof(
+            fc.constant('home'),
+            fc.constant('upload-page'), // just viewing the upload page, not submitting
+            fc.constant('project-detail'),
+          ),
+          { minLength: 1, maxLength: 5 },
+        ),
+        async (navigations) => {
+          // Reset modules so we get fresh state each run
+          vi.resetModules();
+          document.body.innerHTML = '';
+          const freshContainer = document.createElement('div');
+          freshContainer.id = 'app';
+          document.body.appendChild(freshContainer);
+          vi.clearAllMocks();
+
+          const { fetchSearchIndex } = await import('./api');
+          const mockedFetch = vi.mocked(fetchSearchIndex);
+          mockedFetch.mockResolvedValue({ ok: true, data: [{ name: 'proj', description: 'desc', tags: ['t'], date: '2024-01-01', path: 'projects/proj/' }] });
+
+          // Initialize app with home route
+          window.location.hash = '#/';
+          await import('./main');
+          await new Promise(r => setTimeout(r, 50));
+
+          const callCountAfterInit = mockedFetch.mock.calls.length;
+          // Initial home load should fetch
+          expect(callCountAfterInit).toBeGreaterThanOrEqual(1);
+
+          // Perform each navigation in the sequence
+          for (const nav of navigations) {
+            if (nav === 'home') {
+              window.location.hash = '#/';
+            } else if (nav === 'upload-page') {
+              window.location.hash = '#/upload';
+            } else if (nav === 'project-detail') {
+              window.location.hash = '#/project/proj';
+            }
+            await new Promise(r => setTimeout(r, 30));
+          }
+
+          // After all non-mutation navigations, fetchSearchIndex should NOT have been
+          // called again (searchIndexLoaded stays true after successful initial load)
+          expect(mockedFetch.mock.calls.length).toBe(callCountAfterInit);
+        },
+      ),
+      { numRuns: 15 },
+    );
+  });
+
+  it('failed mutations do NOT reset searchIndexLoaded', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.oneof(
+          fc.constant('failed-upload'),
+          fc.constant('failed-delete'),
+          fc.constant('failed-edit'),
+        ),
+        async (failureType) => {
+          vi.resetModules();
+          document.body.innerHTML = '';
+          const freshContainer = document.createElement('div');
+          freshContainer.id = 'app';
+          document.body.appendChild(freshContainer);
+          vi.clearAllMocks();
+
+          const apiModule = await import('./api');
+          const mockedFetch = vi.mocked(apiModule.fetchSearchIndex);
+          mockedFetch.mockResolvedValue({ ok: true, data: [] });
+
+          // Make mutations fail
+          vi.mocked(apiModule.initiateUpload).mockResolvedValue({ ok: false, error: 'Upload failed' });
+          vi.mocked(apiModule.deleteProject).mockResolvedValue({ ok: false, error: 'Delete failed' });
+          vi.mocked(apiModule.updateProject).mockResolvedValue({ ok: false, error: 'Edit failed' });
+
+          // Initialize app — performs initial index load
+          window.location.hash = '#/';
+          await import('./main');
+          await new Promise(r => setTimeout(r, 50));
+
+          const callCountAfterInit = mockedFetch.mock.calls.length;
+          expect(callCountAfterInit).toBeGreaterThanOrEqual(1);
+
+          // Attempt a failing mutation
+          if (failureType === 'failed-upload') {
+            window.location.hash = '#/upload';
+            await new Promise(r => setTimeout(r, 50));
+            const form = document.querySelector('form');
+            if (form) {
+              const nameInput = document.querySelector('#project-name') as HTMLInputElement;
+              if (nameInput) nameInput.value = 'test';
+              form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+              await new Promise(r => setTimeout(r, 100));
+            }
+          } else if (failureType === 'failed-delete') {
+            window.location.hash = '#/project/test-project';
+            await new Promise(r => setTimeout(r, 50));
+            try {
+              const { showDeleteDialog } = await import('./delete-dialog');
+              showDeleteDialog('test-project');
+              await new Promise(r => setTimeout(r, 50));
+              const input = document.querySelector('.delete-dialog-input') as HTMLInputElement;
+              const confirmBtn = document.querySelector('.delete-dialog-confirm') as HTMLButtonElement;
+              if (input && confirmBtn) {
+                input.value = 'test-project';
+                input.dispatchEvent(new Event('input'));
+                confirmBtn.click();
+                await new Promise(r => setTimeout(r, 100));
+              }
+            } catch {
+              // Delete dialog may not render without project detail
+            }
+          } else if (failureType === 'failed-edit') {
+            window.location.hash = '#/project/test-project/edit';
+            await new Promise(r => setTimeout(r, 100));
+            const form = document.querySelector('form');
+            if (form) {
+              form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+              await new Promise(r => setTimeout(r, 100));
+            }
+          }
+
+          // Navigate back to home
+          window.location.hash = '#/';
+          await new Promise(r => setTimeout(r, 50));
+
+          // Failed mutations should NOT reset searchIndexLoaded,
+          // so fetchSearchIndex should NOT be called again
+          expect(mockedFetch.mock.calls.length).toBe(callCountAfterInit);
+        },
+      ),
+      { numRuns: 10 },
+    );
+  });
+});
