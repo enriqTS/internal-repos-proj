@@ -18,7 +18,7 @@ import {
 } from './api';
 import { createTagSelector, type TagSelectorAPI } from './tag-selector';
 import { filterFileList } from './upload-form';
-import { invalidateSearchIndex } from './main';
+import { invalidateSearchIndex } from './search-state';
 import JSZip from 'jszip';
 
 /**

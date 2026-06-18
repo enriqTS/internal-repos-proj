@@ -9,16 +9,16 @@ import { renderProjectDetail } from './project-detail';
 import { renderUploadForm } from './upload-form';
 import { renderEditForm } from './edit-form';
 
+import { searchIndexLoaded, markSearchIndexLoaded, invalidateSearchIndex } from './search-state';
+
+// Re-export for backward compatibility with modules that import from './main'
+export { invalidateSearchIndex };
+
 /**
  * Render the search/home view.
  * Fetches the search index (if not already loaded), initialises Fuse.js,
  * and renders the search input + results list.
  */
-let searchIndexLoaded = false;
-
-export function invalidateSearchIndex(): void {
-  searchIndexLoaded = false;
-}
 
 async function renderSearchView(_params: Record<string, string>, container: HTMLElement): Promise<void> {
   // Create search UI structure
@@ -59,14 +59,14 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
 
       const retryBtn = errorEl.querySelector('.retry-btn') as HTMLButtonElement;
       retryBtn.addEventListener('click', () => {
-        searchIndexLoaded = false;
+        invalidateSearchIndex();
         renderSearchView(_params, container);
       });
       return;
     }
 
     initializeSearch(result.data);
-    searchIndexLoaded = true;
+    markSearchIndexLoaded();
   }
 
   // Wire search input to the search module

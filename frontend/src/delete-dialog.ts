@@ -1,5 +1,5 @@
 import { deleteProject } from './api';
-import { invalidateSearchIndex } from './main';
+import { invalidateSearchIndex } from './search-state';
 
 /**
  * Show a delete confirmation dialog as a modal overlay.

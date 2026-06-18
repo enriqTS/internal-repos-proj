@@ -9,7 +9,7 @@ import {
 import type { TagInput } from 'shared/types';
 import { initiateUpload, uploadToS3, finalizeUpload, fetchTagRegistry, suggestTags } from './api';
 import { createTagSelector, type TagSelectorAPI } from './tag-selector';
-import { invalidateSearchIndex } from './main';
+import { invalidateSearchIndex } from './search-state';
 import JSZip from 'jszip';
 
 /**
