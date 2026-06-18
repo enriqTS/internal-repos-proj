@@ -122,6 +122,43 @@ export interface SessionMetadata {
   createdAt: string;
   /** Tags that need to be added to the registry during finalize */
   newTags?: string[];
+  /** Upload mode: 'create' for new projects, 'replace' for artifact replacement */
+  mode?: 'create' | 'replace';
+}
+
+/**
+ * Request body for PATCH /projects/{name}.
+ * At least one field must be provided.
+ */
+export interface EditRequest {
+  /** New project name (optional, triggers rename). 1-64 chars, /^[a-zA-Z0-9_-]+$/ */
+  name?: string;
+  /** Updated tags array (optional). 1-10 items, each 1-32 chars, /^[a-z0-9_-]+$/ */
+  tags?: string[];
+  /** Updated readme content (optional). Max 50,000 chars */
+  readme?: string;
+}
+
+/**
+ * Response from PATCH /projects/{name}.
+ */
+export interface EditResponse {
+  /** Success message */
+  message: string;
+  /** Updated project metadata */
+  metadata: ProjectMetadata;
+  /** Whether the project was renamed */
+  renamed?: boolean;
+}
+
+/**
+ * Response from DELETE /projects/{name}.
+ */
+export interface DeleteResponse {
+  /** Confirmation message */
+  message: string;
+  /** Name of the deleted project */
+  name: string;
 }
 
 /**
