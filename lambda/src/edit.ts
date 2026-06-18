@@ -1,7 +1,10 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { S3Client, HeadObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import type { ProjectMetadata, EditRequest } from 'shared';
 import { PROJECT_NAME_REGEX, MAX_PROJECT_NAME_LENGTH } from 'shared';
 import { validateEditRequest } from './validate';
+
+const s3Client = new S3Client({});
 
 /** Standard CORS headers included in every response. */
 const CORS_HEADERS = {
@@ -99,11 +102,28 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
-    // TODO: Steps below will be implemented in subsequent tasks (2.2–2.5)
-    // - Check project existence and fetch metadata
-    // - Merge metadata
-    // - Handle rename flow
-    // - Write to S3, update tag registry, regenerate index
+    // 4. Check project existence via HeadObject on metadata.json
+    const bucket = process.env.BUCKET_NAME!;
+    const exists = await projectExists(bucket, name);
+    if (!exists) {
+      return {
+        statusCode: 404,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        body: JSON.stringify({ error: `Project not found: ${name}` }),
+      };
+    }
+
+    // 5. Fetch existing metadata.json
+    const existingMetadata = await fetchMetadata(bucket, name);
+
+    // 6. Merge existing metadata with edit request
+    const { metadata: mergedMetadata, readme } = mergeMetadata(existingMetadata, body);
+
+    // TODO: Steps below will be implemented in subsequent tasks (2.4–2.5)
+    // - Handle rename flow (if name differs from path param)
+    // - Write updated metadata.json and readme.md to S3
+    // - Update tag registry with new tags
+    // - Regenerate global-index.json
 
     return {
       statusCode: 501,
@@ -118,4 +138,48 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       body: JSON.stringify({ error: message }),
     };
   }
+}
+
+/**
+ * Check if a project exists in S3 by attempting a HeadObject
+ * on the project's metadata.json file.
+ */
+async function projectExists(bucket: string, name: string): Promise<boolean> {
+  try {
+    await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: bucket,
+        Key: `projects/${name}/metadata.json`,
+      })
+    );
+    return true;
+  } catch (err: unknown) {
+    if (
+      err instanceof Error &&
+      (err.name === 'NotFound' || (err as any).$metadata?.httpStatusCode === 404)
+    ) {
+      return false;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Fetch and parse the existing metadata.json for a project from S3.
+ * Throws if the file cannot be read or parsed.
+ */
+async function fetchMetadata(bucket: string, name: string): Promise<ProjectMetadata> {
+  const response = await s3Client.send(
+    new GetObjectCommand({
+      Bucket: bucket,
+      Key: `projects/${name}/metadata.json`,
+    })
+  );
+
+  const body = await response.Body?.transformToString();
+  if (!body) {
+    throw new Error(`Failed to read metadata for project: ${name}`);
+  }
+
+  return JSON.parse(body) as ProjectMetadata;
 }
