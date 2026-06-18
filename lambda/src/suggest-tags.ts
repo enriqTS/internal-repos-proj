@@ -63,7 +63,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     console.log(`[suggest-tags] Invoking model: ${MODEL_ID}`);
 
     const client = getAIClient();
-    const message = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: MODEL_ID,
       max_tokens: 1024,
       messages: [{ role: 'user', content: prompt }],
@@ -72,7 +72,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     console.log('[suggest-tags] Model response received');
 
     // 5. Extract text content from the model response
-    const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
+    const content = response.choices[0]?.message?.content ?? null;
 
     if (!content) {
       return {

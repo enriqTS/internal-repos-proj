@@ -41,9 +41,9 @@ resource "aws_lambda_function" "suggest_tags_lambda" {
 
   environment {
     variables = {
-      BUCKET_NAME            = aws_s3_bucket.frontend.id
-      ANTHROPIC_API_KEY      = var.anthropic_api_key
-      ANTHROPIC_WORKSPACE_ID = var.anthropic_workspace_id
+      BUCKET_NAME       = aws_s3_bucket.frontend.id
+      OPENAI_API_KEY    = var.openai_api_key
+      OPENAI_PROJECT_ID = var.openai_project_id
     }
   }
 

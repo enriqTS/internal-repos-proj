@@ -22,15 +22,15 @@ variable "acm_certificate_arn" {
   default     = ""
 }
 
-variable "anthropic_api_key" {
-  description = "API key for Bedrock Mantle endpoint"
+variable "openai_api_key" {
+  description = "API key for Bedrock Mantle OpenAI-compatible endpoint"
   type        = string
   sensitive   = true
 }
 
-variable "anthropic_workspace_id" {
-  description = "Workspace ID for Bedrock Mantle"
+variable "openai_project_id" {
+  description = "Project ID for Bedrock Mantle (default: 'default')"
   type        = string
-  sensitive   = true
+  default     = "default"
 }
 

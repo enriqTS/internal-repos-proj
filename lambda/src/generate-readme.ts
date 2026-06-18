@@ -361,18 +361,15 @@ export function prioritizeFiles(files: FileEntry[]): PrioritizationResult {
 // ─── Response extraction ──────────────────────────────────────────────────────
 
 /**
- * Extract text content from an Anthropic message response.
- * Returns the text field of the first content block if it has type "text",
- * or null if the content array is empty or the first block has no text.
+ * Extract text content from an OpenAI chat completion response.
+ * Returns the content of the first choice's message, or null if empty.
  *
- * @param message - Structured message object with content array
+ * @param response - OpenAI chat completion response object
  * @returns Extracted text content or null if no valid content found
  */
-export function extractModelContent(message: { content: Array<{ type: string; text?: string }> }): string | null {
-  if (message.content.length === 0) return null;
-  const block = message.content[0];
-  if (block.type === 'text' && block.text) return block.text;
-  return null;
+export function extractModelContent(response: { choices: Array<{ message: { content: string | null } }> }): string | null {
+  if (response.choices.length === 0) return null;
+  return response.choices[0].message.content ?? null;
 }
 
 // ─── Output validation ────────────────────────────────────────────────────────
@@ -437,7 +434,7 @@ export interface GenerateReadmeResult {
  * Generate a README for the project using AI.
  *
  * Orchestrates the full flow:
- * prioritizeFiles → buildPrompt → client.messages.create → extractModelContent → validateReadmeOutput
+ * prioritizeFiles → buildPrompt → client.chat.completions.create → extractModelContent → validateReadmeOutput
  *
  * @param projectName - Project name from session metadata
  * @param files - Filtered files from the upload
@@ -457,9 +454,9 @@ export async function generateReadme(
     // Step 2: Build prompt
     const prompt = buildPrompt(projectName, prioritization);
 
-    // Step 3: Invoke model via Anthropic SDK
+    // Step 3: Invoke model via OpenAI SDK
     const client = getAIClient();
-    const message = await client.messages.create(
+    const response = await client.chat.completions.create(
       {
         model: MODEL_ID,
         max_tokens: README_MAX_OUTPUT_TOKENS,
@@ -469,7 +466,7 @@ export async function generateReadme(
     );
 
     // Step 4: Extract content from structured response
-    const content = extractModelContent(message);
+    const content = extractModelContent(response);
 
     if (!content) {
       return { readme: '', warning: 'README generation produced empty content' };

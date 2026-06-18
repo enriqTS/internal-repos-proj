@@ -1,16 +1,16 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 export const MODEL_ID = "moonshotai.kimi-k2.5";
 
-let clientInstance: Anthropic | null = null;
+let clientInstance: OpenAI | null = null;
 
-export function getAIClient(): Anthropic {
+export function getAIClient(): OpenAI {
   if (!clientInstance) {
-    clientInstance = new Anthropic({
-      baseURL: "https://bedrock-mantle.us-east-1.api.aws/anthropic",
-      apiKey: process.env.ANTHROPIC_API_KEY!,
+    clientInstance = new OpenAI({
+      baseURL: "https://bedrock-mantle.us-east-1.api.aws/v1",
+      apiKey: process.env.OPENAI_API_KEY!,
       defaultHeaders: {
-        "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID!,
+        "OpenAI-Project": process.env.OPENAI_PROJECT_ID || "default",
       },
     });
   }
