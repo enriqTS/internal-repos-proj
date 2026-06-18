@@ -1,8 +1,17 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { S3Client, HeadObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import type { ProjectMetadata, EditRequest } from 'shared';
+import {
+  S3Client,
+  HeadObjectCommand,
+  GetObjectCommand,
+  CopyObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
+import type { ProjectMetadata, EditRequest, EditResponse } from 'shared';
 import { PROJECT_NAME_REGEX, MAX_PROJECT_NAME_LENGTH } from 'shared';
 import { validateEditRequest } from './validate';
+import { regenerateIndex } from './index-generator';
+import { addTagsToRegistry, getTagRegistry } from './tag-registry';
 
 const s3Client = new S3Client({});
 
@@ -119,16 +128,140 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     // 6. Merge existing metadata with edit request
     const { metadata: mergedMetadata, readme } = mergeMetadata(existingMetadata, body);
 
-    // TODO: Steps below will be implemented in subsequent tasks (2.4–2.5)
-    // - Handle rename flow (if name differs from path param)
-    // - Write updated metadata.json and readme.md to S3
-    // - Update tag registry with new tags
-    // - Regenerate global-index.json
+    // 7. Handle rename flow (if name differs from path param)
+    let renamed = false;
+    let projectPath = `projects/${name}/`;
+
+    if (body.name !== undefined && body.name !== name) {
+      const newName = body.name;
+      const newPath = `projects/${newName}/`;
+
+      // Check if new name is already taken
+      const newNameTaken = await projectExists(bucket, newName);
+      if (newNameTaken) {
+        return {
+          statusCode: 409,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          body: JSON.stringify({ error: `Project name already taken: ${newName}` }),
+        };
+      }
+
+      // Copy all three objects to the new path
+      const filesToCopy = ['metadata.json', 'readme.md', 'artifact.zip'];
+      try {
+        for (const file of filesToCopy) {
+          await s3Client.send(
+            new CopyObjectCommand({
+              Bucket: bucket,
+              CopySource: `${bucket}/projects/${name}/${file}`,
+              Key: `${newPath}${file}`,
+            })
+          );
+        }
+      } catch (_copyErr) {
+        // Copy failed — no cleanup needed (partial copies at new path are acceptable
+        // since we haven't deleted the old path yet, and we'll return 500)
+        // Clean up any partially copied files at new path
+        for (const file of filesToCopy) {
+          try {
+            await s3Client.send(
+              new DeleteObjectCommand({
+                Bucket: bucket,
+                Key: `${newPath}${file}`,
+              })
+            );
+          } catch (_cleanupErr) {
+            // Best-effort cleanup
+          }
+        }
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          body: JSON.stringify({ error: 'Rename could not be completed' }),
+        };
+      }
+
+      // Delete all objects at old path
+      try {
+        for (const file of filesToCopy) {
+          await s3Client.send(
+            new DeleteObjectCommand({
+              Bucket: bucket,
+              Key: `projects/${name}/${file}`,
+            })
+          );
+        }
+      } catch (_deleteErr) {
+        // Delete failed — rollback by deleting copied objects at new path
+        for (const file of filesToCopy) {
+          try {
+            await s3Client.send(
+              new DeleteObjectCommand({
+                Bucket: bucket,
+                Key: `${newPath}${file}`,
+              })
+            );
+          } catch (_rollbackErr) {
+            // Best-effort rollback
+          }
+        }
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          body: JSON.stringify({ error: 'Rename could not be completed' }),
+        };
+      }
+
+      renamed = true;
+      projectPath = newPath;
+    }
+
+    // 8. Write updated metadata.json to S3
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: `${projectPath}metadata.json`,
+        Body: JSON.stringify(mergedMetadata),
+        ContentType: 'application/json',
+      })
+    );
+
+    // 9. Write updated readme.md if readme was provided
+    if (readme !== undefined) {
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: `${projectPath}readme.md`,
+          Body: readme,
+          ContentType: 'text/markdown',
+        })
+      );
+    }
+
+    // 10. Update tag registry with new tags if tags were provided
+    if (body.tags !== undefined && body.tags.length > 0) {
+      const currentRegistry = await getTagRegistry();
+      const registrySet = new Set(currentRegistry);
+      const newTags = body.tags.filter((tag) => !registrySet.has(tag));
+      if (newTags.length > 0) {
+        await addTagsToRegistry(newTags);
+      }
+    }
+
+    // 11. Regenerate global index
+    await regenerateIndex();
+
+    // 12. Return 200 with EditResponse
+    const response: EditResponse = {
+      message: `Project '${mergedMetadata.name}' updated successfully`,
+      metadata: mergedMetadata,
+      ...(renamed && { renamed: true }),
+    };
 
     return {
-      statusCode: 501,
+      statusCode: 200,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      body: JSON.stringify({ error: 'Not yet implemented' }),
+      body: JSON.stringify(response),
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error';
