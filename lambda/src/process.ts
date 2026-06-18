@@ -6,6 +6,7 @@ import { createArtifactZip, ArtifactTooLargeError } from './archiver-wrapper';
 import { writeProject, ProjectExistsError } from './s3-writer';
 import { regenerateIndex } from './index-generator';
 import { addTagsToRegistry } from './tag-registry';
+import { generateReadme } from './generate-readme';
 import type { FinalizeRequest, FinalizeResponse, SessionMetadata, FileEntry, ProjectMetadata } from 'shared';
 
 const s3Client = new S3Client({});
@@ -125,6 +126,16 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       }
     }
 
+    // 6.5: Generate README if not provided (create mode only)
+    let readmeContent = sessionMeta.readme;
+    let readmeWarning: string | undefined;
+
+    if (sessionMeta.mode !== 'replace' && (!readmeContent || !readmeContent.trim())) {
+      const result = await generateReadme(sessionMeta.name, filterResult.files);
+      readmeContent = result.readme || 'No description provided';
+      readmeWarning = result.warning;
+    }
+
     // 7. Generate artifact.zip
     const artifact = await createArtifactZip(filterResult.files);
 
@@ -146,14 +157,14 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       // Create mode: write full project (readme, metadata, artifact)
       const metadata: ProjectMetadata = {
         name: sessionMeta.name,
-        description: sessionMeta.readme.slice(0, 200) || 'No description provided',
+        description: readmeContent.slice(0, 200) || 'No description provided',
         tags: sessionMeta.tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
         date: new Date().toISOString().split('T')[0],
       };
 
       await writeProject({
         name: sessionMeta.name,
-        readme: sessionMeta.readme,
+        readme: readmeContent,
         metadata,
         artifact,
       });
@@ -166,7 +177,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     await cleanupStagedFiles(stagingBucket, sessionId);
 
     // 11. Return success response
-    const warnings = [filterResult.warning, registryWarning].filter(Boolean).join('; ');
+    const warnings = [filterResult.warning, registryWarning, readmeWarning].filter(Boolean).join('; ');
     const response: FinalizeResponse = {
       message: 'Project uploaded successfully',
       path: `projects/${sessionMeta.name}/`,
