@@ -18,7 +18,11 @@ resource "aws_iam_role_policy" "lambda_bedrock_policy" {
         Action = [
           "bedrock:InvokeModel"
         ]
-        Resource = "arn:aws:bedrock:*:*:model/us.kimi.k2-5-chat"
+        Resource = [
+          "arn:aws:bedrock:*:*:model/us.moonshotai.kimi-k2.5-0613-v1:0",
+          "arn:aws:bedrock:*:*:inference-profile/us.moonshotai.kimi-k2.5-0613-v1:0",
+          "arn:aws:bedrock:*::foundation-model/moonshotai.kimi-k2.5-0613-v1:0"
+        ]
       },
       {
         Effect = "Allow"
