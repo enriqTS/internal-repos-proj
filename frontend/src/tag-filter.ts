@@ -1,6 +1,6 @@
 /**
- * Tag Filter component for the search page.
- * Renders tags as clickable filter buttons with AND-logic filtering.
+ * Tag Filter Dropdown component for the search page.
+ * Renders tags as a collapsible dropdown with checkboxes and AND-logic filtering.
  */
 
 export interface TagFilterOptions {
@@ -22,70 +22,155 @@ export interface TagFilterAPI {
 }
 
 /**
- * Creates a tag filter component that renders tags as clickable filter buttons.
- * Active tags receive the `tag-filter--active` CSS class and `aria-pressed="true"`.
- * Calls `onFilterChange` with the current list of active tags on every change.
+ * Creates a tag filter dropdown component with checkboxes.
+ * The toggle button shows/hides a scrollable panel of tag checkboxes.
+ * Calls `onFilterChange` with the current list of checked tags on every change.
  */
 export function createTagFilter(options: TagFilterOptions): TagFilterAPI {
   const { container, onFilterChange } = options;
 
   let activeTags: Set<string> = new Set();
   let allTags: string[] = [];
-  let buttons: Map<string, HTMLButtonElement> = new Map();
+  let expanded = false;
+
+  // DOM references
+  let dropdownEl: HTMLDivElement | null = null;
+  let toggleBtn: HTMLButtonElement | null = null;
+  let panelEl: HTMLDivElement | null = null;
+  let listEl: HTMLUListElement | null = null;
 
   function render(): void {
     container.innerHTML = '';
-    buttons.clear();
 
     if (allTags.length === 0) {
       return;
     }
 
+    // Root container
+    dropdownEl = document.createElement('div');
+    dropdownEl.className = 'tag-filter-dropdown';
+
+    // Toggle button
+    toggleBtn = document.createElement('button');
+    toggleBtn.className = 'tag-filter-toggle';
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    toggleBtn.textContent = getToggleText();
+    toggleBtn.addEventListener('click', handleToggleClick);
+    toggleBtn.addEventListener('keydown', handleToggleKeydown);
+
+    // Panel (hidden by default)
+    panelEl = document.createElement('div');
+    panelEl.className = 'tag-filter-panel';
+    panelEl.setAttribute('hidden', '');
+    panelEl.addEventListener('focusout', handlePanelBlur);
+
+    // List
+    listEl = document.createElement('ul');
+    listEl.className = 'tag-filter-list';
+    listEl.setAttribute('role', 'group');
+
+    // Render checkboxes
     for (const tag of allTags) {
-      const button = document.createElement('button');
-      button.className = 'tag-filter-item';
-      button.textContent = tag;
-      button.setAttribute('aria-pressed', activeTags.has(tag) ? 'true' : 'false');
+      const li = document.createElement('li');
+      const label = document.createElement('label');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = activeTags.has(tag);
+      checkbox.addEventListener('change', () => handleCheckboxChange(tag, checkbox));
 
-      if (activeTags.has(tag)) {
-        button.classList.add('tag-filter--active');
-      }
+      const span = document.createElement('span');
+      span.textContent = tag;
 
-      button.addEventListener('click', () => handleTagClick(tag));
-      buttons.set(tag, button);
-      container.appendChild(button);
+      label.appendChild(checkbox);
+      label.appendChild(span);
+      li.appendChild(label);
+      listEl.appendChild(li);
+    }
+
+    panelEl.appendChild(listEl);
+    dropdownEl.appendChild(toggleBtn);
+    dropdownEl.appendChild(panelEl);
+    container.appendChild(dropdownEl);
+
+    // Sync expanded state
+    if (expanded) {
+      expand();
     }
   }
 
-  function handleTagClick(tag: string): void {
-    if (activeTags.has(tag)) {
-      activeTags.delete(tag);
+  function getToggleText(): string {
+    const count = activeTags.size;
+    if (count > 0) {
+      return `Filter by tags (${count})`;
+    }
+    return 'Filter by tags';
+  }
+
+  function updateToggleText(): void {
+    if (toggleBtn) {
+      toggleBtn.textContent = getToggleText();
+    }
+  }
+
+  function expand(): void {
+    expanded = true;
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-expanded', 'true');
+    }
+    if (panelEl) {
+      panelEl.removeAttribute('hidden');
+    }
+  }
+
+  function collapse(): void {
+    expanded = false;
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+    if (panelEl) {
+      panelEl.setAttribute('hidden', '');
+    }
+  }
+
+  function handleToggleClick(): void {
+    if (expanded) {
+      collapse();
     } else {
+      expand();
+    }
+  }
+
+  function handleToggleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleToggleClick();
+    }
+  }
+
+  function handlePanelBlur(e: FocusEvent): void {
+    const relatedTarget = e.relatedTarget as Node | null;
+    // Keep panel open if focus moves to another element within the dropdown
+    if (relatedTarget && dropdownEl && dropdownEl.contains(relatedTarget)) {
+      return;
+    }
+    collapse();
+  }
+
+  function handleCheckboxChange(tag: string, checkbox: HTMLInputElement): void {
+    if (checkbox.checked) {
       activeTags.add(tag);
-    }
-
-    updateButtonState(tag);
-    onFilterChange(Array.from(activeTags));
-  }
-
-  function updateButtonState(tag: string): void {
-    const button = buttons.get(tag);
-    if (!button) return;
-
-    const isActive = activeTags.has(tag);
-    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-
-    if (isActive) {
-      button.classList.add('tag-filter--active');
     } else {
-      button.classList.remove('tag-filter--active');
+      activeTags.delete(tag);
     }
+    updateToggleText();
+    onFilterChange(Array.from(activeTags));
   }
 
   return {
     setTags(tags: string[]): void {
       allTags = [...new Set(tags)].sort((a, b) => a.localeCompare(b));
       activeTags.clear();
+      expanded = false;
       render();
     },
 
@@ -95,15 +180,26 @@ export function createTagFilter(options: TagFilterOptions): TagFilterAPI {
 
     clearFilters(): void {
       activeTags.clear();
-      render();
+      updateToggleText();
+      // Uncheck all checkboxes
+      if (listEl) {
+        const checkboxes = listEl.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+        checkboxes.forEach((cb) => {
+          cb.checked = false;
+        });
+      }
       onFilterChange([]);
     },
 
     destroy(): void {
       container.innerHTML = '';
-      buttons.clear();
       activeTags.clear();
       allTags = [];
+      expanded = false;
+      dropdownEl = null;
+      toggleBtn = null;
+      panelEl = null;
+      listEl = null;
     },
   };
 }
