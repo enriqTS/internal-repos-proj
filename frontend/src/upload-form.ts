@@ -24,6 +24,8 @@ import JSZip from 'jszip';
 export function sanitizeProjectName(raw: string): string {
   let sanitized = raw
     .trim()
+    .normalize('NFD')             // decompose accented chars (ã → a + combining ~)
+    .replace(/[\u0300-\u036f]/g, '') // strip combining diacritical marks
     .replace(/\s+/g, '-')         // whitespace → hyphen
     .replace(/[.@#+]+/g, '-')     // common separators → hyphen
     .replace(/[^a-zA-Z0-9_-]/g, '') // remove anything else invalid
