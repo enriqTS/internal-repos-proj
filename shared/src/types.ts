@@ -72,6 +72,8 @@ export interface InitiateRequest {
   tags?: TagInput[];
   /** Optional readme content, max 50,000 chars */
   readme?: string;
+  /** Upload mode: 'create' for new projects, 'replace' for artifact replacement */
+  mode?: 'create' | 'replace';
 }
 
 /**

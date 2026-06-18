@@ -7,6 +7,7 @@ import { fetchSearchIndex } from './api';
 import { initializeSearch, setupSearch, search, renderResults } from './search';
 import { renderProjectDetail } from './project-detail';
 import { renderUploadForm } from './upload-form';
+import { renderEditForm } from './edit-form';
 
 /**
  * Render the search/home view.
@@ -102,12 +103,29 @@ function renderUploadView(_params: Record<string, string>, container: HTMLElemen
 }
 
 /**
+ * Render the edit form view.
+ * Extracts the project name from route params and delegates to the edit-form module.
+ */
+async function renderEditView(params: Record<string, string>, container: HTMLElement): Promise<void> {
+  const projectName = decodeURIComponent(params.name || '');
+  if (!projectName) {
+    container.innerHTML = '<p class="error">No project specified</p>';
+    return;
+  }
+  await renderEditForm(projectName, container);
+}
+
+/**
  * Define application routes.
  */
 const routes: Route[] = [
   {
     pattern: /^\/$/,
     handler: renderSearchView,
+  },
+  {
+    pattern: /^\/project\/(?<name>[^/]+)\/edit$/,
+    handler: renderEditView,
   },
   {
     pattern: /^\/project\/(?<name>[^/]+)$/,
