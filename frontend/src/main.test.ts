@@ -354,6 +354,8 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           vi.mocked(apiModule.initiateUpload).mockResolvedValue({ ok: false, error: 'Upload failed' });
           vi.mocked(apiModule.deleteProject).mockResolvedValue({ ok: false, error: 'Delete failed' });
           vi.mocked(apiModule.updateProject).mockResolvedValue({ ok: false, error: 'Edit failed' });
+          // Ensure computePatchBody returns a non-null value so updateProject is actually called
+          vi.mocked(apiModule.computePatchBody).mockReturnValue({ name: 'changed' });
 
           // Initialize app — performs initial index load
           window.location.hash = '#/';
