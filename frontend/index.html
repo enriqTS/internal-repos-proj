@@ -52,6 +52,13 @@
         --color-success: #3d8c5c;
         --color-error: #c43d3d;
         --color-code-bg: #2c2a26;
+        --color-on-accent: #ffffff;
+        --color-code-text: #e8e6e1;
+        --color-overlay: rgba(44, 42, 38, 0.5);
+        --color-error-hover: #a83333;
+        --color-error-ring: rgba(196, 61, 61, 0.1);
+        --color-accent-underline: rgba(211, 92, 46, 0.3);
+        --color-header-bg: rgba(255, 255, 255, 0.92);
         --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
         --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
         --radius-sm: 4px;
@@ -91,7 +98,7 @@
         top: 0;
         z-index: 100;
         backdrop-filter: blur(8px);
-        background: rgba(255, 255, 255, 0.92);
+        background: var(--color-header-bg);
       }
 
       header h1 {
@@ -357,7 +364,7 @@
         font-family: var(--font-mono);
         font-size: 0.82rem;
         font-weight: 600;
-        color: #fff;
+        color: var(--color-on-accent);
         background: var(--color-accent);
         border: none;
         border-radius: var(--radius-sm);
@@ -474,7 +481,7 @@
         font-family: var(--font-mono);
         font-size: 0.82rem;
         font-weight: 600;
-        color: #fff;
+        color: var(--color-on-accent);
         background: var(--color-text);
         text-decoration: none;
         border-radius: var(--radius-sm);
@@ -534,7 +541,7 @@
       .readme-content a {
         color: var(--color-accent);
         text-decoration: underline;
-        text-decoration-color: rgba(211, 92, 46, 0.3);
+        text-decoration-color: var(--color-accent-underline);
         text-underline-offset: 2px;
         transition: text-decoration-color var(--transition);
       }
@@ -553,7 +560,7 @@
 
       .readme-content pre {
         background: var(--color-code-bg);
-        color: #e8e6e1;
+        color: var(--color-code-text);
         padding: 1.25rem 1.5rem;
         border-radius: var(--radius-md);
         overflow-x: auto;
@@ -661,13 +668,13 @@
 
       .tag-selector-item--selected {
         background: var(--color-accent);
-        color: #fff;
+        color: var(--color-on-accent);
         border-color: var(--color-accent);
       }
 
       .tag-selector-item--selected:hover {
         background: var(--color-accent-hover);
-        color: #fff;
+        color: var(--color-on-accent);
       }
 
       .tag-selector-item--suggested {
@@ -738,7 +745,7 @@
         font-family: var(--font-mono);
         font-size: 0.75rem;
         font-weight: 600;
-        color: #fff;
+        color: var(--color-on-accent);
         background: var(--color-accent);
         border: none;
         border-radius: var(--radius-sm);
@@ -782,7 +789,7 @@
 
       .project-edit-btn:hover {
         background: var(--color-accent);
-        color: #fff;
+        color: var(--color-on-accent);
       }
 
       .project-delete-btn {
@@ -800,14 +807,14 @@
 
       .project-delete-btn:hover {
         background: var(--color-error);
-        color: #fff;
+        color: var(--color-on-accent);
       }
 
       /* ─── Delete Confirmation Dialog ─── */
       .delete-dialog-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(44, 42, 38, 0.5);
+        background: var(--color-overlay);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -874,7 +881,7 @@
 
       .delete-dialog-input:focus {
         border-color: var(--color-error);
-        box-shadow: 0 0 0 3px rgba(196, 61, 61, 0.1);
+        box-shadow: 0 0 0 3px var(--color-error-ring);
       }
 
       .delete-dialog-input:disabled {
@@ -935,7 +942,7 @@
         font-family: var(--font-mono);
         font-size: 0.8rem;
         font-weight: 600;
-        color: #fff;
+        color: var(--color-on-accent);
         background: var(--color-error);
         border: none;
         border-radius: var(--radius-sm);
@@ -944,7 +951,7 @@
       }
 
       .delete-dialog-confirm:hover:not(:disabled) {
-        background: #a83333;
+        background: var(--color-error-hover);
         box-shadow: var(--shadow-md);
       }
 
@@ -1013,7 +1020,7 @@
 
       .readme-toggle__btn--active {
         background: var(--color-accent);
-        color: #fff;
+        color: var(--color-on-accent);
       }
 
       .readme-preview-content {
@@ -1029,7 +1036,7 @@
 
       .readme-preview-content pre {
         background: var(--color-code-bg);
-        color: #e8e6e1;
+        color: var(--color-code-text);
         padding: 1.25rem 1.5rem;
         border-radius: var(--radius-md);
         overflow-x: auto;
@@ -1215,7 +1222,7 @@
 
       .paginator__btn--active {
         background: var(--color-accent);
-        color: #fff;
+        color: var(--color-on-accent);
         border-color: var(--color-accent);
       }
 
@@ -1297,17 +1304,16 @@
         --color-success: #4ea870;
         --color-error: #e05555;
         --color-code-bg: #1e1e22;
+        --color-on-accent: #ffffff;
+        --color-code-text: #e8e6e1;
+        --color-overlay: rgba(0, 0, 0, 0.6);
+        --color-error-hover: #c44444;
+        --color-error-ring: rgba(224, 85, 85, 0.15);
+        --color-accent-underline: rgba(232, 116, 63, 0.4);
+        --color-header-bg: rgba(36, 36, 40, 0.92);
         --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
         --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
         --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
-      }
-
-      html[data-theme="dark"] header {
-        background: rgba(36, 36, 40, 0.92);
-      }
-
-      html[data-theme="dark"] .delete-dialog-overlay {
-        background: rgba(0, 0, 0, 0.6);
       }
 
       html[data-theme="dark"] .upload-submit:disabled {
@@ -1321,7 +1327,7 @@
 
       html[data-theme="dark"] .download-link:hover {
         background: var(--color-accent);
-        color: #fff;
+        color: var(--color-on-accent);
       }
 
       /* ─── Responsive ─── */
