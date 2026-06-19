@@ -2,6 +2,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getAIClient, MODEL_ID } from './ai-client';
 import { getTagRegistry } from './tag-registry';
 import type { SuggestTagsRequest, SuggestTagsResponse } from 'shared';
+import { MAX_AI_SUGGESTED_TAGS } from 'shared';
 
 /** Maximum characters of README content sent to the model. */
 const MAX_README_INPUT_LENGTH = 10_000;
@@ -65,7 +66,7 @@ function extractJson(content: string): { tags: unknown } | null {
  * - Returns empty array on any error (never throws)
  *
  * @param readme - The README content to analyze
- * @returns Array of suggested tag strings (0-10 items, all from registry)
+ * @returns Array of suggested tag strings (0-25 items, all from registry)
  */
 export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
   try {
@@ -88,7 +89,7 @@ export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
     }
 
     // Build prompt (same format as the handler)
-    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing a "tags" field with an array of up to 10 suggested tags. Only suggest tags from the available tags list.`;
+    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing a "tags" field with an array of up to ${MAX_AI_SUGGESTED_TAGS} suggested tags. Only suggest tags from the available tags list.`;
 
     console.log(`[suggest-tags] suggestTagsFromReadme: Invoking model: ${MODEL_ID}`);
 
@@ -126,13 +127,13 @@ export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
         return [];
       }
 
-      // Filter to only tags present in registry (case-insensitive), cap at 10
+      // Filter to only tags present in registry (case-insensitive), cap at MAX_AI_SUGGESTED_TAGS
       const registryLower = new Set(registryTags.map((t) => t.toLowerCase()));
       const suggestedTags: string[] = parsed.tags
         .filter((tag: unknown): tag is string => typeof tag === 'string')
         .map((tag: string) => tag.toLowerCase())
         .filter((tag: string) => registryLower.has(tag))
-        .slice(0, 10);
+        .slice(0, MAX_AI_SUGGESTED_TAGS);
 
       console.log(`[suggest-tags] suggestTagsFromReadme: Suggesting ${suggestedTags.length} tags: ${suggestedTags.join(', ')}`);
 
@@ -192,7 +193,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     // 4. Build prompt and invoke AI model
-    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing a "tags" field with an array of up to 10 suggested tags. Only suggest tags from the available tags list.`;
+    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing a "tags" field with an array of up to ${MAX_AI_SUGGESTED_TAGS} suggested tags. Only suggest tags from the available tags list.`;
 
     console.log(`[suggest-tags] Invoking model: ${MODEL_ID}`);
 
@@ -234,13 +235,13 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
-    // 7. Filter to only tags present in registry (case-insensitive), cap at 10
+    // 7. Filter to only tags present in registry (case-insensitive), cap at MAX_AI_SUGGESTED_TAGS
     const registryLower = new Set(registryTags.map((t) => t.toLowerCase()));
     const suggestedTags: string[] = parsed.tags
       .filter((tag: unknown): tag is string => typeof tag === 'string')
       .map((tag: string) => tag.toLowerCase())
       .filter((tag: string) => registryLower.has(tag))
-      .slice(0, 10);
+      .slice(0, MAX_AI_SUGGESTED_TAGS);
 
     console.log(`[suggest-tags] Suggesting ${suggestedTags.length} tags: ${suggestedTags.join(', ')}`);
 

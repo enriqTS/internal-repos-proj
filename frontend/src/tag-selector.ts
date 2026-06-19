@@ -8,7 +8,7 @@ export interface TagSelectorOptions {
   container: HTMLElement;
   /** Callback fired whenever the selected tags change */
   onChange: (selectedTags: string[]) => void;
-  /** Maximum number of tags that can be selected */
+  /** Maximum number of tags that can be selected (0 = unlimited) */
   maxTags: number;
 }
 
@@ -44,6 +44,7 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
   let userInteracted = false;
   let suggestedTags: Set<string> = new Set();
   let expanded = false;
+  let isRendering = false;
 
   // DOM elements
   const root = document.createElement('div');
@@ -136,9 +137,9 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
     if (relatedTarget && root.contains(relatedTarget)) {
       return;
     }
-    // Don't auto-collapse if toggle was clicked
+    // Don't auto-collapse if toggle was clicked or during re-render
     setTimeout(() => {
-      if (!root.contains(document.activeElement)) {
+      if (!root.contains(document.activeElement) && !isRendering) {
         collapse();
       }
     }, 150);
@@ -197,9 +198,10 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
   }
 
   function render(): void {
+    isRendering = true;
     tagListEl.innerHTML = '';
 
-    const atLimit = selectedTags.size >= maxTags;
+    const atLimit = maxTags > 0 && selectedTags.size >= maxTags;
     limitMsg.hidden = !atLimit;
 
     for (const tag of availableTags) {
@@ -230,6 +232,7 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
     }
 
     updateToggleText();
+    isRendering = false;
   }
 
   function updateToggleText(): void {
@@ -247,7 +250,7 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
       // Remove suggested indicator when manually toggled
       suggestedTags.delete(tag);
     } else {
-      if (selectedTags.size >= maxTags) {
+      if (maxTags > 0 && selectedTags.size >= maxTags) {
         // Limit reached — do nothing
         return;
       }
@@ -283,7 +286,7 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
 
     // Apply suggestions: select the given tags and mark them as suggested
     for (const tag of tags) {
-      if (availableTags.includes(tag) && selectedTags.size < maxTags) {
+      if (availableTags.includes(tag) && (maxTags === 0 || selectedTags.size < maxTags)) {
         selectedTags.add(tag);
         suggestedTags.add(tag);
       }

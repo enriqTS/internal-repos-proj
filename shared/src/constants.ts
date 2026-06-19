@@ -43,8 +43,11 @@ export const PROJECT_NAME_REGEX = /^[a-zA-Z0-9_-]+$/;
 /** Maximum length for a project name */
 export const MAX_PROJECT_NAME_LENGTH = 64;
 
-/** Maximum number of tags per project */
-export const MAX_TAGS_COUNT = 10;
+/** Maximum number of tags per project (server-side hard limit) */
+export const MAX_TAGS_COUNT = 50;
+
+/** Maximum number of tags AI can suggest */
+export const MAX_AI_SUGGESTED_TAGS = 25;
 
 /** Maximum length for a single tag */
 export const MAX_TAG_LENGTH = 32;
