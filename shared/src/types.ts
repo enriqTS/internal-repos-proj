@@ -25,6 +25,8 @@ export interface ProjectMetadata {
   description: string;
   tags: string[];
   date: string;
+  /** Optional repository URL extracted from .git/config or manually provided */
+  repositoryUrl?: string;
 }
 
 /**
@@ -139,6 +141,8 @@ export interface EditRequest {
   tags?: string[];
   /** Updated readme content (optional). Max 50,000 chars */
   readme?: string;
+  /** Repository URL (optional). Must be a valid HTTP(S) URL, max 2048 chars */
+  repositoryUrl?: string;
 }
 
 /**

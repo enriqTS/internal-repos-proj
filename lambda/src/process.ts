@@ -12,6 +12,88 @@ import type { FinalizeRequest, FinalizeResponse, SessionMetadata, FileEntry, Pro
 
 const s3Client = new S3Client({});
 
+/**
+ * Extract the remote origin URL from a .git/config file content.
+ * Parses the INI-style format to find [remote "origin"] url = <value>.
+ * Converts SSH URLs to HTTPS and strips embedded credentials for safety.
+ * Returns undefined if no valid URL is found.
+ */
+export function extractGitRemoteUrl(gitConfigContent: string): string | undefined {
+  const lines = gitConfigContent.split('\n');
+  let inRemoteOrigin = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Detect [remote "origin"] section
+    if (/^\[remote\s+"origin"\]$/i.test(trimmed)) {
+      inRemoteOrigin = true;
+      continue;
+    }
+
+    // Detect start of another section
+    if (trimmed.startsWith('[') && inRemoteOrigin) {
+      break;
+    }
+
+    // Parse url = <value> within [remote "origin"]
+    if (inRemoteOrigin) {
+      const match = trimmed.match(/^url\s*=\s*(.+)$/i);
+      if (match) {
+        let url = match[1].trim();
+        url = normalizeGitUrl(url);
+        return url || undefined;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Normalize a git URL to a clean HTTPS browsable URL.
+ * - Converts SSH format (git@host:user/repo.git) to https://host/user/repo
+ * - Strips .git suffix
+ * - Strips embedded credentials (https://user:token@host/...)
+ * - Returns empty string if the URL format is unrecognized
+ */
+export function normalizeGitUrl(url: string): string {
+  // Handle SSH format: git@github.com:user/repo.git
+  const sshMatch = url.match(/^git@([^:]+):(.+)$/);
+  if (sshMatch) {
+    const host = sshMatch[1];
+    const path = sshMatch[2].replace(/\.git$/, '');
+    return `https://${host}/${path}`;
+  }
+
+  // Handle HTTPS/HTTP URLs
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      // Strip credentials
+      parsed.username = '';
+      parsed.password = '';
+      // Strip .git suffix from pathname
+      parsed.pathname = parsed.pathname.replace(/\.git$/, '');
+      // Force HTTPS
+      parsed.protocol = 'https:';
+      return parsed.toString();
+    }
+  } catch {
+    // Not a valid URL
+  }
+
+  // Handle ssh:// format: ssh://git@github.com/user/repo.git
+  const sshProtoMatch = url.match(/^ssh:\/\/[^@]*@?([^/]+)\/(.+)$/);
+  if (sshProtoMatch) {
+    const host = sshProtoMatch[1];
+    const path = sshProtoMatch[2].replace(/\.git$/, '');
+    return `https://${host}/${path}`;
+  }
+
+  return '';
+}
+
 /** Standard CORS headers included in every response. */
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -123,6 +205,20 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       }
     }
 
+    // 4.5: Extract git remote URL from .git/config (before filtering strips it)
+    let repositoryUrl: string | undefined;
+    const gitConfigEntry = files.find(
+      (f) => f.path === '.git/config' || f.path.endsWith('/.git/config')
+    );
+    if (gitConfigEntry) {
+      try {
+        const configContent = gitConfigEntry.content.toString('utf-8');
+        repositoryUrl = extractGitRemoteUrl(configContent);
+      } catch {
+        // Ignore parse errors — repositoryUrl stays undefined
+      }
+    }
+
     // 5. Apply server-side filtering
     const filterResult = filterFiles(files);
 
@@ -192,6 +288,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
           ? sessionMeta.tags.split(',').map(t => t.trim()).filter(t => t.length > 0)
           : autoTags,
         date: new Date().toISOString().split('T')[0],
+        ...(repositoryUrl && { repositoryUrl }),
       };
 
       await writeProject({

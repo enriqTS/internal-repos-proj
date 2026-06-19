@@ -4,6 +4,7 @@ import {
   MAX_TAGS_COUNT,
   MAX_TAG_LENGTH,
   MAX_README_LENGTH,
+  MAX_REPOSITORY_URL_LENGTH,
   TAG_PATTERN,
   TagInput,
   EditRequest,
@@ -100,8 +101,8 @@ export function validateTagInputs(tags: TagInput[], registry: string[]): string 
  */
 export function validateEditRequest(data: EditRequest): string | null {
   // At least one updatable field must be present
-  if (data.name === undefined && data.tags === undefined && data.readme === undefined) {
-    return 'At least one field (name, tags, readme) must be provided';
+  if (data.name === undefined && data.tags === undefined && data.readme === undefined && data.repositoryUrl === undefined) {
+    return 'At least one field (name, tags, readme, repositoryUrl) must be provided';
   }
 
   // Validate name if provided
@@ -139,6 +140,21 @@ export function validateEditRequest(data: EditRequest): string | null {
   if (data.readme !== undefined) {
     if (data.readme.length > MAX_README_LENGTH) {
       return `Readme content must be at most ${MAX_README_LENGTH} characters.`;
+    }
+  }
+
+  // Validate repositoryUrl if provided (empty string is allowed — it clears the field)
+  if (data.repositoryUrl !== undefined && data.repositoryUrl !== '') {
+    if (data.repositoryUrl.length > MAX_REPOSITORY_URL_LENGTH) {
+      return `Repository URL must be at most ${MAX_REPOSITORY_URL_LENGTH} characters.`;
+    }
+    try {
+      const parsed = new URL(data.repositoryUrl);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return 'Repository URL must use HTTPS or HTTP protocol.';
+      }
+    } catch {
+      return 'Repository URL must be a valid URL.';
     }
   }
 

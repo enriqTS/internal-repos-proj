@@ -69,3 +69,6 @@ export const TAG_PATTERN = /^[a-z0-9_-]+$/;
 
 /** Maximum number of entries in the tag registry */
 export const MAX_REGISTRY_SIZE = 500;
+
+/** Maximum length for a repository URL */
+export const MAX_REPOSITORY_URL_LENGTH = 2048;

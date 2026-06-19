@@ -27,17 +27,19 @@ import JSZip from 'jszip';
 export interface EditValidationErrors {
   readme?: string;
   files?: string;
+  repositoryUrl?: string;
 }
 
 /**
  * Validate the edit form fields client-side before submission.
  * Tags are validated by TagSelector component. Name is not editable in edit form.
- * Only readme length and optional files are validated here.
+ * Only readme length, optional files, and repository URL are validated here.
  */
 export function validateEditForm(
   readme: string,
   files: FileList | null,
   hasFiles: boolean,
+  repositoryUrl?: string,
 ): EditValidationErrors {
   const errors: EditValidationErrors = {};
 
@@ -48,6 +50,22 @@ export function validateEditForm(
   // If user selected a folder, it must contain at least one file
   if (hasFiles && (!files || files.length === 0)) {
     errors.files = 'Selected folder contains no files';
+  }
+
+  // Validate repository URL if provided
+  if (repositoryUrl && repositoryUrl.length > 0) {
+    if (repositoryUrl.length > 2048) {
+      errors.repositoryUrl = 'Repository URL must be at most 2048 characters';
+    } else {
+      try {
+        const parsed = new URL(repositoryUrl);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+          errors.repositoryUrl = 'Repository URL must use HTTPS or HTTP';
+        }
+      } catch {
+        errors.repositoryUrl = 'Please enter a valid URL';
+      }
+    }
   }
 
   return errors;
@@ -124,6 +142,31 @@ export async function renderEditForm(
   nameDisplay.className = 'edit-name-display';
   nameGroup.appendChild(nameDisplay);
   form.appendChild(nameGroup);
+
+  // Repository URL field
+  const repoGroup = document.createElement('div');
+  repoGroup.className = 'form-group';
+
+  const repoLabel = document.createElement('label');
+  repoLabel.htmlFor = 'edit-repository-url';
+  repoLabel.textContent = 'Repository URL (optional)';
+  repoGroup.appendChild(repoLabel);
+
+  const repoInput = document.createElement('input');
+  repoInput.type = 'url';
+  repoInput.id = 'edit-repository-url';
+  repoInput.name = 'edit-repository-url';
+  repoInput.placeholder = 'https://github.com/org/repo';
+  repoInput.value = metadata.repositoryUrl ?? '';
+  repoInput.maxLength = 2048;
+  repoGroup.appendChild(repoInput);
+
+  const repoErrorEl = document.createElement('span');
+  repoErrorEl.className = 'field-error';
+  repoErrorEl.setAttribute('aria-live', 'polite');
+  repoGroup.appendChild(repoErrorEl);
+
+  form.appendChild(repoGroup);
 
   // Tags field — Tag Selector component
   const tagsGroupWrapper = document.createElement('div');
@@ -244,16 +287,19 @@ export async function renderEditForm(
     statusEl.className = 'upload-status';
     readmeErrorEl.textContent = '';
     filesErrorEl.textContent = '';
+    repoErrorEl.textContent = '';
 
     const readme = readmeTextarea.value;
     const files = filesInput.files;
     const hasFiles = files !== null && files.length > 0;
+    const repoUrl = repoInput.value.trim();
 
     // Client-side validation
-    const errors = validateEditForm(readme, files, hasFiles);
+    const errors = validateEditForm(readme, files, hasFiles, repoUrl);
     if (Object.keys(errors).length > 0) {
       if (errors.readme) readmeErrorEl.textContent = errors.readme;
       if (errors.files) filesErrorEl.textContent = errors.files;
+      if (errors.repositoryUrl) repoErrorEl.textContent = errors.repositoryUrl;
       return;
     }
 
@@ -341,8 +387,8 @@ export async function renderEditForm(
 
       // Now handle metadata PATCH
       const patchBody = computePatchBody(
-        { name: metadata.name, tags: metadata.tags, readme: currentReadme },
-        { name: metadata.name, tags: selectedTags, readme },
+        { name: metadata.name, tags: metadata.tags, readme: currentReadme, repositoryUrl: metadata.repositoryUrl ?? '' },
+        { name: metadata.name, tags: selectedTags, readme, repositoryUrl: repoUrl },
       );
 
       if (patchBody) {

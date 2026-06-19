@@ -104,7 +104,7 @@ describe('validateEditRequest', () => {
   });
 
   it('returns error when no fields are provided', () => {
-    expect(validateEditRequest({})).toBe('At least one field (name, tags, readme) must be provided');
+    expect(validateEditRequest({})).toBe('At least one field (name, tags, readme, repositoryUrl) must be provided');
   });
 
   it('returns error when name is empty string', () => {

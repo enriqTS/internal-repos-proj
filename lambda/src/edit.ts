@@ -55,6 +55,15 @@ export function mergeMetadata(existing: ProjectMetadata, request: EditRequest): 
     merged.tags = request.tags;
   }
 
+  if (request.repositoryUrl !== undefined) {
+    // Empty string clears the field
+    if (request.repositoryUrl === '') {
+      delete merged.repositoryUrl;
+    } else {
+      merged.repositoryUrl = request.repositoryUrl;
+    }
+  }
+
   let readme: string | undefined;
 
   if (request.readme !== undefined) {

@@ -374,10 +374,10 @@ export async function deleteProject(name: string): Promise<ApiResult<DeleteRespo
  * @returns Object containing only the modified fields, or null if nothing changed
  */
 export function computePatchBody(
-  original: { name: string; tags: string[]; readme: string },
-  edited: { name: string; tags: string[]; readme: string }
-): { name?: string; tags?: string[]; readme?: string } | null {
-  const patch: { name?: string; tags?: string[]; readme?: string } = {};
+  original: { name: string; tags: string[]; readme: string; repositoryUrl?: string },
+  edited: { name: string; tags: string[]; readme: string; repositoryUrl?: string }
+): { name?: string; tags?: string[]; readme?: string; repositoryUrl?: string } | null {
+  const patch: { name?: string; tags?: string[]; readme?: string; repositoryUrl?: string } = {};
 
   if (edited.name !== original.name) {
     patch.name = edited.name;
@@ -395,6 +395,13 @@ export function computePatchBody(
 
   if (edited.readme !== original.readme) {
     patch.readme = edited.readme;
+  }
+
+  // Compare repositoryUrl (treat undefined and '' as equivalent for "no URL")
+  const originalRepo = original.repositoryUrl ?? '';
+  const editedRepo = edited.repositoryUrl ?? '';
+  if (editedRepo !== originalRepo) {
+    patch.repositoryUrl = editedRepo;
   }
 
   return Object.keys(patch).length > 0 ? patch : null;

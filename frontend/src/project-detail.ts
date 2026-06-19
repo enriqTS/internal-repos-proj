@@ -159,6 +159,20 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
   dateEl.setAttribute('datetime', metadata.date);
   section.appendChild(dateEl);
 
+  // Repository link (if available)
+  if (metadata.repositoryUrl) {
+    const repoEl = document.createElement('div');
+    repoEl.className = 'project-repository';
+    const repoLink = document.createElement('a');
+    repoLink.href = metadata.repositoryUrl;
+    repoLink.textContent = metadata.repositoryUrl;
+    repoLink.target = '_blank';
+    repoLink.rel = 'noopener noreferrer';
+    repoLink.className = 'repository-link';
+    repoEl.appendChild(repoLink);
+    section.appendChild(repoEl);
+  }
+
   // Project actions (Edit and Delete buttons)
   const actionsEl = document.createElement('div');
   actionsEl.className = 'project-actions';
