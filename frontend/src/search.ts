@@ -2,7 +2,7 @@ import Fuse, { type IFuseOptions } from 'fuse.js';
 import type { ProjectIndexEntry, SearchIndex } from 'shared/types';
 import { createTagFilter, type TagFilterAPI } from './tag-filter';
 import { createPaginator, type PaginatorAPI } from './paginator';
-import { formatRelativeDate } from './relative-date';
+import { renderCardGrid, type CardItem } from './card-grid';
 
 /**
  * Fuse.js configuration for fuzzy searching project entries.
@@ -102,71 +102,26 @@ export function debounce<T extends (...args: unknown[]) => void>(
 
 /**
  * Render search results into the given container element.
- * Displays project cards with name, description, tags, relative date,
- * and keyboard navigation support.
+ * Uses the shared card grid component to display project cards with
+ * name, description, tags, relative date, and keyboard navigation support.
  * Shows a "No results found" message when results are empty.
  */
 export function renderResults(results: SearchResult[], container: HTMLElement): void {
-  container.innerHTML = '';
+  const items: CardItem[] = results.map((result) => ({
+    name: result.item.name,
+    description: result.item.description,
+    tags: result.item.tags,
+    date: result.item.date,
+  }));
 
-  if (results.length === 0) {
-    const noResults = document.createElement('p');
-    noResults.className = 'no-results';
-    noResults.textContent = 'No results found';
-    container.appendChild(noResults);
-    return;
-  }
-
-  const list = document.createElement('ul');
-  list.className = 'results-list';
-
-  for (const result of results) {
-    const { item } = result;
-
-    const li = document.createElement('li');
-    li.className = 'result-item';
-    li.setAttribute('tabindex', '0');
-    li.setAttribute('role', 'link');
-    li.setAttribute('aria-label', `View project ${item.name}`);
-
-    li.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        window.location.hash = `#/project/${encodeURIComponent(item.name)}`;
-      }
-    });
-
-    const nameEl = document.createElement('h3');
-    nameEl.className = 'result-name';
-    nameEl.textContent = item.name;
-
-    const descEl = document.createElement('p');
-    descEl.className = 'result-description';
-    descEl.textContent = item.description;
-
-    const tagsEl = document.createElement('div');
-    tagsEl.className = 'result-tags';
-    for (const tag of item.tags) {
-      const tagSpan = document.createElement('span');
-      tagSpan.className = 'tag';
-      tagSpan.textContent = tag;
-      tagsEl.appendChild(tagSpan);
-    }
-
-    const dateEl = document.createElement('time');
-    dateEl.className = 'result-date';
-    dateEl.textContent = formatRelativeDate(item.date);
-    dateEl.setAttribute('title', item.date);
-    dateEl.setAttribute('datetime', item.date);
-
-    li.appendChild(nameEl);
-    li.appendChild(descEl);
-    li.appendChild(tagsEl);
-    li.appendChild(dateEl);
-    list.appendChild(li);
-  }
-
-  container.appendChild(list);
+  renderCardGrid(items, {
+    container,
+    ariaLabelPrefix: 'View project',
+    breakpoints: { sm: 640, md: 1024 },
+    onCardActivate: (item: CardItem) => {
+      window.location.hash = `#/project/${encodeURIComponent(item.name)}`;
+    },
+  });
 }
 
 /**
