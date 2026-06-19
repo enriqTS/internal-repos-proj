@@ -8,6 +8,7 @@ import { initializeSearch, setupSearch, search, renderResults } from './search';
 import { renderProjectDetail } from './project-detail';
 import { renderUploadForm } from './upload-form';
 import { renderEditForm } from './edit-form';
+import { createThemeManager, createThemeToggle } from './theme-manager';
 
 import { searchIndexLoaded, markSearchIndexLoaded, invalidateSearchIndex } from './search-state';
 
@@ -149,6 +150,15 @@ function init(): void {
   if (!appContainer) {
     throw new Error('Missing #app container element');
   }
+
+  // Initialize theme manager and inject toggle button into the nav
+  const themeManager = createThemeManager();
+  const themeToggle = createThemeToggle(themeManager);
+  const nav = document.querySelector('header nav');
+  if (nav) {
+    nav.appendChild(themeToggle);
+  }
+  themeManager.startListening();
 
   const router = createRouter(routes, appContainer);
   router.start();
