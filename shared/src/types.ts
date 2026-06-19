@@ -171,6 +171,46 @@ export interface DeleteResponse {
   name: string;
 }
 
+// ─── Template Types ───────────────────────────────────────────────────────────
+
+/**
+ * Represents a single template entry in the template index (templates-index.json).
+ */
+export interface TemplateIndexEntry {
+  /** Template name: 1–64 chars, pattern /^[a-zA-Z0-9_-]+$/ */
+  name: string;
+  /** Description: 0–200 chars */
+  description: string;
+  /** Tags: 0–50 items, each 1–32 chars matching /^[a-z0-9_-]+$/ */
+  tags: string[];
+  /** ISO 8601 date: "YYYY-MM-DD" */
+  date: string;
+  /** S3 path prefix: "templates/{name}/" */
+  path: string;
+}
+
+/** The full template index is an array of template entries. */
+export type TemplateIndex = TemplateIndexEntry[];
+
+/**
+ * Per-template metadata stored in templates/{name}/metadata.json.
+ * Contains the same fields as TemplateIndexEntry (minus path) plus an optional language field.
+ */
+export interface TemplateMetadata {
+  /** Template name: 1–64 chars, pattern /^[a-zA-Z0-9_-]+$/ */
+  name: string;
+  /** Description: 0–200 chars */
+  description: string;
+  /** Tags: 0–50 items, each 1–32 chars matching /^[a-z0-9_-]+$/ */
+  tags: string[];
+  /** ISO 8601 date: "YYYY-MM-DD" */
+  date: string;
+  /** Optional primary programming language or framework name: 0–64 chars */
+  language?: string;
+}
+
+// ─── Tag Suggestion Types ────────────────────────────────────────────────────
+
 /**
  * Request body for POST /tags/suggest.
  */
