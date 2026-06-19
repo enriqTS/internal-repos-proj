@@ -149,6 +149,7 @@ export function setupSearch(
 
   const paginator: PaginatorAPI = createPaginator({
     container: paginatorContainer,
+    pageSize: 8,
     onPageChange: (_page: number) => {
       // Re-render results for the new page
       const { start, end } = paginator.getSliceRange();

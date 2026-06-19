@@ -30,6 +30,7 @@ function injectStyles(sm: number, md: number): void {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
+  max-height: none;
 }
 
 @media (min-width: ${sm}px) {
@@ -40,7 +41,7 @@ function injectStyles(sm: number, md: number): void {
 
 @media (min-width: ${md}px) {
   .card-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 

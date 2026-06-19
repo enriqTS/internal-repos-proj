@@ -10,7 +10,7 @@ import { renderCardGrid, type CardItem } from './card-grid';
 import { createTagFilter, type TagFilterAPI } from './tag-filter';
 import { createPaginator, type PaginatorAPI } from './paginator';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 8;
 
 const fuseOptions: IFuseOptions<TemplateIndexEntry> = {
   keys: ['name', 'description', 'tags'],
