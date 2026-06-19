@@ -17,6 +17,42 @@ const CORS_HEADERS = {
 };
 
 /**
+ * Safely extract a JSON object containing a "tags" array from AI model output.
+ * Handles markdown code fences, trailing text, and other common quirks.
+ * Uses a non-greedy approach to find the first valid JSON object with a "tags" field.
+ */
+function extractJson(content: string): { tags: unknown } | null {
+  // Strip markdown code fences if present
+  const stripped = content.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '');
+
+  // Find the first '{' and attempt to parse progressively to find valid JSON
+  const startIdx = stripped.indexOf('{');
+  if (startIdx === -1) return null;
+
+  // Walk through the string tracking brace depth to find the matching closing brace
+  let depth = 0;
+  for (let i = startIdx; i < stripped.length; i++) {
+    if (stripped[i] === '{') depth++;
+    else if (stripped[i] === '}') {
+      depth--;
+      if (depth === 0) {
+        const candidate = stripped.slice(startIdx, i + 1);
+        try {
+          const parsed = JSON.parse(candidate);
+          if (parsed && typeof parsed === 'object' && 'tags' in parsed) {
+            return parsed;
+          }
+        } catch {
+          // Not valid JSON at this closing brace, continue looking
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Suggest tags for a project based on its README content.
  * Designed for direct invocation within the Finalize_Lambda (no HTTP).
  *
@@ -81,12 +117,10 @@ export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
       }
 
       // Extract JSON from the content (handle markdown code blocks)
-      const jsonMatch = content.match(/\{[\s\S]*"tags"[\s\S]*\}/);
-      if (!jsonMatch) {
+      const parsed = extractJson(content);
+      if (!parsed) {
         return [];
       }
-
-      const parsed = JSON.parse(jsonMatch[0]);
 
       if (!parsed.tags || !Array.isArray(parsed.tags)) {
         return [];
@@ -183,16 +217,14 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     // 6. Extract JSON from the content (handle markdown code blocks)
-    const jsonMatch = content.match(/\{[\s\S]*"tags"[\s\S]*\}/);
-    if (!jsonMatch) {
+    const parsed = extractJson(content);
+    if (!parsed) {
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
         body: JSON.stringify({ tags: [] } satisfies SuggestTagsResponse),
       };
     }
-
-    const parsed = JSON.parse(jsonMatch[0]);
 
     if (!parsed.tags || !Array.isArray(parsed.tags)) {
       return {
