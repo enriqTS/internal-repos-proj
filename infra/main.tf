@@ -114,6 +114,12 @@ resource "aws_cloudfront_distribution" "frontend" {
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
   }
 
+  origin {
+    domain_name              = aws_s3_bucket.templates.bucket_regional_domain_name
+    origin_id                = "S3-${aws_s3_bucket.templates.id}"
+    origin_access_control_id = aws_cloudfront_origin_access_control.templates.id
+  }
+
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
@@ -197,6 +203,72 @@ resource "aws_cloudfront_distribution" "frontend" {
     max_ttl     = 0
   }
 
+  # No-cache behavior for templates-index.json — must always be fresh after
+  # template mutations.
+  ordered_cache_behavior {
+    path_pattern           = "templates-index.json"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${aws_s3_bucket.templates.id}"
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
+  # No-cache behavior for template metadata.json files — must always be
+  # fresh for the template detail page.
+  ordered_cache_behavior {
+    path_pattern           = "templates/*/metadata.json"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${aws_s3_bucket.templates.id}"
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
+  # Default caching behavior for all other template paths (e.g. template
+  # archives, readmes, source files).
+  ordered_cache_behavior {
+    path_pattern           = "templates/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${aws_s3_bucket.templates.id}"
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+  }
+
   # SPA routing: return index.html for 403 errors (missing S3 keys)
   custom_error_response {
     error_code            = 403
@@ -230,6 +302,68 @@ resource "aws_cloudfront_distribution" "frontend" {
     Name    = "internal-repos-cdn"
     Project = "internal-repos"
   }
+}
+
+# ------------------------------------------------------------------------------
+# S3 Bucket - Templates
+# ------------------------------------------------------------------------------
+
+resource "aws_s3_bucket" "templates" {
+  bucket = "${var.bucket_name_prefix}-templates"
+
+  tags = {
+    Name    = "internal-repos-templates"
+    Project = "internal-repos"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "templates" {
+  bucket = aws_s3_bucket.templates.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# ------------------------------------------------------------------------------
+# CloudFront Origin Access Control - Templates
+# ------------------------------------------------------------------------------
+
+resource "aws_cloudfront_origin_access_control" "templates" {
+  name                              = "${var.bucket_name_prefix}-templates-oac"
+  description                       = "OAC for internal-repos templates S3 bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+# ------------------------------------------------------------------------------
+# S3 Bucket Policy - Allow CloudFront OAC read access to Templates
+# ------------------------------------------------------------------------------
+
+resource "aws_s3_bucket_policy" "templates" {
+  bucket = aws_s3_bucket.templates.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudFrontServicePrincipalRead"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action   = "s3:GetObject"
+        Resource = "${aws_s3_bucket.templates.arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_cloudfront_distribution.frontend.arn
+          }
+        }
+      }
+    ]
+  })
 }
 
 # ------------------------------------------------------------------------------
