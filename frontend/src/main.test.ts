@@ -65,6 +65,20 @@ vi.mock('jszip', () => {
   };
 });
 
+vi.mock('./theme-manager', () => {
+  const mockManager = {
+    getTheme: vi.fn(() => 'light'),
+    toggle: vi.fn(() => 'dark'),
+    setTheme: vi.fn(),
+    startListening: vi.fn(),
+    stopListening: vi.fn(),
+  };
+  return {
+    createThemeManager: vi.fn(() => mockManager),
+    createThemeToggle: vi.fn(() => document.createElement('button')),
+  };
+});
+
 describe('Bug Condition: searchIndexLoaded reset after mutations', () => {
   let container: HTMLElement;
 
