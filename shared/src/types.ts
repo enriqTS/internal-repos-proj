@@ -76,6 +76,8 @@ export interface InitiateRequest {
   readme?: string;
   /** Upload mode: 'create' for new projects, 'replace' for artifact replacement */
   mode?: 'create' | 'replace';
+  /** Optional repository URL, extracted client-side from .git/config or provided manually */
+  repositoryUrl?: string;
 }
 
 /**
@@ -128,6 +130,8 @@ export interface SessionMetadata {
   newTags?: string[];
   /** Upload mode: 'create' for new projects, 'replace' for artifact replacement */
   mode?: 'create' | 'replace';
+  /** Repository URL extracted from .git/config or provided by user */
+  repositoryUrl?: string;
 }
 
 /**

@@ -149,6 +149,104 @@ export function filterFileList(files: FileList): File[] {
 }
 
 /**
+ * Extract the git remote origin URL from the .git/config file in a FileList.
+ * Looks for a file at the root-level .git/config path (e.g., "FolderName/.git/config").
+ * Parses the INI-style format and normalizes SSH/HTTPS URLs.
+ * Returns undefined if no .git/config is found or no remote origin exists.
+ */
+export async function extractGitRemoteFromFiles(files: FileList): Promise<string | undefined> {
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const relativePath = file.webkitRelativePath || file.name;
+    const parts = relativePath.split('/');
+    // Match "TopFolder/.git/config" (3 parts) only
+    if (parts.length === 3 && parts[1] === '.git' && parts[2] === 'config') {
+      try {
+        const content = await file.text();
+        return parseGitConfigRemoteUrl(content);
+      } catch {
+        return undefined;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Parse a .git/config file content and extract the remote origin URL.
+ * Converts SSH URLs to HTTPS and strips credentials.
+ */
+export function parseGitConfigRemoteUrl(content: string): string | undefined {
+  const lines = content.split('\n');
+  let inRemoteOrigin = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (/^\[remote\s+"origin"\]$/i.test(trimmed)) {
+      inRemoteOrigin = true;
+      continue;
+    }
+
+    if (trimmed.startsWith('[') && inRemoteOrigin) {
+      break;
+    }
+
+    if (inRemoteOrigin) {
+      const match = trimmed.match(/^url\s*=\s*(.+)$/i);
+      if (match) {
+        let url = match[1].trim();
+        url = normalizeGitUrl(url);
+        return url || undefined;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Normalize a git URL to a clean HTTPS browsable URL.
+ * - Converts SSH format (git@host:user/repo.git) to https://host/user/repo
+ * - Strips .git suffix
+ * - Strips embedded credentials
+ * - Returns empty string if the URL format is unrecognized
+ */
+function normalizeGitUrl(url: string): string {
+  // Handle SSH format: git@github.com:user/repo.git
+  const sshMatch = url.match(/^git@([^:]+):(.+)$/);
+  if (sshMatch) {
+    const host = sshMatch[1];
+    const path = sshMatch[2].replace(/\.git$/, '');
+    return `https://${host}/${path}`;
+  }
+
+  // Handle HTTPS/HTTP URLs
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      parsed.username = '';
+      parsed.password = '';
+      parsed.pathname = parsed.pathname.replace(/\.git$/, '');
+      parsed.protocol = 'https:';
+      return parsed.toString();
+    }
+  } catch {
+    // Not a valid URL
+  }
+
+  // Handle ssh:// format
+  const sshProtoMatch = url.match(/^ssh:\/\/[^@]*@?([^/]+)\/(.+)$/);
+  if (sshProtoMatch) {
+    const host = sshProtoMatch[1];
+    const path = sshProtoMatch[2].replace(/\.git$/, '');
+    return `https://${host}/${path}`;
+  }
+
+  return '';
+}
+
+/**
  * Scans a FileList for a root-level README file using webkitRelativePath.
  * Root level means the file's relative path has exactly one path separator
  * (e.g., "folderName/README.md").
@@ -291,6 +389,13 @@ export function renderUploadForm(container: HTMLElement): void {
   });
   form.appendChild(nameGroup.wrapper);
 
+  // --- 2.5. Repository URL field ---
+  const repoGroup = createFieldGroup('project-repository-url', 'Repository URL (optional)', 'url', {
+    maxLength: 2048,
+    placeholder: 'https://github.com/org/repo',
+  });
+  form.appendChild(repoGroup.wrapper);
+
   // --- 3. Tags field — Tag Selector component ---
   const tagsGroupWrapper = document.createElement('div');
   tagsGroupWrapper.className = 'form-group';
@@ -430,6 +535,15 @@ export function renderUploadForm(container: HTMLElement): void {
         }
       }
 
+      // Auto-fill repository URL from .git/config if the field is empty
+      if (!repoGroup.input.value.trim()) {
+        extractGitRemoteFromFiles(files).then((url) => {
+          if (url && !repoGroup.input.value.trim()) {
+            repoGroup.input.value = url;
+          }
+        });
+      }
+
       handleReadmeAutofill(files, readmePreview, readmeNoticeContainer).then(() => {
         // After autofill completes, trigger tag suggestions
         requestTagSuggestions();
@@ -524,7 +638,10 @@ export function renderUploadForm(container: HTMLElement): void {
 
     // 4. Initiate upload with structured tags
     statusEl.textContent = 'Initiating upload...';
-    const initiateResult = await initiateUpload({ name: name.trim(), tags: tagInputs, readme });
+
+    // Use the repo URL from the form field (may have been auto-filled from .git/config or entered manually)
+    const repoUrl = repoGroup.input.value.trim();
+    const initiateResult = await initiateUpload({ name: name.trim(), tags: tagInputs, readme, ...(repoUrl && { repositoryUrl: repoUrl }) });
     if (!initiateResult.ok) {
       statusEl.textContent = initiateResult.error;
       statusEl.className = 'upload-status upload-status--error';

@@ -111,6 +111,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       createdAt: new Date().toISOString(),
       ...(newTags.length > 0 && { newTags }),
       ...(mode === 'replace' && { mode: 'replace' as const }),
+      ...(body.repositoryUrl && { repositoryUrl: body.repositoryUrl }),
     };
 
     await s3Client.send(

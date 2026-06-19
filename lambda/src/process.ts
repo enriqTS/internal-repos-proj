@@ -206,16 +206,19 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     // 4.5: Extract git remote URL from .git/config (before filtering strips it)
-    let repositoryUrl: string | undefined;
-    const gitConfigEntry = files.find(
-      (f) => f.path === '.git/config' || f.path.endsWith('/.git/config')
-    );
-    if (gitConfigEntry) {
-      try {
-        const configContent = gitConfigEntry.content.toString('utf-8');
-        repositoryUrl = extractGitRemoteUrl(configContent);
-      } catch {
-        // Ignore parse errors — repositoryUrl stays undefined
+    // Client-side URL from session metadata takes priority over server-side extraction
+    let repositoryUrl: string | undefined = sessionMeta.repositoryUrl;
+    if (!repositoryUrl) {
+      const gitConfigEntry = files.find(
+        (f) => f.path === '.git/config' || f.path.endsWith('/.git/config')
+      );
+      if (gitConfigEntry) {
+        try {
+          const configContent = gitConfigEntry.content.toString('utf-8');
+          repositoryUrl = extractGitRemoteUrl(configContent);
+        } catch {
+          // Ignore parse errors — repositoryUrl stays undefined
+        }
       }
     }
 
