@@ -7,6 +7,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <script>
+      // Inline theme resolution — prevents flash-of-incorrect-theme (FOIT).
+      // Must run synchronously before any styles/content render.
+      (function() {
+        var STORAGE_KEY = 'theme-preference';
+        var VALID_THEMES = ['light', 'dark'];
+        var theme = null;
+
+        try {
+          var stored = localStorage.getItem(STORAGE_KEY);
+          if (stored && VALID_THEMES.indexOf(stored) !== -1) {
+            theme = stored;
+          }
+        } catch (e) {
+          // localStorage unavailable (private browsing, disabled, etc.) — ignore
+        }
+
+        if (!theme) {
+          try {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          } catch (e) {
+            theme = 'light';
+          }
+        }
+
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
     <style>
       :root {
         --color-bg: #f4f2ef;
