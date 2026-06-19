@@ -49,12 +49,15 @@ function injectStyles(sm: number, md: number): void {
   background: var(--color-surface, #ffffff);
   border: 1px solid var(--color-border, #e2dfd9);
   border-radius: var(--radius-md, 8px);
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   cursor: pointer;
   transition: all var(--transition, 180ms ease);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.375rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .card-grid-item:hover {
@@ -75,47 +78,56 @@ function injectStyles(sm: number, md: number): void {
 
 .card-grid-item__name {
   font-family: var(--font-mono, monospace);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-text, #2c2a26);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-grid-item__description {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--color-text-muted, #6b6660);
-  line-height: 1.5;
+  line-height: 1.4;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 .card-grid-item__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: 0.3rem;
+  overflow: hidden;
+  flex: 1;
+  align-content: flex-start;
 }
 
 .card-grid-item__tag {
   font-family: var(--font-mono, monospace);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 500;
   background: var(--color-tag-bg, #eae7e2);
   color: var(--color-tag-text, #4a4640);
-  padding: 0.2rem 0.5rem;
+  padding: 0.15rem 0.4rem;
   border-radius: var(--radius-sm, 4px);
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .card-grid-item__date {
   font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-text-muted, #6b6660);
   opacity: 0.8;
   margin-top: auto;
+  flex-shrink: 0;
 }
 
 .card-grid-empty {
