@@ -145,6 +145,11 @@
         background: var(--color-accent-subtle);
       }
 
+      nav a.nav-active {
+        color: var(--color-accent);
+        background: var(--color-accent-subtle);
+      }
+
       /* ─── Main Container ─── */
       #app {
         max-width: 860px;
@@ -1433,8 +1438,9 @@
     <header>
       <h1><a href="#/">Internal Repos</a></h1>
       <nav aria-label="Main navigation">
-        <a href="#/">Search</a>
-        <a href="#/upload">Upload</a>
+        <a href="#/" data-nav="projects">Projects</a>
+        <a href="#/templates" data-nav="templates">Templates</a>
+        <a href="#/upload" data-nav="upload">Upload</a>
       </nav>
     </header>
     <main id="app"></main>
