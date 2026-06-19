@@ -9,6 +9,8 @@ import { renderProjectDetail } from './project-detail';
 import { renderUploadForm } from './upload-form';
 import { renderEditForm } from './edit-form';
 import { createThemeManager, createThemeToggle } from './theme-manager';
+import { renderTemplatesPage } from './templates-page';
+import { renderTemplateDetail } from './template-detail';
 
 import { searchIndexLoaded, markSearchIndexLoaded, invalidateSearchIndex } from './search-state';
 
@@ -137,10 +139,38 @@ const routes: Route[] = [
     handler: renderDetailView,
   },
   {
+    pattern: /^\/templates$/,
+    handler: renderTemplatesPage,
+  },
+  {
+    pattern: /^\/template\/(?<name>[^/]+)$/,
+    handler: renderTemplateDetail,
+  },
+  {
     pattern: /^\/upload$/,
     handler: renderUploadView,
   },
 ];
+
+/**
+ * Update the active navigation link based on the current hash.
+ * Applies `nav-active` class to the correct nav link and removes it from others.
+ */
+export function updateNavActive(): void {
+  const hash = window.location.hash.slice(1) || '/'; // remove '#', default to '/'
+  const navLinks = document.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Main navigation"] a[data-nav]');
+
+  navLinks.forEach((link) => {
+    link.classList.remove('nav-active');
+
+    const navId = link.getAttribute('data-nav');
+    if (navId === 'projects' && (hash === '/' || hash.startsWith('/project/'))) {
+      link.classList.add('nav-active');
+    } else if (navId === 'templates' && hash.startsWith('/templates')) {
+      link.classList.add('nav-active');
+    }
+  });
+}
 
 /**
  * Bootstrap the application.
@@ -159,6 +189,10 @@ function init(): void {
     nav.appendChild(themeToggle);
   }
   themeManager.startListening();
+
+  // Set initial active nav state and listen for route changes
+  updateNavActive();
+  window.addEventListener('hashchange', updateNavActive);
 
   const router = createRouter(routes, appContainer);
   router.start();
