@@ -1,4 +1,4 @@
-import type { SearchIndex, ProjectMetadata, InitiateRequest, InitiateResponse, FinalizeResponse, SuggestTagsResponse, EditResponse, DeleteResponse } from 'shared/types';
+import type { SearchIndex, ProjectMetadata, InitiateRequest, InitiateResponse, FinalizeResponse, SuggestTagsResponse, EditResponse, DeleteResponse, TemplateIndex, TemplateMetadata } from 'shared/types';
 
 /**
  * Typed API response wrapper.
@@ -405,4 +405,74 @@ export function computePatchBody(
   }
 
   return Object.keys(patch).length > 0 ? patch : null;
+}
+
+
+/**
+ * Fetch the template index (templates-index.json) from CloudFront.
+ * Returns the parsed TemplateIndex on success, or an error message on failure.
+ *
+ * When no templates exist yet, the file may not be present in S3. CloudFront's
+ * custom error response returns index.html (HTML) with a 200 status in that case.
+ * We detect non-JSON responses and treat them as an empty index rather than
+ * surfacing a confusing parse error.
+ */
+export async function fetchTemplateIndex(): Promise<ApiResult<TemplateIndex>> {
+  try {
+    const response = await fetch(`${getBaseUrl()}/templates-index.json`);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: `Failed to load template index (HTTP ${response.status})`,
+      };
+    }
+
+    const text = await response.text();
+
+    // If the response isn't JSON (e.g. CloudFront served index.html for a missing
+    // S3 key), treat it as an empty index instead of throwing a parse error.
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json') && !text.trimStart().startsWith('[')) {
+      return { ok: true, data: [] };
+    }
+
+    const data: TemplateIndex = JSON.parse(text);
+    return { ok: true, data };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error
+        ? `Failed to load template index: ${err.message}`
+        : 'Failed to load template index: unknown error',
+    };
+  }
+}
+
+/**
+ * Fetch a template's metadata.json by template name.
+ * @param name - The template name, e.g. "basic-lambda"
+ */
+export async function fetchTemplateMetadata(name: string): Promise<ApiResult<TemplateMetadata>> {
+  try {
+    const url = `${getBaseUrl()}/templates/${name}/metadata.json`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: `Failed to load template details (HTTP ${response.status})`,
+      };
+    }
+
+    const data: TemplateMetadata = await response.json();
+    return { ok: true, data };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error
+        ? `Failed to load template details: ${err.message}`
+        : 'Failed to load template details: unknown error',
+    };
+  }
 }
