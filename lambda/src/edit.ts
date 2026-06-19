@@ -232,6 +232,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
         Key: `${projectPath}metadata.json`,
         Body: JSON.stringify(mergedMetadata),
         ContentType: 'application/json',
+        CacheControl: 'max-age=0, no-cache, must-revalidate',
       })
     );
 

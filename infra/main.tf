@@ -175,6 +175,28 @@ resource "aws_cloudfront_distribution" "frontend" {
     max_ttl     = 0
   }
 
+  # No-cache behavior for project metadata.json files — these are written
+  # by Lambda on upload/edit and must always be fresh for the detail page.
+  ordered_cache_behavior {
+    path_pattern           = "projects/*/metadata.json"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${aws_s3_bucket.frontend.id}"
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
   # SPA routing: return index.html for 403 errors (missing S3 keys)
   custom_error_response {
     error_code            = 403
