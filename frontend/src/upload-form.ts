@@ -378,6 +378,17 @@ export function renderUploadForm(container: HTMLElement): void {
 
   // --- Tag suggestion logic ---
   let suggestionTimeout: ReturnType<typeof setTimeout> | null = null;
+  let tagSuggestionInFlight = false;
+
+  function updateSubmitState(): void {
+    if (tagSuggestionInFlight) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Suggesting tags...';
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Upload Project';
+    }
+  }
 
   /**
    * Request tag suggestions from the Lambda if conditions are met:
@@ -391,10 +402,15 @@ export function renderUploadForm(container: HTMLElement): void {
     const content = readmePreview.getValue();
     if (content.length >= 50 && tagSelector && !tagSelector.hasUserInteracted()) {
       suggestionTimeout = setTimeout(() => {
+        tagSuggestionInFlight = true;
+        updateSubmitState();
         suggestTags(content).then((result) => {
           if (result.ok && result.data.length > 0 && tagSelector && !tagSelector.hasUserInteracted()) {
             tagSelector.applySuggestions(result.data);
           }
+        }).finally(() => {
+          tagSuggestionInFlight = false;
+          updateSubmitState();
         });
       }, 500);
     }
