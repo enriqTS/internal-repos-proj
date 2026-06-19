@@ -54,7 +54,7 @@ function escapeHtml(html: string): string {
 export function createReadmePreview(options: ReadmePreviewOptions): ReadmePreviewAPI {
   const { container, markedInstance, textareaId, maxLength, placeholder, rows } = options;
 
-  let currentMode: 'edit' | 'preview' = 'edit';
+  let currentMode: 'edit' | 'preview' = 'preview';
 
   // --- Build DOM structure ---
 
@@ -69,17 +69,17 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
 
   const editBtn = document.createElement('button');
   editBtn.type = 'button';
-  editBtn.className = 'readme-toggle__btn readme-toggle__btn--active';
+  editBtn.className = 'readme-toggle__btn';
   editBtn.setAttribute('role', 'tab');
-  editBtn.setAttribute('aria-selected', 'true');
+  editBtn.setAttribute('aria-selected', 'false');
   editBtn.setAttribute('aria-controls', 'readme-edit-panel');
   editBtn.textContent = 'Edit';
 
   const previewBtn = document.createElement('button');
   previewBtn.type = 'button';
-  previewBtn.className = 'readme-toggle__btn';
+  previewBtn.className = 'readme-toggle__btn readme-toggle__btn--active';
   previewBtn.setAttribute('role', 'tab');
-  previewBtn.setAttribute('aria-selected', 'false');
+  previewBtn.setAttribute('aria-selected', 'true');
   previewBtn.setAttribute('aria-controls', 'readme-preview-panel');
   previewBtn.textContent = 'Preview';
 
@@ -87,10 +87,11 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   toggle.appendChild(previewBtn);
   root.appendChild(toggle);
 
-  // Edit panel (textarea)
+  // Edit panel (textarea) — hidden by default (preview mode is default)
   const editPanel = document.createElement('div');
   editPanel.id = 'readme-edit-panel';
   editPanel.setAttribute('role', 'tabpanel');
+  editPanel.hidden = true;
 
   const textarea = document.createElement('textarea');
   if (textareaId) {
@@ -109,16 +110,21 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   editPanel.appendChild(textarea);
   root.appendChild(editPanel);
 
-  // Preview panel
+  // Preview panel — visible by default
   const previewPanel = document.createElement('div');
   previewPanel.id = 'readme-preview-panel';
   previewPanel.setAttribute('role', 'tabpanel');
-  previewPanel.hidden = true;
 
   const previewContent = document.createElement('div');
   previewContent.className = 'readme-preview-content';
   previewPanel.appendChild(previewContent);
   root.appendChild(previewPanel);
+
+  // Render initial preview state (shows placeholder since textarea is empty)
+  const placeholderEl = document.createElement('p');
+  placeholderEl.className = 'readme-preview-placeholder';
+  placeholderEl.textContent = 'Nothing to preview';
+  previewContent.appendChild(placeholderEl);
 
   container.appendChild(root);
 
@@ -190,6 +196,10 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
 
   function setValue(content: string): void {
     textarea.value = content;
+    // If in preview mode, re-render the preview with new content
+    if (currentMode === 'preview') {
+      setPreviewMode();
+    }
   }
 
   function getTextarea(): HTMLTextAreaElement {

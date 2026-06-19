@@ -31,8 +31,8 @@ export interface TagSelectorAPI {
 }
 
 /**
- * Creates a Tag Selector component that renders available tags as clickable
- * buttons with selection toggling, new tag creation, and AI suggestion support.
+ * Creates a Tag Selector component that renders available tags as a collapsible
+ * dropdown with checkboxes, new tag creation, and AI suggestion support.
  */
 export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
   const { container, onChange, maxTags } = options;
@@ -43,39 +43,51 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
   let newTags: Set<string> = new Set();
   let userInteracted = false;
   let suggestedTags: Set<string> = new Set();
+  let expanded = false;
 
   // DOM elements
   const root = document.createElement('div');
   root.className = 'tag-selector';
 
-  const tagListEl = document.createElement('div');
-  tagListEl.className = 'tag-selector-list';
-  root.appendChild(tagListEl);
+  // Toggle button (collapsible)
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'tag-filter-toggle';
+  toggleBtn.setAttribute('aria-expanded', 'false');
+  toggleBtn.textContent = 'Select tags';
+  root.appendChild(toggleBtn);
+
+  // Dropdown panel
+  const panelEl = document.createElement('div');
+  panelEl.className = 'tag-filter-panel';
+  panelEl.setAttribute('hidden', '');
+  root.appendChild(panelEl);
+
+  const tagListEl = document.createElement('ul');
+  tagListEl.className = 'tag-filter-list';
+  tagListEl.setAttribute('role', 'group');
+  panelEl.appendChild(tagListEl);
 
   const limitMsg = document.createElement('p');
   limitMsg.className = 'tag-selector-limit-msg';
   limitMsg.textContent = `Maximum of ${maxTags} tags reached`;
   limitMsg.hidden = true;
-  root.appendChild(limitMsg);
+  panelEl.appendChild(limitMsg);
 
-  // "Add new tag" section
+  // "Add new tag" section (inside the panel)
   const addSection = document.createElement('div');
   addSection.className = 'tag-selector-add';
-
-  const addBtn = document.createElement('button');
-  addBtn.type = 'button';
-  addBtn.className = 'tag-selector-add-btn';
-  addBtn.textContent = 'Add new tag';
-  addSection.appendChild(addBtn);
+  addSection.style.marginTop = '0.5rem';
+  addSection.style.borderTop = '1px solid var(--color-border)';
+  addSection.style.paddingTop = '0.5rem';
 
   const addInputWrapper = document.createElement('div');
   addInputWrapper.className = 'tag-selector-add-input-wrapper';
-  addInputWrapper.hidden = true;
 
   const addInput = document.createElement('input');
   addInput.type = 'text';
   addInput.className = 'tag-selector-add-input';
-  addInput.placeholder = 'Enter new tag...';
+  addInput.placeholder = 'New tag...';
   addInput.maxLength = MAX_TAG_LENGTH;
   addInputWrapper.appendChild(addInput);
 
@@ -85,23 +97,51 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
   addSubmitBtn.textContent = 'Add';
   addInputWrapper.appendChild(addSubmitBtn);
 
+  addSection.appendChild(addInputWrapper);
+
   const errorEl = document.createElement('span');
   errorEl.className = 'tag-selector-error';
-  addInputWrapper.appendChild(errorEl);
+  addSection.appendChild(errorEl);
 
-  addSection.appendChild(addInputWrapper);
-  root.appendChild(addSection);
+  panelEl.appendChild(addSection);
 
+  root.appendChild(panelEl);
   container.appendChild(root);
 
-  // --- Event handlers ---
+  // --- Toggle expand/collapse ---
 
-  addBtn.addEventListener('click', () => {
-    addInputWrapper.hidden = !addInputWrapper.hidden;
-    if (!addInputWrapper.hidden) {
-      addInput.focus();
+  function expand(): void {
+    expanded = true;
+    toggleBtn.setAttribute('aria-expanded', 'true');
+    panelEl.removeAttribute('hidden');
+  }
+
+  function collapse(): void {
+    expanded = false;
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    panelEl.setAttribute('hidden', '');
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    if (expanded) {
+      collapse();
+    } else {
+      expand();
     }
-    errorEl.textContent = '';
+  });
+
+  // Keep panel open while focus is inside
+  panelEl.addEventListener('focusout', (e: FocusEvent) => {
+    const relatedTarget = e.relatedTarget as Node | null;
+    if (relatedTarget && root.contains(relatedTarget)) {
+      return;
+    }
+    // Don't auto-collapse if toggle was clicked
+    setTimeout(() => {
+      if (!root.contains(document.activeElement)) {
+        collapse();
+      }
+    }, 150);
   });
 
   addSubmitBtn.addEventListener('click', () => {
@@ -163,33 +203,41 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
     limitMsg.hidden = !atLimit;
 
     for (const tag of availableTags) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tag-selector-item';
-      btn.textContent = tag;
+      const li = document.createElement('li');
+      const label = document.createElement('label');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = selectedTags.has(tag);
 
-      const isSelected = selectedTags.has(tag);
-      const isSuggested = suggestedTags.has(tag);
-
-      if (isSelected) {
-        btn.classList.add('tag-selector-item--selected');
-      }
-      if (isSuggested) {
-        btn.classList.add('tag-selector-item--suggested');
+      if (atLimit && !selectedTags.has(tag)) {
+        checkbox.disabled = true;
       }
 
-      btn.setAttribute('aria-pressed', String(isSelected));
-
-      // Disable unselected tags when at limit
-      if (atLimit && !isSelected) {
-        btn.disabled = true;
-      }
-
-      btn.addEventListener('click', () => {
+      checkbox.addEventListener('change', () => {
         handleTagToggle(tag);
       });
 
-      tagListEl.appendChild(btn);
+      const span = document.createElement('span');
+      span.textContent = tag;
+      if (suggestedTags.has(tag)) {
+        span.style.fontStyle = 'italic';
+      }
+
+      label.appendChild(checkbox);
+      label.appendChild(span);
+      li.appendChild(label);
+      tagListEl.appendChild(li);
+    }
+
+    updateToggleText();
+  }
+
+  function updateToggleText(): void {
+    const count = selectedTags.size;
+    if (count > 0) {
+      toggleBtn.textContent = `Select tags (${count})`;
+    } else {
+      toggleBtn.textContent = 'Select tags';
     }
   }
 
