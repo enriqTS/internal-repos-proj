@@ -163,6 +163,10 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
   if (metadata.repositoryUrl) {
     const repoEl = document.createElement('div');
     repoEl.className = 'project-repository';
+    const repoLabel = document.createElement('span');
+    repoLabel.className = 'repository-label';
+    repoLabel.textContent = 'Repository: ';
+    repoEl.appendChild(repoLabel);
     const repoLink = document.createElement('a');
     repoLink.href = metadata.repositoryUrl;
     repoLink.textContent = metadata.repositoryUrl;

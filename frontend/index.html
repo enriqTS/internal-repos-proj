@@ -470,6 +470,32 @@
         opacity: 0.8;
       }
 
+      .project-repository {
+        margin-top: 0.625rem;
+      }
+
+      .repository-label {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--color-text-muted);
+        font-weight: 500;
+      }
+
+      .repository-link {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-decoration-color: var(--color-accent-underline);
+        text-underline-offset: 2px;
+        transition: text-decoration-color var(--transition);
+        word-break: break-all;
+      }
+
+      .repository-link:hover {
+        text-decoration-color: var(--color-accent);
+      }
+
       /* ─── Download Section ─── */
       .project-download {
         margin-bottom: 2rem;
