@@ -1,7 +1,6 @@
 import {
   PROJECT_NAME_REGEX,
   MAX_PROJECT_NAME_LENGTH,
-  MAX_TAGS_COUNT,
   MAX_README_LENGTH,
   MAX_CLIENT_ZIP_SIZE,
   DENY_LIST,
@@ -420,7 +419,7 @@ export function renderUploadForm(container: HTMLElement): void {
   tagSelector = createTagSelector({
     container: tagSelectorContainer,
     onChange: () => {},
-    maxTags: MAX_TAGS_COUNT,
+    maxTags: 0,
   });
 
   // Fetch tag registry on form load
