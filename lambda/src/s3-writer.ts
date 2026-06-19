@@ -86,6 +86,7 @@ export async function writeProject(params: WriteProjectParams): Promise<void> {
         Key: `${prefix}metadata.json`,
         Body: JSON.stringify(metadata),
         ContentType: 'application/json',
+        CacheControl: 'max-age=0, no-cache, must-revalidate',
       })
     ),
     s3Client.send(
