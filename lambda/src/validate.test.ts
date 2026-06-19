@@ -52,15 +52,15 @@ describe('validateMetadata', () => {
     expect(validateMetadata({ name: 'proj', readme })).toBeNull();
   });
 
-  it('returns error when more than 10 tags provided', () => {
-    const tags = Array.from({ length: 11 }, (_, i) => `tag${i}`).join(',');
+  it('returns error when more than 50 tags provided', () => {
+    const tags = Array.from({ length: 51 }, (_, i) => `tag${i}`).join(',');
     expect(validateMetadata({ name: 'proj', tags })).toBe(
-      'Maximum of 10 tags allowed.',
+      'Maximum of 50 tags allowed.',
     );
   });
 
-  it('accepts exactly 10 tags', () => {
-    const tags = Array.from({ length: 10 }, (_, i) => `tag${i}`).join(',');
+  it('accepts exactly 50 tags', () => {
+    const tags = Array.from({ length: 50 }, (_, i) => `tag${i}`).join(',');
     expect(validateMetadata({ name: 'proj', tags })).toBeNull();
   });
 
@@ -127,13 +127,13 @@ describe('validateEditRequest', () => {
     );
   });
 
-  it('returns error when more than 10 tags', () => {
-    const tags = Array.from({ length: 11 }, (_, i) => `tag${i}`);
-    expect(validateEditRequest({ tags })).toBe('Maximum of 10 tags allowed.');
+  it('returns error when more than 50 tags', () => {
+    const tags = Array.from({ length: 51 }, (_, i) => `tag${i}`);
+    expect(validateEditRequest({ tags })).toBe('Maximum of 50 tags allowed.');
   });
 
-  it('accepts exactly 10 tags', () => {
-    const tags = Array.from({ length: 10 }, (_, i) => `tag${i}`);
+  it('accepts exactly 50 tags', () => {
+    const tags = Array.from({ length: 50 }, (_, i) => `tag${i}`);
     expect(validateEditRequest({ tags })).toBeNull();
   });
 
