@@ -1,0 +1,326 @@
+"""Orchestrator Lambda — manages conversation flow and coordinates AI calls."""
+
+import json
+import os
+import time
+
+import boto3
+
+from shared.logging_config import get_logger
+from shared.models import ChatMessage
+
+logger = get_logger("orchestrator")
+
+# Configuration from environment variables
+MAX_CONVERSATION_HISTORY = int(os.environ.get("MAX_CONVERSATION_HISTORY", "50"))
+MAX_RETRY_ATTEMPTS = int(os.environ.get("MAX_RETRY_ATTEMPTS", "3"))
+MAX_TOOL_ITERATIONS = int(os.environ.get("MAX_TOOL_ITERATIONS", "10"))
+AI_CALLER_FUNCTION_NAME = os.environ.get("AI_CALLER_FUNCTION_NAME", "")
+TOOL_EXECUTOR_FUNCTION_NAME = os.environ.get("TOOL_EXECUTOR_FUNCTION_NAME", "")
+DYNAMODB_TABLE_NAME = os.environ.get("DYNAMODB_TABLE_NAME", "")
+
+# AWS clients
+lambda_client = boto3.client("lambda")
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table(DYNAMODB_TABLE_NAME) if DYNAMODB_TABLE_NAME else None
+
+
+@logger.inject_lambda_context
+def handler(event, context):
+    """SQS trigger handler — processes one message at a time (batch size 1)."""
+    start_time = time.time()
+
+    record = event["Records"][0]
+    body = json.loads(record["body"])
+
+    user_id = body.get("userId", "")
+    message = body.get("message", "")
+    correlation_id = body.get("correlationId", context.aws_request_id)
+    timestamp = body.get("timestamp", "")
+
+    logger.set_correlation_id(correlation_id)
+    logger.info(
+        "Orchestrator invoked",
+        extra={
+            "correlationId": correlation_id,
+            "userId": user_id,
+        },
+    )
+
+    try:
+        response = _process_message(user_id, message, correlation_id, timestamp)
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.info(
+            "Processing completed successfully",
+            extra={
+                "correlationId": correlation_id,
+                "status": "success",
+                "durationMs": duration_ms,
+            },
+        )
+        return response
+
+    except Exception as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.exception(
+            "Processing failed",
+            extra={
+                "correlationId": correlation_id,
+                "status": "failure",
+                "durationMs": duration_ms,
+                "errorType": type(e).__name__,
+                "errorMessage": str(e),
+                "userId": user_id,
+                "messageBody": message,
+                "attempts": MAX_RETRY_ATTEMPTS,
+            },
+        )
+        raise
+
+
+def _process_message(user_id, message, correlation_id, timestamp):
+    """Core processing logic: retrieve history, invoke AI, handle tool loop, save."""
+    # Step 1: Retrieve conversation history
+    conversation_history = retrieve_conversation_history(user_id, correlation_id)
+
+    # Step 2: Append new user message
+    user_message = {
+        "role": "user",
+        "content": message,
+        "timestamp": timestamp,
+    }
+    conversation_history.append(user_message)
+
+    # Step 3: Tool-use loop
+    messages_for_ai = list(conversation_history)
+    final_response = None
+
+    for iteration in range(MAX_TOOL_ITERATIONS):
+        logger.info(
+            "Invoking AI Caller",
+            extra={
+                "correlationId": correlation_id,
+                "iteration": iteration + 1,
+                "maxIterations": MAX_TOOL_ITERATIONS,
+            },
+        )
+
+        ai_response = invoke_ai_caller(
+            messages=messages_for_ai,
+            correlation_id=correlation_id,
+        )
+
+        function_calls = ai_response.get("function_calls", [])
+
+        if not function_calls:
+            # No tool calls — we have a final text response
+            final_response = ai_response
+            break
+
+        # Tool calls present — invoke Tool Executor for each
+        logger.info(
+            "Tool calls requested",
+            extra={
+                "correlationId": correlation_id,
+                "iteration": iteration + 1,
+                "toolCallCount": len(function_calls),
+                "toolNames": [fc.get("name", "") for fc in function_calls],
+            },
+        )
+
+        tool_results = invoke_tool_executor(function_calls, correlation_id)
+
+        # Append assistant message with tool calls and tool results to conversation
+        assistant_message = {
+            "role": "assistant",
+            "content": ai_response.get("content", ""),
+            "tool_calls": function_calls,
+        }
+        messages_for_ai.append(assistant_message)
+
+        # Append tool results as tool messages
+        for result in tool_results:
+            tool_message = {
+                "role": "tool",
+                "content": json.dumps(result.get("result", "")),
+                "tool_call_id": result.get("tool_call_id", ""),
+            }
+            messages_for_ai.append(tool_message)
+    else:
+        # Max iterations reached without a text-only response
+        logger.error(
+            "Max tool-use iterations reached",
+            extra={
+                "correlationId": correlation_id,
+                "maxIterations": MAX_TOOL_ITERATIONS,
+                "userId": user_id,
+            },
+        )
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                "error": True,
+                "correlationId": correlation_id,
+                "message": (
+                    f"Conversation exceeded maximum allowed tool-use iterations "
+                    f"({MAX_TOOL_ITERATIONS})."
+                ),
+            }),
+        }
+
+    # Step 4: Append assistant response to history
+    assistant_response_message = {
+        "role": "assistant",
+        "content": final_response.get("content", ""),
+        "timestamp": final_response.get("timestamp", ""),
+    }
+    conversation_history.append(assistant_response_message)
+
+    # Step 5: Save updated conversation history
+    save_conversation_history(user_id, conversation_history, correlation_id)
+
+    # Step 6: Return final response
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "response": final_response.get("content", ""),
+            "conversationId": user_id,
+            "timestamp": timestamp,
+            "correlationId": correlation_id,
+        }),
+    }
+
+
+def retrieve_conversation_history(user_id, correlation_id):
+    """
+    Retrieve conversation history from DynamoDB, trimmed to max length.
+
+    On failure, proceeds with empty history and logs ERROR.
+    """
+    try:
+        response = table.get_item(Key={"userId": user_id})
+        item = response.get("Item", {})
+        messages = item.get("messages", [])
+
+        # Trim to MAX_CONVERSATION_HISTORY (oldest first, keep most recent)
+        if len(messages) > MAX_CONVERSATION_HISTORY:
+            messages = messages[-MAX_CONVERSATION_HISTORY:]
+
+        logger.info(
+            "Retrieved conversation history",
+            extra={
+                "correlationId": correlation_id,
+                "userId": user_id,
+                "messageCount": len(messages),
+            },
+        )
+        return messages
+
+    except Exception as e:
+        logger.error(
+            "Failed to retrieve conversation history",
+            extra={
+                "correlationId": correlation_id,
+                "userId": user_id,
+                "errorType": type(e).__name__,
+                "errorMessage": str(e),
+            },
+        )
+        # Proceed with empty history on DynamoDB read failure
+        return []
+
+
+def save_conversation_history(user_id, messages, correlation_id):
+    """
+    Save updated conversation history to DynamoDB.
+
+    On failure, logs ERROR but does not raise — the response is still returned.
+    """
+    try:
+        table.put_item(
+            Item={
+                "userId": user_id,
+                "messages": messages,
+            }
+        )
+        logger.info(
+            "Saved conversation history",
+            extra={
+                "correlationId": correlation_id,
+                "userId": user_id,
+                "messageCount": len(messages),
+            },
+        )
+    except Exception as e:
+        logger.error(
+            "Failed to save conversation history",
+            extra={
+                "correlationId": correlation_id,
+                "userId": user_id,
+                "errorType": type(e).__name__,
+                "errorMessage": str(e),
+            },
+        )
+
+
+def invoke_ai_caller(messages, correlation_id):
+    """Synchronously invoke the AI Caller Lambda."""
+    payload = {
+        "messages": messages,
+        "correlationId": correlation_id,
+    }
+
+    response = lambda_client.invoke(
+        FunctionName=AI_CALLER_FUNCTION_NAME,
+        InvocationType="RequestResponse",
+        Payload=json.dumps(payload),
+    )
+
+    response_payload = json.loads(response["Payload"].read())
+
+    if "FunctionError" in response:
+        raise RuntimeError(
+            f"AI Caller invocation failed: {response_payload}"
+        )
+
+    return response_payload
+
+
+def invoke_tool_executor(tool_calls, correlation_id):
+    """Invoke the Tool Executor Lambda for each tool call and collect results."""
+    results = []
+
+    for tool_call in tool_calls:
+        payload = {
+            "toolCall": tool_call,
+            "correlationId": correlation_id,
+        }
+
+        response = lambda_client.invoke(
+            FunctionName=TOOL_EXECUTOR_FUNCTION_NAME,
+            InvocationType="RequestResponse",
+            Payload=json.dumps(payload),
+        )
+
+        response_payload = json.loads(response["Payload"].read())
+
+        if "FunctionError" in response:
+            logger.error(
+                "Tool Executor invocation failed",
+                extra={
+                    "correlationId": correlation_id,
+                    "toolName": tool_call.get("name", ""),
+                    "error": response_payload,
+                },
+            )
+            results.append({
+                "tool_call_id": tool_call.get("call_id", ""),
+                "result": {"error": str(response_payload)},
+            })
+        else:
+            results.append({
+                "tool_call_id": tool_call.get("call_id", ""),
+                "result": response_payload,
+            })
+
+    return results
