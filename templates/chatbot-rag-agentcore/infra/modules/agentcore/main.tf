@@ -1,26 +1,72 @@
 # ------------------------------------------------------------------------------
-# Bedrock AgentCore — Agent Runtime, Alias, and Action Group
+# Bedrock AgentCore — Agent, Alias, and Action Group
 # ------------------------------------------------------------------------------
 
-resource "aws_bedrockagent_agent" "chatbot" {
-  agent_name              = "${var.project_prefix}-agent"
-  foundation_model        = var.model_id
-  instruction             = var.agent_instruction
-  idle_session_ttl_in_seconds = 600
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
-  agent_resource_role_arn = aws_iam_role.agent.arn
+# IAM role for the Bedrock Agent
+data "aws_iam_policy_document" "agent_assume" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["bedrock.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
 }
 
+resource "aws_iam_role" "agent" {
+  name               = "${var.project_prefix}-agentcore-role"
+  assume_role_policy = data.aws_iam_policy_document.agent_assume.json
+}
+
+resource "aws_iam_role_policy" "agent_model_invocation" {
+  name   = "${var.project_prefix}-agent-model-invocation"
+  role   = aws_iam_role.agent.id
+  policy = data.aws_iam_policy_document.agent_model_invocation.json
+}
+
+data "aws_iam_policy_document" "agent_model_invocation" {
+  statement {
+    effect  = "Allow"
+    actions = ["bedrock:InvokeModel"]
+    resources = [
+      "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/${var.model_id}"
+    ]
+  }
+}
+
+# Bedrock Agent
+resource "aws_bedrockagent_agent" "chatbot" {
+  agent_name                  = "${var.project_prefix}-agent"
+  agent_resource_role_arn     = aws_iam_role.agent.arn
+  foundation_model            = var.model_id
+  instruction                 = var.agent_instruction
+  idle_session_ttl_in_seconds = 600
+}
+
+# Agent Alias — points to the latest prepared version
 resource "aws_bedrockagent_agent_alias" "chatbot" {
   agent_id         = aws_bedrockagent_agent.chatbot.agent_id
   agent_alias_name = "${var.project_prefix}-alias"
-  description      = "Primary alias for ${var.project_prefix} agent"
+  description      = "Production alias for ${var.project_prefix} agent"
 }
 
-resource "aws_bedrockagent_agent_action_group" "tool_executor" {
+# Action Group — registers the Tool Executor Lambda for tool execution
+resource "aws_bedrockagent_agent_action_group" "tools" {
   agent_id          = aws_bedrockagent_agent.chatbot.agent_id
+  agent_version     = "DRAFT"
   action_group_name = "${var.project_prefix}-tools"
-  description       = "Tool executor action group for RAG search"
+  description       = "Action group for RAG tool execution"
 
   action_group_executor {
     lambda = var.tool_executor_arn
@@ -36,8 +82,8 @@ resource "aws_bedrockagent_agent_action_group" "tool_executor" {
       paths = {
         "/search" = {
           post = {
-            summary     = "Search the knowledge base"
-            operationId = "searchKnowledgeBase"
+            operationId = "search_knowledge_base"
+            description = "Search the RAG knowledge base for relevant documents"
             requestBody = {
               required = true
               content = {
@@ -47,7 +93,7 @@ resource "aws_bedrockagent_agent_action_group" "tool_executor" {
                     properties = {
                       query = {
                         type        = "string"
-                        description = "Search query for the RAG knowledge base"
+                        description = "Search query to find relevant documents in the knowledge base"
                       }
                     }
                     required = ["query"]
@@ -57,14 +103,15 @@ resource "aws_bedrockagent_agent_action_group" "tool_executor" {
             }
             responses = {
               "200" = {
-                description = "Search results"
+                description = "Search results from the knowledge base"
                 content = {
                   "application/json" = {
                     schema = {
                       type = "object"
                       properties = {
                         results = {
-                          type = "string"
+                          type        = "string"
+                          description = "Retrieved document content"
                         }
                       }
                     }
@@ -79,53 +126,11 @@ resource "aws_bedrockagent_agent_action_group" "tool_executor" {
   }
 }
 
-# IAM role for the Bedrock Agent
-resource "aws_iam_role" "agent" {
-  name = "${var.project_prefix}-agent-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "bedrock.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "agent_permissions" {
-  name = "${var.project_prefix}-agent-permissions"
-  role = aws_iam_role.agent.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "bedrock:InvokeModel",
-        ]
-        Resource = ["*"]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "lambda:InvokeFunction",
-        ]
-        Resource = [var.tool_executor_arn]
-      }
-    ]
-  })
-}
-
-# Allow Bedrock to invoke the Tool Executor Lambda
-resource "aws_lambda_permission" "allow_bedrock" {
-  statement_id  = "AllowBedrockInvoke"
+# Grant AgentCore permission to invoke the Tool Executor Lambda
+resource "aws_lambda_permission" "allow_agentcore" {
+  statement_id  = "AllowBedrockAgentInvocation"
   action        = "lambda:InvokeFunction"
   function_name = var.tool_executor_arn
   principal     = "bedrock.amazonaws.com"
+  source_arn    = aws_bedrockagent_agent.chatbot.agent_arn
 }

@@ -4,7 +4,7 @@ output "agent_id" {
 }
 
 output "agent_alias_id" {
-  description = "Alias ID of the Bedrock AgentCore agent"
+  description = "ID of the Bedrock AgentCore agent alias"
   value       = aws_bedrockagent_agent_alias.chatbot.agent_alias_id
 }
 
