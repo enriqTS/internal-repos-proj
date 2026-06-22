@@ -476,3 +476,31 @@ export async function fetchTemplateMetadata(name: string): Promise<ApiResult<Tem
     };
   }
 }
+
+/**
+ * Fetch a template's readme.md content by template name.
+ * @param name - The template name, e.g. "basic-lambda"
+ */
+export async function fetchTemplateReadme(name: string): Promise<ApiResult<string>> {
+  try {
+    const url = `${getBaseUrl()}/templates/${name}/readme.md`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: `Failed to load template documentation (HTTP ${response.status})`,
+      };
+    }
+
+    const text = await response.text();
+    return { ok: true, data: text };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error
+        ? `Failed to load template documentation: ${err.message}`
+        : 'Failed to load template documentation: unknown error',
+    };
+  }
+}
