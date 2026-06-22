@@ -161,19 +161,16 @@ export function renderReadmeError(): HTMLElement {
   return errorEl;
 }
 
-// Re-export marked instance and fetchTemplateReadme for use in renderTemplateDetail rewrite (task 2.6)
-export { marked, fetchTemplateReadme };
-
 /**
  * Render the template detail view into the given container element.
  *
  * Fetches metadata for the template identified by `params.name`, then builds
  * the detail page with metadata display (name, description, tags, date, and
- * optional language).
+ * optional language), download button, architecture diagram, and rendered readme.
  *
  * Error handling:
  * - If name param is empty/missing: shows "No template was specified" error
- * - If metadata fails to load: shows "Template details are unavailable" + back link
+ * - If metadata fails to load: shows "Template details are unavailable" + back link, NO download button
  *
  * @param params - Route params object with `name` key from the regex named group
  * @param container - The DOM element to render into
@@ -219,7 +216,7 @@ export async function renderTemplateDetail(
   const detailWrapper = document.createElement('div');
   detailWrapper.className = 'template-detail';
 
-  // Render metadata section
+  // 1. Render metadata section
   const section = document.createElement('section');
   section.className = 'template-metadata';
 
@@ -258,5 +255,35 @@ export async function renderTemplateDetail(
   }
 
   detailWrapper.appendChild(section);
+
+  // 2. Download button
+  const downloadButton = renderDownloadButton(name);
+  detailWrapper.appendChild(downloadButton);
+
+  // 3. Fetch readme and resolve architecture image in parallel for performance
+  const [architectureImageUrl, readmeResult] = await Promise.all([
+    resolveArchitectureImageUrl(name, metadata),
+    fetchTemplateReadme(name),
+  ]);
+
+  // 4. Architecture diagram (if image resolved)
+  if (architectureImageUrl) {
+    const architectureSection = renderArchitectureSection(architectureImageUrl, name);
+    detailWrapper.appendChild(architectureSection);
+  }
+
+  // 5. Readme section
+  if (readmeResult.ok) {
+    const readmeHtml = await marked.parse(readmeResult.data);
+    const readmeSection = renderReadmeSection(readmeHtml);
+    detailWrapper.appendChild(readmeSection);
+  } else {
+    const readmeError = renderReadmeError();
+    const readmeWrapper = document.createElement('section');
+    readmeWrapper.className = 'template-readme';
+    readmeWrapper.appendChild(readmeError);
+    detailWrapper.appendChild(readmeWrapper);
+  }
+
   container.appendChild(detailWrapper);
 }
