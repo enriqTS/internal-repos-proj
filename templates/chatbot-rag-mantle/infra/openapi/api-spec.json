@@ -1,0 +1,129 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "${project_prefix}-chatbot-api",
+    "description": "Chatbot RAG API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/chat": {
+      "post": {
+        "summary": "Send a chat message",
+        "operationId": "postChat",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId", "message"],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "description": "Unique identifier for the user"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Chat message content"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "response": {
+                      "type": "string",
+                      "description": "AI-generated response text"
+                    },
+                    "conversationId": {
+                      "type": "string",
+                      "description": "Unique conversation identifier"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Response timestamp in ISO 8601 format"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlationId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlationId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws",
+          "uri": "arn:aws:apigateway:${region}:sqs:action/SendMessage",
+          "httpMethod": "POST",
+          "credentials": "${api_gateway_role_arn}",
+          "requestParameters": {
+            "integration.request.querystring.QueueUrl": "'${sqs_queue_url}'",
+            "integration.request.querystring.MessageGroupId": "method.request.body.userId"
+          },
+          "requestTemplates": {
+            "application/json": "Action=SendMessage&MessageGroupId=$input.path('$.userId')&MessageBody=$input.body&MessageDeduplicationId=$context.requestId"
+          },
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseTemplates": {
+                "application/json": "{\"response\": \"Message accepted\", \"conversationId\": \"$context.requestId\", \"timestamp\": \"$context.requestTime\"}"
+              }
+            }
+          },
+          "passthroughBehavior": "never",
+          "timeoutInMillis": 29000
+        }
+      }
+    }
+  }
+}
