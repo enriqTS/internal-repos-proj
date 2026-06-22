@@ -1,0 +1,23 @@
+# Project prefix for all resource names (e.g., "my-chatbot-staging")
+project_prefix = "my-chatbot-staging"
+
+# AWS region for deployment
+aws_region = "us-east-1"
+
+# AWS account ID for ARN construction
+aws_account_id = "123456789012"
+
+# AI model identifier - Replace with an available Bedrock model
+model_id = "your-model-id"
+
+# Bedrock Mantle API base URL
+mantle_base_url = "https://bedrock-mantle.us-east-1.api.aws/v1"
+
+# Maximum messages to retain in conversation context
+max_conversation_history = 50
+
+# Maximum retry attempts for message processing
+max_retry_attempts = 3
+
+# Powertools log level (DEBUG, INFO, WARNING, ERROR)
+log_level = "INFO"
