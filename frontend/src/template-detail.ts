@@ -1,5 +1,168 @@
-import { fetchTemplateMetadata } from './api';
+import { Marked } from 'marked';
+import { markedHighlight } from 'marked-highlight';
+import hljs from 'highlight.js';
+import type { TemplateMetadata } from 'shared/types';
+import { fetchTemplateMetadata, fetchTemplateReadme } from './api';
 import { formatRelativeDate } from './relative-date';
+
+/**
+ * Configure marked with highlight.js for syntax highlighting in code blocks.
+ */
+const marked = new Marked(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight(code: string, lang: string) {
+      if (lang && hljs.getLanguage(lang)) {
+        return hljs.highlight(code, { language: lang }).value;
+      }
+      return hljs.highlightAuto(code).value;
+    },
+  }),
+);
+
+/**
+ * Get the base URL for constructing CDN asset URLs.
+ */
+function getBaseUrl(): string {
+  return import.meta.env.VITE_CDN_URL ?? '';
+}
+
+/**
+ * Resolve the architecture image URL for a template.
+ *
+ * If metadata.architectureImage is "architecture.png" or "architecture.svg",
+ * construct the direct URL and HEAD-check it; return URL if ok, null otherwise.
+ *
+ * If absent or any other value, try PNG first (HEAD), then SVG (HEAD);
+ * return first successful URL or null.
+ */
+export async function resolveArchitectureImageUrl(
+  name: string,
+  metadata: TemplateMetadata,
+): Promise<string | null> {
+  const baseUrl = getBaseUrl();
+
+  // If metadata specifies the image format, use it directly
+  if (
+    metadata.architectureImage === 'architecture.png' ||
+    metadata.architectureImage === 'architecture.svg'
+  ) {
+    const url = `${baseUrl}/templates/${name}/${metadata.architectureImage}`;
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      return res.ok ? url : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Fallback: try PNG first, then SVG
+  const pngUrl = `${baseUrl}/templates/${name}/architecture.png`;
+  try {
+    const pngRes = await fetch(pngUrl, { method: 'HEAD' });
+    if (pngRes.ok) return pngUrl;
+  } catch {
+    // continue to SVG
+  }
+
+  const svgUrl = `${baseUrl}/templates/${name}/architecture.svg`;
+  try {
+    const svgRes = await fetch(svgUrl, { method: 'HEAD' });
+    if (svgRes.ok) return svgUrl;
+  } catch {
+    // no image available
+  }
+
+  return null;
+}
+
+/**
+ * Render a download button (anchor element) for the template artifact.
+ *
+ * - href: {baseUrl}/templates/{name}/artifact.zip
+ * - download attribute: {name}.zip
+ * - aria-label: "Download {name} template zip archive"
+ * - visible text: "Download Template"
+ * - class: download-link
+ */
+export function renderDownloadButton(name: string): HTMLElement {
+  const baseUrl = getBaseUrl();
+  const link = document.createElement('a');
+  link.className = 'download-link';
+  link.href = `${baseUrl}/templates/${name}/artifact.zip`;
+  link.setAttribute('download', `${name}.zip`);
+  link.setAttribute('aria-label', `Download ${name} template zip archive`);
+  link.textContent = 'Download Template';
+  return link;
+}
+
+/**
+ * Render the architecture image section.
+ *
+ * - Wraps an <img> in an <a> that opens the full-size image in a new tab
+ * - img alt: "Architecture diagram for {name}"
+ * - img style: max-width:100%
+ * - a href: imageUrl, target: _blank, rel: noopener noreferrer
+ * - a aria-label: "View full-size architecture diagram for {name}"
+ * - onerror on <img>: removes entire architecture section from the DOM
+ * - section class: template-architecture
+ */
+export function renderArchitectureSection(imageUrl: string, name: string): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'template-architecture';
+
+  const anchor = document.createElement('a');
+  anchor.href = imageUrl;
+  anchor.target = '_blank';
+  anchor.rel = 'noopener noreferrer';
+  anchor.setAttribute('aria-label', `View full-size architecture diagram for ${name}`);
+
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = `Architecture diagram for ${name}`;
+  img.style.maxWidth = '100%';
+  img.onerror = () => {
+    section.remove();
+  };
+
+  anchor.appendChild(img);
+  section.appendChild(anchor);
+  return section;
+}
+
+/**
+ * Render the readme section with parsed HTML content.
+ *
+ * Returns a <section class="template-readme"> containing a
+ * <div class="readme-content"> with the rendered HTML.
+ */
+export function renderReadmeSection(readmeHtml: string): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'template-readme';
+
+  const content = document.createElement('div');
+  content.className = 'readme-content';
+  content.innerHTML = readmeHtml;
+
+  section.appendChild(content);
+  return section;
+}
+
+/**
+ * Render the readme error fallback element.
+ *
+ * Returns a <p class="error-message"> with text
+ * "Template documentation is unavailable".
+ */
+export function renderReadmeError(): HTMLElement {
+  const errorEl = document.createElement('p');
+  errorEl.className = 'error-message';
+  errorEl.textContent = 'Template documentation is unavailable';
+  return errorEl;
+}
+
+// Re-export marked instance and fetchTemplateReadme for use in renderTemplateDetail rewrite (task 2.6)
+export { marked, fetchTemplateReadme };
 
 /**
  * Render the template detail view into the given container element.
