@@ -187,6 +187,8 @@ export interface TemplateIndexEntry {
   date: string;
   /** S3 path prefix: "templates/{name}/" */
   path: string;
+  /** Optional architecture image filename hint to avoid trial-and-error fetching */
+  architectureImage?: 'architecture.png' | 'architecture.svg';
 }
 
 /** The full template index is an array of template entries. */
@@ -207,6 +209,8 @@ export interface TemplateMetadata {
   date: string;
   /** Optional primary programming language or framework name: 0–64 chars */
   language?: string;
+  /** Optional architecture image filename hint to avoid trial-and-error fetching */
+  architectureImage?: 'architecture.png' | 'architecture.svg';
 }
 
 // ─── Tag Suggestion Types ────────────────────────────────────────────────────
