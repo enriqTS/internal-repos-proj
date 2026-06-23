@@ -320,7 +320,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // Initialize app with home route
           window.location.hash = '#/';
           await import('./main');
-          await new Promise(r => setTimeout(r, 50));
+          await new Promise(r => setTimeout(r, 100));
 
           const callCountAfterInit = mockedFetch.mock.calls.length;
           // Initial home load should fetch
