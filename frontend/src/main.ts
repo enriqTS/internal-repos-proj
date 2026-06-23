@@ -153,20 +153,34 @@ const routes: Route[] = [
 ];
 
 /**
+ * Determine the active navigation section for a given route path.
+ * Returns 'projects' if the path matches the projects section,
+ * 'templates' if it matches the templates section, or null otherwise.
+ */
+export function getActiveNavSection(path: string): 'projects' | 'templates' | null {
+  if (path.startsWith('/projects') || path.startsWith('/project/')) {
+    return 'projects';
+  }
+  if (path.startsWith('/templates') || path.startsWith('/template/')) {
+    return 'templates';
+  }
+  return null;
+}
+
+/**
  * Update the active navigation link based on the current hash.
  * Applies `nav-active` class to the correct nav link and removes it from others.
  */
 export function updateNavActive(): void {
   const hash = window.location.hash.slice(1) || '/'; // remove '#', default to '/'
+  const activeSection = getActiveNavSection(hash);
   const navLinks = document.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Main navigation"] a[data-nav]');
 
   navLinks.forEach((link) => {
     link.classList.remove('nav-active');
 
     const navId = link.getAttribute('data-nav');
-    if (navId === 'projects' && (hash === '/' || hash.startsWith('/project/'))) {
-      link.classList.add('nav-active');
-    } else if (navId === 'templates' && hash.startsWith('/templates')) {
+    if (navId && navId === activeSection) {
       link.classList.add('nav-active');
     }
   });
