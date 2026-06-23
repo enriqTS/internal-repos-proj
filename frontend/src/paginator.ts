@@ -2,6 +2,7 @@
  * Paginator component for the search page.
  * Slices a result set into pages and renders page navigation controls.
  */
+import { t } from './i18n';
 
 export interface PaginatorOptions {
   /** Container element to render into */
@@ -101,7 +102,7 @@ export function createPaginator(options: PaginatorOptions): PaginatorAPI {
     const prevBtn = document.createElement('button');
     prevBtn.className = 'paginator__btn';
     prevBtn.textContent = '←';
-    prevBtn.setAttribute('aria-label', 'Previous page');
+    prevBtn.setAttribute('aria-label', t('paginator.previous'));
     prevBtn.disabled = currentPage === 1;
     prevBtn.addEventListener('click', () => goToPage(currentPage - 1));
     wrapper.appendChild(prevBtn);
@@ -133,7 +134,7 @@ export function createPaginator(options: PaginatorOptions): PaginatorAPI {
     const nextBtn = document.createElement('button');
     nextBtn.className = 'paginator__btn';
     nextBtn.textContent = '→';
-    nextBtn.setAttribute('aria-label', 'Next page');
+    nextBtn.setAttribute('aria-label', t('paginator.next'));
     nextBtn.disabled = currentPage === totalPages;
     nextBtn.addEventListener('click', () => goToPage(currentPage + 1));
     wrapper.appendChild(nextBtn);

@@ -1,4 +1,5 @@
 import { marked } from './shared-markdown';
+import { t } from './i18n';
 
 /**
  * Options for creating a ReadmePreview component.
@@ -71,7 +72,7 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   editBtn.setAttribute('role', 'tab');
   editBtn.setAttribute('aria-selected', 'false');
   editBtn.setAttribute('aria-controls', 'readme-edit-panel');
-  editBtn.textContent = 'Edit';
+  editBtn.textContent = t('readmePreview.write');
 
   const previewBtn = document.createElement('button');
   previewBtn.type = 'button';
@@ -79,7 +80,7 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   previewBtn.setAttribute('role', 'tab');
   previewBtn.setAttribute('aria-selected', 'true');
   previewBtn.setAttribute('aria-controls', 'readme-preview-panel');
-  previewBtn.textContent = 'Preview';
+  previewBtn.textContent = t('readmePreview.preview');
 
   toggle.appendChild(editBtn);
   toggle.appendChild(previewBtn);

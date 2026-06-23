@@ -3,6 +3,7 @@
  * Renders a responsive grid of cards with accessibility support.
  */
 import { formatRelativeDate } from './relative-date';
+import { t } from './i18n';
 
 export interface CardItem {
   name: string;
@@ -158,7 +159,7 @@ export function renderCardGrid(items: CardItem[], options: CardGridOptions): voi
   if (items.length === 0) {
     const emptyMsg = document.createElement('p');
     emptyMsg.className = 'card-grid-empty';
-    emptyMsg.textContent = 'No results found';
+    emptyMsg.textContent = t('cardGrid.noResults');
     container.appendChild(emptyMsg);
     return;
   }

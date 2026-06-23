@@ -2,6 +2,7 @@
  * Drop Zone component for file/folder selection via drag-and-drop or click.
  * Renders a styled interactive region that accepts files and provides visual feedback.
  */
+import { t } from './i18n';
 
 export interface DropZoneOptions {
   /** Container element to render into */
@@ -69,9 +70,9 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
 
   // Set instructional text based on feature detection
   if (hasDragDrop) {
-    text.textContent = 'Drag & drop a project folder here, or click to browse';
+    text.textContent = t('dropZone.text');
   } else {
-    text.textContent = 'Click to browse for a project folder';
+    text.textContent = t('dropZone.text');
     zone.style.cursor = 'pointer';
   }
 
@@ -84,7 +85,7 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
     // Update summary display
     text.hidden = true;
     summary.hidden = false;
-    summary.textContent = `${files.length} file${files.length !== 1 ? 's' : ''} selected`;
+    summary.textContent = t('dropZone.summary', { count: files.length });
     onFiles(files);
   }
 

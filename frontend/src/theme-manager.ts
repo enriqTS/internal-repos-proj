@@ -2,6 +2,7 @@
  * Theme Manager module.
  * Handles theme resolution, persistence, and DOM application for the dark mode toggle.
  */
+import { t } from './i18n';
 
 export type Theme = 'light' | 'dark';
 
@@ -40,7 +41,7 @@ export function oppositeTheme(current: Theme): Theme {
  * Describes the action (switch to the OTHER theme).
  */
 export function getToggleLabel(current: Theme): string {
-  return current === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
+  return current === 'light' ? t('theme.switchToDark') : t('theme.switchToLight');
 }
 
 /**
