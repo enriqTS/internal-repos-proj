@@ -362,7 +362,7 @@ describe('renderUploadForm', () => {
     expect(mockedFinalize).toHaveBeenCalledWith('sess-123');
 
     // Verify redirect to project list
-    expect(window.location.hash).toBe('#/');
+    expect(window.location.hash).toBe('#/projects');
 
     // Verify search index was invalidated
     expect(invalidateSearchIndex).toHaveBeenCalled();
@@ -455,7 +455,7 @@ describe('renderUploadForm', () => {
 
     // After successful upload, page redirects — button state doesn't matter
     // but we verify the redirect happened
-    expect(window.location.hash).toBe('#/');
+    expect(window.location.hash).toBe('#/projects');
   });
 
   it('shows error when all files are filtered out by DENY_LIST', async () => {

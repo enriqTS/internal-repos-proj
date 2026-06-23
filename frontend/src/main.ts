@@ -11,6 +11,7 @@ import { renderEditForm } from './edit-form';
 import { createThemeManager, createThemeToggle } from './theme-manager';
 import { renderTemplatesPage } from './templates-page';
 import { renderTemplateDetail } from './template-detail';
+import { renderLandingPage } from './landing-page';
 
 import { searchIndexLoaded, markSearchIndexLoaded, invalidateSearchIndex } from './search-state';
 
@@ -128,6 +129,10 @@ async function renderEditView(params: Record<string, string>, container: HTMLEle
 const routes: Route[] = [
   {
     pattern: /^\/$/,
+    handler: renderLandingPage,
+  },
+  {
+    pattern: /^\/projects$/,
     handler: renderSearchView,
   },
   {

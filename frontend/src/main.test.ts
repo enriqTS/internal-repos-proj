@@ -79,6 +79,12 @@ vi.mock('./theme-manager', () => {
   };
 });
 
+vi.mock('./landing-page', () => ({
+  renderLandingPage: vi.fn((_params: Record<string, string>, container: HTMLElement) => {
+    container.innerHTML = '<div class="landing-page"><h1>Landing</h1></div>';
+  }),
+}));
+
 describe('Bug Condition: searchIndexLoaded reset after mutations', () => {
   let container: HTMLElement;
 
@@ -115,8 +121,8 @@ describe('Bug Condition: searchIndexLoaded reset after mutations', () => {
     // 3. Performing a mutation
     // 4. Navigating to home again and checking if fetchSearchIndex was called again
 
-    // Set the hash to home route
-    window.location.hash = '#/';
+    // Set the hash to projects route (search view)
+    window.location.hash = '#/projects';
     await import('./main');
 
     // Wait for initial render
@@ -186,8 +192,8 @@ describe('Bug Condition: searchIndexLoaded reset after mutations', () => {
       }
     }
 
-    // Now navigate back to home and check if fetchSearchIndex is called again
-    window.location.hash = '#/';
+    // Now navigate back to projects and check if fetchSearchIndex is called again
+    window.location.hash = '#/projects';
     await new Promise(r => setTimeout(r, 100));
 
     return {
@@ -260,7 +266,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
     const mockedFetch = vi.mocked(fetchSearchIndex);
     mockedFetch.mockResolvedValue({ ok: true, data: [] });
 
-    window.location.hash = '#/';
+    window.location.hash = '#/projects';
     await import('./main');
     await new Promise(r => setTimeout(r, 50));
 
@@ -273,17 +279,17 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
     const mockedFetch = vi.mocked(fetchSearchIndex);
     mockedFetch.mockResolvedValue({ ok: true, data: [] });
 
-    window.location.hash = '#/';
+    window.location.hash = '#/projects';
     await import('./main');
     await new Promise(r => setTimeout(r, 50));
 
     const callCountAfterFirstLoad = mockedFetch.mock.calls.length;
     expect(callCountAfterFirstLoad).toBeGreaterThanOrEqual(1);
 
-    // Navigate away and back to home
+    // Navigate away and back to projects
     window.location.hash = '#/upload';
     await new Promise(r => setTimeout(r, 50));
-    window.location.hash = '#/';
+    window.location.hash = '#/projects';
     await new Promise(r => setTimeout(r, 50));
 
     // Should NOT have called fetchSearchIndex again (flag stays true)
@@ -317,19 +323,19 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           const mockedFetch = vi.mocked(fetchSearchIndex);
           mockedFetch.mockResolvedValue({ ok: true, data: [{ name: 'proj', description: 'desc', tags: ['t'], date: '2024-01-01', path: 'projects/proj/' }] });
 
-          // Initialize app with home route
-          window.location.hash = '#/';
+          // Initialize app with projects route
+          window.location.hash = '#/projects';
           await import('./main');
           await new Promise(r => setTimeout(r, 100));
 
           const callCountAfterInit = mockedFetch.mock.calls.length;
-          // Initial home load should fetch
+          // Initial projects load should fetch
           expect(callCountAfterInit).toBeGreaterThanOrEqual(1);
 
           // Perform each navigation in the sequence
           for (const nav of navigations) {
             if (nav === 'home') {
-              window.location.hash = '#/';
+              window.location.hash = '#/projects';
             } else if (nav === 'upload-page') {
               window.location.hash = '#/upload';
             } else if (nav === 'project-detail') {
@@ -375,7 +381,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           vi.mocked(apiModule.computePatchBody).mockReturnValue({ name: 'changed' });
 
           // Initialize app — performs initial index load
-          window.location.hash = '#/';
+          window.location.hash = '#/projects';
           await import('./main');
           await new Promise(r => setTimeout(r, 50));
 
@@ -421,8 +427,8 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
             }
           }
 
-          // Navigate back to home
-          window.location.hash = '#/';
+          // Navigate back to projects
+          window.location.hash = '#/projects';
           await new Promise(r => setTimeout(r, 50));
 
           // Failed mutations should NOT reset searchIndexLoaded,

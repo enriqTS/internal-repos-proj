@@ -125,7 +125,7 @@ export function showDeleteDialog(projectName: string): void {
       setTimeout(() => {
         closeDialog(overlay);
         document.removeEventListener('keydown', onKeyDown);
-        window.location.hash = '#/';
+        window.location.hash = '#/projects';
       }, 1200);
     } else {
       // Show error, re-enable confirm button

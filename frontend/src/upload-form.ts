@@ -659,7 +659,7 @@ export function renderUploadForm(container: HTMLElement): void {
 
     // 7. Success — redirect to project list
     invalidateSearchIndex();
-    window.location.hash = '#/';
+    window.location.hash = '#/projects';
   });
 
   wrapper.appendChild(form);
