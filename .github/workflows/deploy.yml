@@ -141,6 +141,8 @@ jobs:
           aws s3 sync frontend/dist/ s3://${{ steps.tf_outputs.outputs.s3_bucket }} \
             --delete \
             --exclude "projects/*" \
+            --exclude "templates/*" \
+            --exclude "templates-index.json" \
             --exclude "global-index.json" \
             --exclude "tags.json"
 
