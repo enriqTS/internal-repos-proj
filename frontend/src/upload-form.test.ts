@@ -32,23 +32,23 @@ describe('validateForm', () => {
   describe('project name validation', () => {
     it('returns error when name is empty', () => {
       const errors = validateForm('', 'some readme', createFileList(1));
-      expect(errors.name).toBe('Project name is required');
+      expect(errors.name).toBe('Nome do projeto é obrigatório');
     });
 
     it('returns error when name is only whitespace', () => {
       const errors = validateForm('   ', 'some readme', createFileList(1));
-      expect(errors.name).toBe('Project name is required');
+      expect(errors.name).toBe('Nome do projeto é obrigatório');
     });
 
     it('returns error when name exceeds 64 characters', () => {
       const longName = 'a'.repeat(65);
       const errors = validateForm(longName, 'some readme', createFileList(1));
-      expect(errors.name).toContain('at most 64 characters');
+      expect(errors.name).toContain('no máximo 64 caracteres');
     });
 
     it('returns error when name has invalid characters', () => {
       const errors = validateForm('my project!', 'some readme', createFileList(1));
-      expect(errors.name).toContain('alphanumeric');
+      expect(errors.name).toContain('alfanuméricos');
     });
 
     it('accepts valid names with hyphens and underscores', () => {
@@ -77,8 +77,8 @@ describe('validateForm', () => {
     it('returns error when readme exceeds 50,000 characters', () => {
       const longReadme = 'x'.repeat(50_001);
       const errors = validateForm('project', longReadme, createFileList(1));
-      expect(errors.readme).toContain('at most');
-      expect(errors.readme).toContain('characters');
+      expect(errors.readme).toContain('no máximo');
+      expect(errors.readme).toContain('caracteres');
     });
 
     it('accepts readme at exactly 50,000 characters', () => {
@@ -91,12 +91,12 @@ describe('validateForm', () => {
   describe('files validation', () => {
     it('returns error when files is null', () => {
       const errors = validateForm('project', 'readme', null);
-      expect(errors.files).toBe('At least one file must be selected');
+      expect(errors.files).toBe('Pelo menos um arquivo deve ser selecionado');
     });
 
     it('returns error when no files selected', () => {
       const errors = validateForm('project', 'readme', createFileList(0));
-      expect(errors.files).toBe('At least one file must be selected');
+      expect(errors.files).toBe('Pelo menos um arquivo deve ser selecionado');
     });
 
     it('accepts when files are selected', () => {
@@ -282,7 +282,7 @@ describe('renderUploadForm', () => {
     renderUploadForm(container);
     const btn = container.querySelector('button[type="submit"]');
     expect(btn).not.toBeNull();
-    expect(btn!.textContent).toBe('Upload Project');
+    expect(btn!.textContent).toBe('Enviar Projeto');
   });
 
   it('renders form elements in correct order: drop-zone, name, tags, submit, status, readme', () => {
@@ -447,7 +447,7 @@ describe('renderUploadForm', () => {
 
     // During upload, button should be disabled
     expect(submitBtn.disabled).toBe(true);
-    expect(submitBtn.textContent).toBe('Uploading...');
+    expect(submitBtn.textContent).toBe('Enviando...');
 
     // Resolve the S3 upload
     resolveS3();
@@ -480,7 +480,7 @@ describe('renderUploadForm', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const statusEl = container.querySelector('.upload-status');
-    expect(statusEl!.textContent).toContain('No files remain after filtering');
+    expect(statusEl!.textContent).toContain('Nenhum arquivo restou');
     expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
   });
 
@@ -591,7 +591,7 @@ describe('renderUploadForm', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const statusEl = container.querySelector('.upload-status');
-    expect(statusEl!.textContent).toContain('too large');
+    expect(statusEl!.textContent).toContain('muito grande');
     expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
 
     // initiateUpload should NOT have been called

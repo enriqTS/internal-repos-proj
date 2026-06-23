@@ -11,6 +11,7 @@ import { createTagSelector, type TagSelectorAPI } from './tag-selector';
 import { createDropZone } from './drop-zone';
 import { createReadmePreview, type ReadmePreviewAPI } from './readme-preview';
 import { invalidateSearchIndex } from './search-state';
+import { t } from './i18n';
 import JSZip from 'jszip';
 
 /**
@@ -48,6 +49,7 @@ export interface ValidationErrors {
   name?: string;
   readme?: string;
   files?: string;
+  repositoryUrl?: string;
 }
 
 /**
@@ -59,26 +61,43 @@ export function validateForm(
   name: string,
   readme: string,
   files: FileList | null,
+  repositoryUrl?: string,
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
   // Project name validation
   if (!name.trim()) {
-    errors.name = 'Project name is required';
+    errors.name = t('validation.nameRequired');
   } else if (name.length > MAX_PROJECT_NAME_LENGTH) {
-    errors.name = `Project name must be at most ${MAX_PROJECT_NAME_LENGTH} characters`;
+    errors.name = t('validation.nameTooLong', { max: MAX_PROJECT_NAME_LENGTH });
   } else if (!PROJECT_NAME_REGEX.test(name)) {
-    errors.name = 'Project name may only contain alphanumeric characters, hyphens, and underscores';
+    errors.name = t('validation.nameInvalid');
   }
 
   // Readme validation — only check length if provided
   if (readme.length > MAX_README_LENGTH) {
-    errors.readme = `Readme must be at most ${MAX_README_LENGTH.toLocaleString()} characters`;
+    errors.readme = t('validation.readmeTooLong', { max: MAX_README_LENGTH.toLocaleString() });
   }
 
   // Files validation
   if (!files || files.length === 0) {
-    errors.files = 'At least one file must be selected';
+    errors.files = t('validation.filesRequired');
+  }
+
+  // Repository URL validation (optional field)
+  if (repositoryUrl && repositoryUrl.length > 0) {
+    if (repositoryUrl.length > 2048) {
+      errors.repositoryUrl = t('validation.repoTooLong');
+    } else {
+      try {
+        const parsed = new URL(repositoryUrl);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+          errors.repositoryUrl = t('validation.repoInvalidProtocol');
+        }
+      } catch {
+        errors.repositoryUrl = t('validation.repoInvalidUrl');
+      }
+    }
   }
 
   return errors;
@@ -318,7 +337,7 @@ export async function handleReadmeAutofill(
   // Show autofill notice
   const notice = document.createElement('span');
   notice.className = 'readme-autofill-notice';
-  notice.textContent = `Auto-filled from ${readmeFile.name}`;
+  notice.textContent = t('readmePreview.autofill', { filename: readmeFile.name });
   notice.setAttribute('aria-live', 'polite');
   noticeContainer.appendChild(notice);
 
@@ -326,7 +345,7 @@ export async function handleReadmeAutofill(
   if (truncated) {
     const warning = document.createElement('span');
     warning.className = 'readme-truncation-warning';
-    warning.textContent = `Content was truncated to ${MAX_README_LENGTH.toLocaleString()} characters (maximum allowed).`;
+    warning.textContent = t('readmePreview.truncated', { max: MAX_README_LENGTH.toLocaleString() });
     warning.setAttribute('role', 'alert');
     noticeContainer.appendChild(warning);
   }
@@ -343,7 +362,7 @@ export function renderUploadForm(container: HTMLElement): void {
   wrapper.className = 'upload-form-wrapper';
 
   const heading = document.createElement('h2');
-  heading.textContent = 'Upload Project';
+  heading.textContent = t('upload.heading');
   wrapper.appendChild(heading);
 
   const form = document.createElement('form');
@@ -365,17 +384,17 @@ export function renderUploadForm(container: HTMLElement): void {
   let selectedFiles: FileList | null = null;
 
   // --- 2. Project Name field ---
-  const nameGroup = createFieldGroup('project-name', 'Project Name', 'text', {
+  const nameGroup = createFieldGroup('project-name', t('upload.nameLabel'), 'text', {
     maxLength: MAX_PROJECT_NAME_LENGTH,
-    placeholder: 'my-project-name',
+    placeholder: t('upload.namePlaceholder'),
     required: true,
   });
   form.appendChild(nameGroup.wrapper);
 
   // --- 2.5. Repository URL field ---
-  const repoGroup = createFieldGroup('project-repository-url', 'Repository URL (optional)', 'url', {
+  const repoGroup = createFieldGroup('project-repository-url', t('upload.repoLabel'), 'url', {
     maxLength: 2048,
-    placeholder: 'https://github.com/org/repo',
+    placeholder: t('upload.repoPlaceholder'),
   });
   form.appendChild(repoGroup.wrapper);
 
@@ -384,7 +403,7 @@ export function renderUploadForm(container: HTMLElement): void {
   tagsGroupWrapper.className = 'form-group';
 
   const tagsLabel = document.createElement('label');
-  tagsLabel.textContent = 'Tags';
+  tagsLabel.textContent = t('upload.tagsLabel');
   tagsGroupWrapper.appendChild(tagsLabel);
 
   const tagSelectorContainer = document.createElement('div');
@@ -412,7 +431,7 @@ export function renderUploadForm(container: HTMLElement): void {
       tagSelector!.setAvailableTags(result.data);
     } else {
       // Non-404 error — show warning in the tag selector area
-      tagWarningEl.textContent = 'Existing tag suggestions unavailable';
+      tagWarningEl.textContent = t('upload.tagsWarning');
     }
   });
 
@@ -420,7 +439,7 @@ export function renderUploadForm(container: HTMLElement): void {
   const submitBtn = document.createElement('button');
   submitBtn.type = 'submit';
   submitBtn.className = 'upload-submit';
-  submitBtn.textContent = 'Upload Project';
+  submitBtn.textContent = t('upload.submit');
   form.appendChild(submitBtn);
 
   // --- 5. Status message area ---
@@ -435,7 +454,7 @@ export function renderUploadForm(container: HTMLElement): void {
   readmeGroupWrapper.className = 'form-group';
 
   const readmeLabel = document.createElement('label');
-  readmeLabel.textContent = 'Readme Content';
+  readmeLabel.textContent = t('upload.readmeLabel');
   readmeGroupWrapper.appendChild(readmeLabel);
 
   const readmePreviewContainer = document.createElement('div');
@@ -453,7 +472,7 @@ export function renderUploadForm(container: HTMLElement): void {
     container: readmePreviewContainer,
     textareaId: 'project-readme',
     maxLength: MAX_README_LENGTH,
-    placeholder: '# My Project\n\nDescribe your project here...',
+    placeholder: t('upload.readmePlaceholder'),
     rows: 12,
   });
 
@@ -470,10 +489,10 @@ export function renderUploadForm(container: HTMLElement): void {
   function updateSubmitState(): void {
     if (tagSuggestionInFlight) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Suggesting tags...';
+      submitBtn.textContent = t('upload.suggestingTags');
     } else {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Upload Project';
+      submitBtn.textContent = t('upload.submit');
     }
   }
 
@@ -555,13 +574,15 @@ export function renderUploadForm(container: HTMLElement): void {
     const name = nameGroup.input.value;
     const readme = readmePreview.getValue();
     const files = selectedFiles;
+    const repoUrlValue = repoGroup.input.value.trim();
 
     // Client-side validation (tags handled by TagSelector component)
-    const errors = validateForm(name, readme, files);
+    const errors = validateForm(name, readme, files, repoUrlValue || undefined);
     if (Object.keys(errors).length > 0) {
       if (errors.name) nameGroup.errorEl.textContent = errors.name;
       if (errors.readme) readmeErrorEl.textContent = errors.readme;
       if (errors.files) filesErrorEl.textContent = errors.files;
+      if (errors.repositoryUrl) repoGroup.errorEl.textContent = errors.repositoryUrl;
       return;
     }
 
@@ -571,7 +592,7 @@ export function renderUploadForm(container: HTMLElement): void {
 
     // If no tags selected and README is available, attempt to get AI suggestions as fallback
     if (selectedTags.length === 0 && readme.length >= 50) {
-      statusEl.textContent = 'Getting tag suggestions...';
+      statusEl.textContent = t('upload.suggestingTags');
       statusEl.className = 'upload-status upload-status--loading';
       const suggestResult = await suggestTags(readme);
       if (suggestResult.ok && suggestResult.data.length > 0) {
@@ -588,17 +609,17 @@ export function renderUploadForm(container: HTMLElement): void {
     // 1. Filter files client-side
     const filteredFiles = filterFileList(files!);
     if (filteredFiles.length === 0) {
-      statusEl.textContent = 'No files remain after filtering out build artifacts and ignored patterns.';
+      statusEl.textContent = t('upload.noFilesAfterFilter');
       statusEl.className = 'upload-status upload-status--error';
       return;
     }
 
     // Disable submit while processing
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Uploading...';
+    submitBtn.textContent = t('upload.submitting');
 
     // 2. Create zip client-side
-    statusEl.textContent = 'Zipping files...';
+    statusEl.textContent = t('upload.zipping');
     statusEl.className = 'upload-status upload-status--loading';
     const zip = new JSZip();
     for (const file of filteredFiles) {
@@ -611,15 +632,15 @@ export function renderUploadForm(container: HTMLElement): void {
 
     // 3. Check size
     if (blob.size > MAX_CLIENT_ZIP_SIZE) {
-      statusEl.textContent = 'Project is too large to upload (exceeds 500 MB limit).';
+      statusEl.textContent = t('upload.tooLarge');
       statusEl.className = 'upload-status upload-status--error';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Upload Project';
+      submitBtn.textContent = t('upload.submit');
       return;
     }
 
     // 4. Initiate upload with structured tags
-    statusEl.textContent = 'Initiating upload...';
+    statusEl.textContent = t('upload.initiating');
 
     // Use the repo URL from the form field (may have been auto-filled from .git/config or entered manually)
     const repoUrl = repoGroup.input.value.trim();
@@ -628,32 +649,32 @@ export function renderUploadForm(container: HTMLElement): void {
       statusEl.textContent = initiateResult.error;
       statusEl.className = 'upload-status upload-status--error';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Upload Project';
+      submitBtn.textContent = t('upload.submit');
       return;
     }
 
     // 5. Upload to S3 with progress
-    statusEl.textContent = 'Uploading... 0%';
+    statusEl.textContent = t('upload.submitting');
     try {
       await uploadToS3(initiateResult.data.uploadUrl, blob, (pct) => {
-        statusEl.textContent = `Uploading... ${pct}%`;
+        statusEl.textContent = `${t('upload.submitting')} ${pct}%`;
       });
     } catch (err) {
       statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
       statusEl.className = 'upload-status upload-status--error';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Upload Project';
+      submitBtn.textContent = t('upload.submit');
       return;
     }
 
     // 6. Finalize
-    statusEl.textContent = 'Processing...';
+    statusEl.textContent = t('upload.processing');
     const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
     if (!finalizeResult.ok) {
       statusEl.textContent = finalizeResult.error;
       statusEl.className = 'upload-status upload-status--error';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Upload Project';
+      submitBtn.textContent = t('upload.submit');
       return;
     }
 
