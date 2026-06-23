@@ -12,6 +12,7 @@ import { createThemeManager, createThemeToggle } from './theme-manager';
 import { renderTemplatesPage } from './templates-page';
 import { renderTemplateDetail } from './template-detail';
 import { renderLandingPage } from './landing-page';
+import { t } from './i18n';
 
 import { searchIndexLoaded, markSearchIndexLoaded, invalidateSearchIndex } from './search-state';
 
@@ -27,13 +28,13 @@ export { invalidateSearchIndex };
 async function renderSearchView(_params: Record<string, string>, container: HTMLElement): Promise<void> {
   // Create search UI structure
   const heading = document.createElement('h2');
-  heading.textContent = 'Search Projects';
+  heading.textContent = t('search.heading');
 
   const input = document.createElement('input');
   input.type = 'text';
-  input.placeholder = 'Search by name, description, or tags…';
+  input.placeholder = t('search.placeholder');
   input.className = 'search-input';
-  input.setAttribute('aria-label', 'Search projects');
+  input.setAttribute('aria-label', t('search.placeholder'));
 
   const resultsContainer = document.createElement('div');
   resultsContainer.className = 'results-container';
@@ -48,7 +49,7 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
 
   if (!searchIndexLoaded) {
     // Show loading state
-    resultsContainer.innerHTML = '<p class="loading">Loading projects…</p>';
+    resultsContainer.innerHTML = `<p class="loading">${t('search.loading')}</p>`;
 
     const result = await fetchSearchIndex();
     if (!result.ok) {
@@ -56,8 +57,8 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
       const errorEl = document.createElement('div');
       errorEl.className = 'error';
       errorEl.innerHTML = `
-        <p>${result.error}</p>
-        <button class="retry-btn">Retry</button>
+        <p>${t('search.error')}</p>
+        <button class="retry-btn">${t('search.retry')}</button>
       `;
       resultsContainer.appendChild(errorEl);
 
