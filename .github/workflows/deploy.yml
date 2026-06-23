@@ -166,6 +166,112 @@ jobs:
             echo "tags.json already exists, skipping."
           fi
 
+      - name: Package and deploy templates
+        run: |
+          S3_BUCKET="${{ steps.tf_outputs.outputs.s3_bucket }}"
+
+          # Find all template directories (chatbot-rag-* pattern)
+          for TEMPLATE_DIR in templates/chatbot-rag-*/; do
+            if [ ! -d "$TEMPLATE_DIR" ]; then
+              continue
+            fi
+
+            TEMPLATE=$(basename "$TEMPLATE_DIR")
+            S3_PREFIX="templates/$TEMPLATE"
+            echo "Processing template: $TEMPLATE"
+
+            # 1. Create artifact.zip (exclude docs/, .git*, build/, .kiro/)
+            echo "  Creating artifact.zip..."
+            cd "$TEMPLATE_DIR"
+            zip -r "../../build-${TEMPLATE}.zip" . \
+              -x "docs/*" \
+              -x ".git*" \
+              -x "build/*" \
+              -x ".kiro/*" \
+              -x "*.zip"
+            cd ../..
+
+            # 2. Upload metadata.json
+            echo "  Uploading metadata.json..."
+            aws s3 cp "$TEMPLATE_DIR/metadata.json" \
+              "s3://$S3_BUCKET/$S3_PREFIX/metadata.json" \
+              --content-type "application/json"
+
+            # 3. Upload README as readme.md
+            echo "  Uploading readme.md..."
+            aws s3 cp "$TEMPLATE_DIR/README.md" \
+              "s3://$S3_BUCKET/$S3_PREFIX/readme.md" \
+              --content-type "text/markdown"
+
+            # 4. Upload architecture diagram (prefer PNG, fallback to SVG)
+            if ls "$TEMPLATE_DIR"/docs/arquitetura/*.png 1>/dev/null 2>&1; then
+              ARCH_FILE=$(ls "$TEMPLATE_DIR"/docs/arquitetura/*.png | head -1)
+              echo "  Uploading architecture.png..."
+              aws s3 cp "$ARCH_FILE" \
+                "s3://$S3_BUCKET/$S3_PREFIX/architecture.png" \
+                --content-type "image/png"
+            elif ls "$TEMPLATE_DIR"/docs/arquitetura/*.svg 1>/dev/null 2>&1; then
+              ARCH_FILE=$(ls "$TEMPLATE_DIR"/docs/arquitetura/*.svg | head -1)
+              echo "  Uploading architecture.svg..."
+              aws s3 cp "$ARCH_FILE" \
+                "s3://$S3_BUCKET/$S3_PREFIX/architecture.svg" \
+                --content-type "image/svg+xml"
+            fi
+
+            # 5. Upload artifact.zip
+            echo "  Uploading artifact.zip..."
+            aws s3 cp "build-${TEMPLATE}.zip" \
+              "s3://$S3_BUCKET/$S3_PREFIX/artifact.zip" \
+              --content-type "application/zip"
+
+            rm -f "build-${TEMPLATE}.zip"
+            echo "  Template '$TEMPLATE' deployed."
+          done
+
+      - name: Regenerate templates index
+        run: |
+          S3_BUCKET="${{ steps.tf_outputs.outputs.s3_bucket }}"
+          echo "Regenerating templates-index.json..."
+
+          # List all template prefixes in S3
+          TEMPLATE_PREFIXES=$(aws s3api list-objects-v2 \
+            --bucket "$S3_BUCKET" \
+            --prefix "templates/" \
+            --delimiter "/" \
+            --query "CommonPrefixes[].Prefix" \
+            --output text 2>/dev/null || echo "")
+
+          INDEX="[]"
+
+          for PREFIX in $TEMPLATE_PREFIXES; do
+            # Skip non-template prefixes
+            if [[ "$PREFIX" == "templates/arquitetura/" ]]; then
+              continue
+            fi
+
+            METADATA_KEY="${PREFIX}metadata.json"
+
+            if aws s3api head-object --bucket "$S3_BUCKET" --key "$METADATA_KEY" 2>/dev/null; then
+              METADATA=$(aws s3 cp "s3://$S3_BUCKET/$METADATA_KEY" -)
+              ENTRY=$(echo "$METADATA" | jq --arg path "$PREFIX" '. + {path: $path}')
+
+              # Detect architecture image format
+              if aws s3api head-object --bucket "$S3_BUCKET" --key "${PREFIX}architecture.png" 2>/dev/null; then
+                ENTRY=$(echo "$ENTRY" | jq '. + {architectureImage: "architecture.png"}')
+              elif aws s3api head-object --bucket "$S3_BUCKET" --key "${PREFIX}architecture.svg" 2>/dev/null; then
+                ENTRY=$(echo "$ENTRY" | jq '. + {architectureImage: "architecture.svg"}')
+              fi
+
+              INDEX=$(echo "$INDEX" | jq --argjson entry "$ENTRY" '. + [$entry]')
+            fi
+          done
+
+          echo "$INDEX" | jq '.' | aws s3 cp - \
+            "s3://$S3_BUCKET/templates-index.json" \
+            --content-type "application/json"
+
+          echo "templates-index.json regenerated with $(echo "$INDEX" | jq length) templates."
+
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
