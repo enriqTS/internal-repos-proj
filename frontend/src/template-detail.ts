@@ -1,5 +1,6 @@
 import type { TemplateMetadata } from 'shared/types';
 import { fetchTemplateMetadata, fetchTemplateReadme } from './api';
+import { t } from './i18n';
 import { formatRelativeDate } from './relative-date';
 import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
 
@@ -75,7 +76,7 @@ export function renderDownloadButton(name: string): HTMLElement {
   link.href = `${baseUrl}/templates/${name}/artifact.zip`;
   link.setAttribute('download', `${name}.zip`);
   link.setAttribute('aria-label', `Download ${name} template zip archive`);
-  link.textContent = 'Download Template';
+  link.textContent = t('templateDetail.download');
   return link;
 }
 
@@ -139,7 +140,7 @@ export async function renderTemplateDetail(
   if (!name) {
     const errorEl = document.createElement('p');
     errorEl.className = 'error-message';
-    errorEl.textContent = 'No template was specified';
+    errorEl.textContent = t('templateDetail.noTemplate');
     container.appendChild(errorEl);
     return;
   }
@@ -148,7 +149,7 @@ export async function renderTemplateDetail(
   const backLink = document.createElement('a');
   backLink.href = '#/templates';
   backLink.className = 'back-link';
-  backLink.textContent = '← Back to templates';
+  backLink.textContent = t('templateDetail.back');
   container.appendChild(backLink);
 
   // Fetch template metadata
@@ -157,7 +158,7 @@ export async function renderTemplateDetail(
   if (!metadataResult.ok) {
     const errorEl = document.createElement('p');
     errorEl.className = 'error-message';
-    errorEl.textContent = 'Template details are unavailable';
+    errorEl.textContent = t('templateDetail.unavailable');
     container.appendChild(errorEl);
     return;
   }
@@ -202,7 +203,7 @@ export async function renderTemplateDetail(
   if (metadata.language) {
     const langEl = document.createElement('p');
     langEl.className = 'template-language';
-    langEl.textContent = `Language: ${metadata.language}`;
+    langEl.textContent = `${t('templateDetail.language')}: ${metadata.language}`;
     section.appendChild(langEl);
   }
 
@@ -230,7 +231,7 @@ export async function renderTemplateDetail(
     const readmeSection = renderReadmeSection(readmeHtml, 'template-readme');
     detailWrapper.appendChild(readmeSection);
   } else {
-    const readmeErrorEl = renderReadmeError('Template documentation is unavailable');
+    const readmeErrorEl = renderReadmeError(t('templateDetail.docUnavailable'));
     const readmeWrapper = document.createElement('section');
     readmeWrapper.className = 'template-readme';
     readmeWrapper.appendChild(readmeErrorEl);

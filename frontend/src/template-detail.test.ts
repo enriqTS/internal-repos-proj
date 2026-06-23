@@ -85,7 +85,7 @@ describe('renderTemplateDetail', () => {
       // Download button rendered
       const downloadLink = container.querySelector('a.download-link') as HTMLAnchorElement;
       expect(downloadLink).not.toBeNull();
-      expect(downloadLink.textContent).toBe('Download Template');
+      expect(downloadLink.textContent).toBe('Baixar Template');
 
       // Architecture section rendered
       const archSection = container.querySelector('.template-architecture');
@@ -102,7 +102,7 @@ describe('renderTemplateDetail', () => {
   });
 
   describe('metadata fetch failure', () => {
-    it('renders error message "Template details are unavailable" and no download button', async () => {
+    it('renders error message "Detalhes do template não disponíveis" and no download button', async () => {
       // metadata fetch fails
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -114,7 +114,7 @@ describe('renderTemplateDetail', () => {
 
       const errorMsg = container.querySelector('.error-message');
       expect(errorMsg).not.toBeNull();
-      expect(errorMsg?.textContent).toBe('Template details are unavailable');
+      expect(errorMsg?.textContent).toBe('Detalhes do template não disponíveis');
 
       // No download button
       expect(container.querySelector('a.download-link')).toBeNull();
@@ -125,7 +125,7 @@ describe('renderTemplateDetail', () => {
   });
 
   describe('readme fetch failure', () => {
-    it('renders fallback text "Template documentation is unavailable" but rest of page still renders', async () => {
+    it('renders fallback text "Documentação do template não disponível" but rest of page still renders', async () => {
       // metadata succeeds
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -152,7 +152,7 @@ describe('renderTemplateDetail', () => {
       // Readme error fallback shown
       const errorMsg = container.querySelector('.error-message');
       expect(errorMsg).not.toBeNull();
-      expect(errorMsg?.textContent).toBe('Template documentation is unavailable');
+      expect(errorMsg?.textContent).toBe('Documentação do template não disponível');
 
       // No readme content
       expect(container.querySelector('.readme-content')).toBeNull();
@@ -219,22 +219,22 @@ describe('renderTemplateDetail', () => {
   });
 
   describe('empty/missing template name', () => {
-    it('shows "No template was specified"', async () => {
+    it('shows "Nenhum template especificado"', async () => {
       const container = createContainer();
       await renderTemplateDetail({}, container);
 
       const errorMsg = container.querySelector('.error-message');
       expect(errorMsg).not.toBeNull();
-      expect(errorMsg?.textContent).toBe('No template was specified');
+      expect(errorMsg?.textContent).toBe('Nenhum template especificado');
     });
 
-    it('shows "No template was specified" for empty name', async () => {
+    it('shows "Nenhum template especificado" for empty name', async () => {
       const container = createContainer();
       await renderTemplateDetail({ name: '' }, container);
 
       const errorMsg = container.querySelector('.error-message');
       expect(errorMsg).not.toBeNull();
-      expect(errorMsg?.textContent).toBe('No template was specified');
+      expect(errorMsg?.textContent).toBe('Nenhum template especificado');
     });
   });
 
