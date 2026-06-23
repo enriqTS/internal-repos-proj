@@ -18,6 +18,7 @@ import {
 import { createTagSelector, type TagSelectorAPI } from './tag-selector';
 import { filterFileList } from './upload-form';
 import { invalidateSearchIndex } from './search-state';
+import { t } from './i18n';
 import JSZip from 'jszip';
 
 /**
@@ -43,26 +44,26 @@ export function validateEditForm(
   const errors: EditValidationErrors = {};
 
   if (readme.length > MAX_README_LENGTH) {
-    errors.readme = `Readme must be at most ${MAX_README_LENGTH.toLocaleString()} characters`;
+    errors.readme = t('validation.readmeTooLong', { max: MAX_README_LENGTH.toLocaleString() });
   }
 
   // If user selected a folder, it must contain at least one file
   if (hasFiles && (!files || files.length === 0)) {
-    errors.files = 'Selected folder contains no files';
+    errors.files = t('validation.folderEmpty');
   }
 
   // Validate repository URL if provided
   if (repositoryUrl && repositoryUrl.length > 0) {
     if (repositoryUrl.length > 2048) {
-      errors.repositoryUrl = 'Repository URL must be at most 2048 characters';
+      errors.repositoryUrl = t('validation.repoTooLong');
     } else {
       try {
         const parsed = new URL(repositoryUrl);
         if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-          errors.repositoryUrl = 'Repository URL must use HTTPS or HTTP';
+          errors.repositoryUrl = t('validation.repoInvalidProtocol');
         }
       } catch {
-        errors.repositoryUrl = 'Please enter a valid URL';
+        errors.repositoryUrl = t('validation.repoInvalidUrl');
       }
     }
   }
@@ -88,7 +89,7 @@ export async function renderEditForm(
   wrapper.className = 'upload-form-wrapper';
 
   const heading = document.createElement('h2');
-  heading.textContent = `Edit Project: ${projectName}`;
+  heading.textContent = `${t('edit.heading')}: ${projectName}`;
   wrapper.appendChild(heading);
 
   // Status message area
@@ -101,7 +102,7 @@ export async function renderEditForm(
   container.appendChild(wrapper);
 
   // Fetch current metadata and readme
-  statusEl.textContent = 'Loading project data...';
+  statusEl.textContent = t('edit.loading');
   statusEl.className = 'upload-status upload-status--loading';
 
   const projectPath = `projects/${projectName}/`;
@@ -111,7 +112,7 @@ export async function renderEditForm(
   ]);
 
   if (!metadataResult.ok) {
-    statusEl.textContent = `Could not load project data: ${metadataResult.error}`;
+    statusEl.textContent = `${t('edit.loadError')}: ${metadataResult.error}`;
     statusEl.className = 'upload-status upload-status--error';
     return;
   }
@@ -132,7 +133,7 @@ export async function renderEditForm(
   const nameGroup = document.createElement('div');
   nameGroup.className = 'form-group';
   const nameLabel = document.createElement('label');
-  nameLabel.textContent = 'Project Name';
+  nameLabel.textContent = t('edit.nameLabel');
   nameGroup.appendChild(nameLabel);
   const nameDisplay = document.createElement('input');
   nameDisplay.type = 'text';
@@ -148,14 +149,14 @@ export async function renderEditForm(
 
   const repoLabel = document.createElement('label');
   repoLabel.htmlFor = 'edit-repository-url';
-  repoLabel.textContent = 'Repository URL (optional)';
+  repoLabel.textContent = t('edit.repoLabel');
   repoGroup.appendChild(repoLabel);
 
   const repoInput = document.createElement('input');
   repoInput.type = 'url';
   repoInput.id = 'edit-repository-url';
   repoInput.name = 'edit-repository-url';
-  repoInput.placeholder = 'https://github.com/org/repo';
+  repoInput.placeholder = t('upload.repoPlaceholder');
   repoInput.value = metadata.repositoryUrl ?? '';
   repoInput.maxLength = 2048;
   repoGroup.appendChild(repoInput);
@@ -172,7 +173,7 @@ export async function renderEditForm(
   tagsGroupWrapper.className = 'form-group';
 
   const tagsLabel = document.createElement('label');
-  tagsLabel.textContent = 'Tags';
+  tagsLabel.textContent = t('upload.tagsLabel');
   tagsGroupWrapper.appendChild(tagsLabel);
 
   const tagSelectorContainer = document.createElement('div');
@@ -205,7 +206,7 @@ export async function renderEditForm(
       // If registry fails, at least show the project's current tags
       tagSelector.setAvailableTags(metadata.tags);
       tagSelector.applySuggestions(metadata.tags);
-      tagWarningEl.textContent = 'Existing tag suggestions unavailable';
+      tagWarningEl.textContent = t('upload.tagsWarning');
     }
   });
 
@@ -215,14 +216,14 @@ export async function renderEditForm(
 
   const readmeLabel = document.createElement('label');
   readmeLabel.htmlFor = 'edit-readme';
-  readmeLabel.textContent = 'Readme Content';
+  readmeLabel.textContent = t('edit.readmeLabel');
   readmeGroup.appendChild(readmeLabel);
 
   const readmeTextarea = document.createElement('textarea');
   readmeTextarea.id = 'edit-readme';
   readmeTextarea.name = 'edit-readme';
   readmeTextarea.maxLength = MAX_README_LENGTH;
-  readmeTextarea.placeholder = '# My Project\n\nDescribe your project here...';
+  readmeTextarea.placeholder = t('upload.readmePlaceholder');
   readmeTextarea.rows = 12;
   readmeTextarea.value = currentReadme;
   readmeGroup.appendChild(readmeTextarea);
@@ -240,7 +241,7 @@ export async function renderEditForm(
 
   const filesLabel = document.createElement('label');
   filesLabel.htmlFor = 'edit-files';
-  filesLabel.textContent = 'Replace Artifact (optional — select folder)';
+  filesLabel.textContent = t('edit.filesLabel');
   filesGroup.appendChild(filesLabel);
 
   const filesInput = document.createElement('input');
@@ -263,7 +264,7 @@ export async function renderEditForm(
   const submitBtn = document.createElement('button');
   submitBtn.type = 'submit';
   submitBtn.className = 'upload-submit';
-  submitBtn.textContent = 'Save Changes';
+  submitBtn.textContent = t('edit.submit');
   form.appendChild(submitBtn);
 
   // Cancel button
@@ -272,7 +273,7 @@ export async function renderEditForm(
   cancelBtn.className = 'upload-submit';
   cancelBtn.style.marginLeft = '8px';
   cancelBtn.style.backgroundColor = '#6c757d';
-  cancelBtn.textContent = 'Cancel';
+  cancelBtn.textContent = t('edit.cancel');
   cancelBtn.addEventListener('click', () => {
     window.location.hash = `#/project/${encodeURIComponent(projectName)}`;
   });
@@ -306,22 +307,22 @@ export async function renderEditForm(
 
     // Disable submit while processing
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving...';
+    submitBtn.textContent = t('edit.saving');
 
     try {
       // If new artifact is selected, run presigned upload flow first
       if (hasFiles) {
         const filteredFiles = filterFileList(files!);
         if (filteredFiles.length === 0) {
-          statusEl.textContent = 'No files remain after filtering out build artifacts and ignored patterns.';
+          statusEl.textContent = t('upload.noFilesAfterFilter');
           statusEl.className = 'upload-status upload-status--error';
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Save Changes';
+          submitBtn.textContent = t('edit.submit');
           return;
         }
 
         // Create zip client-side
-        statusEl.textContent = 'Zipping files...';
+        statusEl.textContent = t('upload.zipping');
         statusEl.className = 'upload-status upload-status--loading';
         const zip = new JSZip();
         for (const file of filteredFiles) {
@@ -334,18 +335,18 @@ export async function renderEditForm(
 
         // Check size
         if (blob.size > MAX_CLIENT_ZIP_SIZE) {
-          statusEl.textContent = 'Project is too large to upload (exceeds 500 MB limit).';
+          statusEl.textContent = t('upload.tooLarge');
           statusEl.className = 'upload-status upload-status--error';
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Save Changes';
+          submitBtn.textContent = t('edit.submit');
           return;
         }
 
         // Initiate upload with mode: 'replace'
-        statusEl.textContent = 'Initiating artifact replacement...';
+        statusEl.textContent = t('edit.initiatingReplace');
         const initiateResult = await initiateUpload({
           name: projectName,
-          tags: selectedTags.map((t) => ({ tag: t, isNew: false } as TagInput)),
+          tags: selectedTags.map((tag) => ({ tag, isNew: false } as TagInput)),
           readme,
           mode: 'replace',
         });
@@ -354,7 +355,7 @@ export async function renderEditForm(
           statusEl.textContent = initiateResult.error;
           statusEl.className = 'upload-status upload-status--error';
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Save Changes';
+          submitBtn.textContent = t('edit.submit');
           return;
         }
 
@@ -368,18 +369,18 @@ export async function renderEditForm(
           statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
           statusEl.className = 'upload-status upload-status--error';
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Save Changes';
+          submitBtn.textContent = t('edit.submit');
           return;
         }
 
         // Finalize
-        statusEl.textContent = 'Processing artifact...';
+        statusEl.textContent = t('upload.processing');
         const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
         if (!finalizeResult.ok) {
           statusEl.textContent = finalizeResult.error;
           statusEl.className = 'upload-status upload-status--error';
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Save Changes';
+          submitBtn.textContent = t('edit.submit');
           return;
         }
       }
@@ -391,22 +392,22 @@ export async function renderEditForm(
       );
 
       if (patchBody) {
-        statusEl.textContent = 'Updating metadata...';
+        statusEl.textContent = t('edit.updatingMetadata');
         statusEl.className = 'upload-status upload-status--loading';
         const updateResult = await updateProject(projectName, patchBody);
         if (!updateResult.ok) {
           statusEl.textContent = updateResult.error;
           statusEl.className = 'upload-status upload-status--error';
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Save Changes';
+          submitBtn.textContent = t('edit.submit');
           return;
         }
       }
 
       // Success — show message, then navigate back
       statusEl.textContent = hasFiles
-        ? 'Project updated successfully (artifact replaced)!'
-        : 'Project updated successfully!';
+        ? t('edit.successWithArtifact')
+        : t('edit.success');
       statusEl.className = 'upload-status upload-status--success';
 
       invalidateSearchIndex();
@@ -418,7 +419,7 @@ export async function renderEditForm(
       statusEl.textContent = err instanceof Error ? err.message : 'An unexpected error occurred';
       statusEl.className = 'upload-status upload-status--error';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Save Changes';
+      submitBtn.textContent = t('edit.submit');
     }
   });
 
