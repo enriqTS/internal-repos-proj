@@ -11,9 +11,6 @@ import { createTagSelector, type TagSelectorAPI } from './tag-selector';
 import { createDropZone } from './drop-zone';
 import { createReadmePreview, type ReadmePreviewAPI } from './readme-preview';
 import { invalidateSearchIndex } from './search-state';
-import { Marked } from 'marked';
-import { markedHighlight } from 'marked-highlight';
-import hljs from 'highlight.js';
 import JSZip from 'jszip';
 
 /**
@@ -342,19 +339,6 @@ export async function handleReadmeAutofill(
 export function renderUploadForm(container: HTMLElement): void {
   container.innerHTML = '';
 
-  // Configure marked with highlight.js for syntax highlighting
-  const markedInstance = new Marked(
-    markedHighlight({
-      langPrefix: 'hljs language-',
-      highlight(code: string, lang: string) {
-        if (lang && hljs.getLanguage(lang)) {
-          return hljs.highlight(code, { language: lang }).value;
-        }
-        return hljs.highlightAuto(code).value;
-      },
-    }),
-  );
-
   const wrapper = document.createElement('div');
   wrapper.className = 'upload-form-wrapper';
 
@@ -467,7 +451,6 @@ export function renderUploadForm(container: HTMLElement): void {
   // Create the Readme Preview component
   const readmePreview: ReadmePreviewAPI = createReadmePreview({
     container: readmePreviewContainer,
-    markedInstance,
     textareaId: 'project-readme',
     maxLength: MAX_README_LENGTH,
     placeholder: '# My Project\n\nDescribe your project here...',
