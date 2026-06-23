@@ -9,6 +9,7 @@ import { fetchTemplateIndex } from './api';
 import { renderCardGrid, type CardItem } from './card-grid';
 import { createTagFilter, type TagFilterAPI } from './tag-filter';
 import { createPaginator, type PaginatorAPI } from './paginator';
+import { t } from './i18n';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -31,7 +32,7 @@ export async function renderTemplatesPage(
   // Show loading state
   const loadingEl = document.createElement('p');
   loadingEl.className = 'loading';
-  loadingEl.textContent = 'Loading templates…';
+  loadingEl.textContent = t('templates.loading');
   container.appendChild(loadingEl);
 
   const result = await fetchTemplateIndex();
@@ -81,12 +82,12 @@ function renderError(container: HTMLElement, errorMessage: string): void {
  */
 function renderEmpty(container: HTMLElement): void {
   const heading = document.createElement('h2');
-  heading.textContent = 'Project Templates';
+  heading.textContent = t('templates.heading');
   container.appendChild(heading);
 
   const emptyMsg = document.createElement('p');
   emptyMsg.className = 'no-results';
-  emptyMsg.textContent = 'No templates available yet';
+  emptyMsg.textContent = t('templates.empty');
   container.appendChild(emptyMsg);
 }
 
@@ -99,13 +100,13 @@ function renderFullPage(container: HTMLElement, index: TemplateIndex): void {
 
   // Heading
   const heading = document.createElement('h2');
-  heading.textContent = 'Project Templates';
+  heading.textContent = t('templates.heading');
   container.appendChild(heading);
 
   // Search input
   const input = document.createElement('input');
   input.type = 'text';
-  input.placeholder = 'Search templates by name, description, or tags…';
+  input.placeholder = t('templates.placeholder');
   input.className = 'search-input';
   input.setAttribute('aria-label', 'Search templates');
   container.appendChild(input);
