@@ -115,7 +115,7 @@ describe('renderProjectDetail', () => {
 
       const errorMsg = container.querySelector('.metadata-error');
       expect(errorMsg).not.toBeNull();
-      expect(errorMsg?.textContent).toBe('Project details are unavailable');
+      expect(errorMsg?.textContent).toBe('Detalhes do projeto não disponíveis');
 
       // No metadata or readme should be rendered
       expect(container.querySelector('.project-metadata')).toBeNull();
@@ -149,7 +149,7 @@ describe('renderProjectDetail', () => {
       // Readme error should be shown
       const readmeError = container.querySelector('.error-message');
       expect(readmeError).not.toBeNull();
-      expect(readmeError?.textContent).toBe('Documentation is unavailable');
+      expect(readmeError?.textContent).toBe('Documentação não disponível');
 
       // No readme content
       expect(container.querySelector('.readme-content')).toBeNull();
@@ -184,7 +184,7 @@ describe('renderProjectDetail', () => {
       // Should have unavailable message
       const unavailableMsg = container.querySelector('.artifact-unavailable');
       expect(unavailableMsg).not.toBeNull();
-      expect(unavailableMsg?.textContent).toBe('Artifact is not available for download');
+      expect(unavailableMsg?.textContent).toBe('Artefato não disponível para download');
     });
   });
 

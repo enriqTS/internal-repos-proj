@@ -1,6 +1,7 @@
 import type { ProjectMetadata } from 'shared/types';
 import { fetchProjectReadme, fetchProjectMetadata } from './api';
 import { showDeleteDialog } from './delete-dialog';
+import { t } from './i18n';
 import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
 
 /**
@@ -48,7 +49,7 @@ export async function renderProjectDetail(
   const backLink = document.createElement('a');
   backLink.href = '#/projects';
   backLink.className = 'back-link';
-  backLink.textContent = '← Back to search';
+  backLink.textContent = t('projectDetail.back');
   container.appendChild(backLink);
 
   // Fetch metadata first — if it fails, we can't show project details
@@ -80,7 +81,7 @@ export async function renderProjectDetail(
 
   // Render readme or readme error
   if (!readmeResult.ok) {
-    detailWrapper.appendChild(renderReadmeError('Documentation is unavailable'));
+    detailWrapper.appendChild(renderReadmeError(t('projectDetail.docUnavailable')));
   } else {
     const readmeHtml = await marked.parse(readmeResult.data);
     detailWrapper.appendChild(renderReadmeSection(readmeHtml, 'project-readme'));
@@ -94,7 +95,7 @@ export async function renderProjectDetail(
 function renderMetadataError(container: HTMLElement): void {
   const errorEl = document.createElement('p');
   errorEl.className = 'error-message metadata-error';
-  errorEl.textContent = 'Project details are unavailable';
+  errorEl.textContent = t('projectDetail.unavailable');
   container.appendChild(errorEl);
 }
 
@@ -137,7 +138,7 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
     repoEl.className = 'project-repository';
     const repoLabel = document.createElement('span');
     repoLabel.className = 'repository-label';
-    repoLabel.textContent = 'Repository: ';
+    repoLabel.textContent = t('projectDetail.repository');
     repoEl.appendChild(repoLabel);
     const repoLink = document.createElement('a');
     repoLink.href = metadata.repositoryUrl;
@@ -156,13 +157,13 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
   const editBtn = document.createElement('a');
   editBtn.className = 'project-edit-btn';
   editBtn.href = `#/project/${encodeURIComponent(metadata.name)}/edit`;
-  editBtn.textContent = 'Edit';
+  editBtn.textContent = t('projectDetail.edit');
   actionsEl.appendChild(editBtn);
 
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
   deleteBtn.className = 'project-delete-btn';
-  deleteBtn.textContent = 'Delete';
+  deleteBtn.textContent = t('projectDetail.delete');
   deleteBtn.addEventListener('click', () => {
     showDeleteDialog(metadata.name);
   });
@@ -189,20 +190,20 @@ function renderDownloadSection(projectPath: string, available: boolean, projectN
     const link = document.createElement('a');
     link.className = 'download-link';
     link.href = `${getBaseUrl()}/${projectPath}artifact.zip`;
-    link.textContent = 'Download artifact.zip';
+    link.textContent = t('projectDetail.download');
     link.setAttribute('download', `${projectName}.zip`);
     link.setAttribute('aria-label', `Download ${projectName} project zip archive`);
     section.appendChild(link);
   } else {
     const disabledLink = document.createElement('span');
     disabledLink.className = 'download-link disabled';
-    disabledLink.textContent = 'Download artifact.zip';
+    disabledLink.textContent = t('projectDetail.downloadDisabled');
     disabledLink.setAttribute('aria-disabled', 'true');
     section.appendChild(disabledLink);
 
     const unavailableMsg = document.createElement('p');
     unavailableMsg.className = 'artifact-unavailable';
-    unavailableMsg.textContent = 'Artifact is not available for download';
+    unavailableMsg.textContent = t('projectDetail.artifactUnavailable');
     section.appendChild(unavailableMsg);
   }
 
