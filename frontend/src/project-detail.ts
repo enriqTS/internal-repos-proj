@@ -1,24 +1,7 @@
-import { Marked } from 'marked';
-import { markedHighlight } from 'marked-highlight';
-import hljs from 'highlight.js';
 import type { ProjectMetadata } from 'shared/types';
 import { fetchProjectReadme, fetchProjectMetadata } from './api';
 import { showDeleteDialog } from './delete-dialog';
-
-/**
- * Configure marked with highlight.js for syntax highlighting in code blocks.
- */
-const marked = new Marked(
-  markedHighlight({
-    langPrefix: 'hljs language-',
-    highlight(code: string, lang: string) {
-      if (lang && hljs.getLanguage(lang)) {
-        return hljs.highlight(code, { language: lang }).value;
-      }
-      return hljs.highlightAuto(code).value;
-    },
-  }),
-);
+import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
 
 /**
  * Get the base URL for constructing artifact download links.
@@ -92,27 +75,16 @@ export async function renderProjectDetail(
     checkArtifactAvailability(projectPath),
   ]);
 
-  const downloadSection = renderDownloadSection(projectPath, artifactAvailable);
+  const downloadSection = renderDownloadSection(projectPath, artifactAvailable, metadata.name);
   detailWrapper.appendChild(downloadSection);
 
   // Render readme or readme error
-  const readmeSection = document.createElement('section');
-  readmeSection.className = 'project-readme';
-
   if (!readmeResult.ok) {
-    const readmeError = document.createElement('p');
-    readmeError.className = 'error-message readme-error';
-    readmeError.textContent = 'Documentation is unavailable';
-    readmeSection.appendChild(readmeError);
+    detailWrapper.appendChild(renderReadmeError('Documentation is unavailable'));
   } else {
     const readmeHtml = await marked.parse(readmeResult.data);
-    const readmeContent = document.createElement('div');
-    readmeContent.className = 'readme-content';
-    readmeContent.innerHTML = readmeHtml;
-    readmeSection.appendChild(readmeContent);
+    detailWrapper.appendChild(renderReadmeSection(readmeHtml, 'project-readme'));
   }
-
-  detailWrapper.appendChild(readmeSection);
   container.appendChild(detailWrapper);
 }
 
@@ -204,8 +176,12 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
 /**
  * Render the download section with a link to artifact.zip.
  * If the artifact is unavailable, the link is disabled with a message.
+ *
+ * @param projectPath - The project path prefix, e.g. "projects/my-project/"
+ * @param available - Whether the artifact.zip is available for download
+ * @param projectName - The project name used for accessibility attributes and download filename
  */
-function renderDownloadSection(projectPath: string, available: boolean): HTMLElement {
+function renderDownloadSection(projectPath: string, available: boolean, projectName: string): HTMLElement {
   const section = document.createElement('section');
   section.className = 'project-download';
 
@@ -214,7 +190,8 @@ function renderDownloadSection(projectPath: string, available: boolean): HTMLEle
     link.className = 'download-link';
     link.href = `${getBaseUrl()}/${projectPath}artifact.zip`;
     link.textContent = 'Download artifact.zip';
-    link.setAttribute('download', '');
+    link.setAttribute('download', `${projectName}.zip`);
+    link.setAttribute('aria-label', `Download ${projectName} project zip archive`);
     section.appendChild(link);
   } else {
     const disabledLink = document.createElement('span');

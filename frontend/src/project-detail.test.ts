@@ -146,7 +146,7 @@ describe('renderProjectDetail', () => {
       );
 
       // Readme error should be shown
-      const readmeError = container.querySelector('.readme-error');
+      const readmeError = container.querySelector('.error-message');
       expect(readmeError).not.toBeNull();
       expect(readmeError?.textContent).toBe('Documentation is unavailable');
 

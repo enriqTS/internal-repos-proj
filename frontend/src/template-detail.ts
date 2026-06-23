@@ -1,24 +1,7 @@
-import { Marked } from 'marked';
-import { markedHighlight } from 'marked-highlight';
-import hljs from 'highlight.js';
 import type { TemplateMetadata } from 'shared/types';
 import { fetchTemplateMetadata, fetchTemplateReadme } from './api';
 import { formatRelativeDate } from './relative-date';
-
-/**
- * Configure marked with highlight.js for syntax highlighting in code blocks.
- */
-const marked = new Marked(
-  markedHighlight({
-    langPrefix: 'hljs language-',
-    highlight(code: string, lang: string) {
-      if (lang && hljs.getLanguage(lang)) {
-        return hljs.highlight(code, { language: lang }).value;
-      }
-      return hljs.highlightAuto(code).value;
-    },
-  }),
-);
+import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
 
 /**
  * Get the base URL for constructing CDN asset URLs.
@@ -128,37 +111,6 @@ export function renderArchitectureSection(imageUrl: string, name: string): HTMLE
   anchor.appendChild(img);
   section.appendChild(anchor);
   return section;
-}
-
-/**
- * Render the readme section with parsed HTML content.
- *
- * Returns a <section class="template-readme"> containing a
- * <div class="readme-content"> with the rendered HTML.
- */
-export function renderReadmeSection(readmeHtml: string): HTMLElement {
-  const section = document.createElement('section');
-  section.className = 'template-readme';
-
-  const content = document.createElement('div');
-  content.className = 'readme-content';
-  content.innerHTML = readmeHtml;
-
-  section.appendChild(content);
-  return section;
-}
-
-/**
- * Render the readme error fallback element.
- *
- * Returns a <p class="error-message"> with text
- * "Template documentation is unavailable".
- */
-export function renderReadmeError(): HTMLElement {
-  const errorEl = document.createElement('p');
-  errorEl.className = 'error-message';
-  errorEl.textContent = 'Template documentation is unavailable';
-  return errorEl;
 }
 
 /**
@@ -275,13 +227,13 @@ export async function renderTemplateDetail(
   // 5. Readme section
   if (readmeResult.ok) {
     const readmeHtml = await marked.parse(readmeResult.data);
-    const readmeSection = renderReadmeSection(readmeHtml);
+    const readmeSection = renderReadmeSection(readmeHtml, 'template-readme');
     detailWrapper.appendChild(readmeSection);
   } else {
-    const readmeError = renderReadmeError();
+    const readmeErrorEl = renderReadmeError('Template documentation is unavailable');
     const readmeWrapper = document.createElement('section');
     readmeWrapper.className = 'template-readme';
-    readmeWrapper.appendChild(readmeError);
+    readmeWrapper.appendChild(readmeErrorEl);
     detailWrapper.appendChild(readmeWrapper);
   }
 
