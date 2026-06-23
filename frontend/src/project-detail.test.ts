@@ -98,7 +98,8 @@ describe('renderProjectDetail', () => {
       const link = container.querySelector('a.download-link') as HTMLAnchorElement;
       expect(link).not.toBeNull();
       expect(link.href).toBe('https://cdn.example.com/projects/my-project/artifact.zip');
-      expect(link.hasAttribute('download')).toBe(true);
+      expect(link.getAttribute('download')).toBe('my-project.zip');
+      expect(link.getAttribute('aria-label')).toBe('Download my-project project zip archive');
     });
   });
 
