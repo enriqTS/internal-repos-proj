@@ -48,3 +48,8 @@ output "staging_bucket_arn" {
   description = "The ARN of the S3 staging bucket"
   value       = aws_s3_bucket.staging.arn
 }
+
+output "templates_bucket_name" {
+  description = "The name of the S3 bucket for template artifacts"
+  value       = aws_s3_bucket.templates.id
+}
