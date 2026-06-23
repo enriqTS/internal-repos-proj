@@ -27,7 +27,7 @@ S3 Bucket (static website hosting)
 | Search | Fuse.js — client-side fuzzy matching on tags + project name |
 | Markdown | marked + highlight.js — renders READMEs with syntax-highlighted code blocks |
 | HTTPS / Domain | CloudFront in front of S3 |
-| Upload page | Form: project name, tags, readme (textarea) + folder drag-drop / `webkitdirectory` input to upload source files directly |
+| Upload page | Form: project name, tags, readme (textarea) + folder drag-drop / `webkitdirectory` input to upload source files directly  |
 
 ### Upload Flow (Serverless)
 
