@@ -1,4 +1,4 @@
-"""Logging configuration using aws-lambda-powertools."""
+"""Logging configuration using aws-lambda-powertools!"""
 
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.logging import correlation_paths
