@@ -1,4 +1,5 @@
 import { deleteProject } from './api';
+import { t } from './i18n';
 import { invalidateSearchIndex } from './search-state';
 
 /**
@@ -25,27 +26,27 @@ export function showDeleteDialog(projectName: string): void {
   const title = document.createElement('h2');
   title.id = 'delete-dialog-title';
   title.className = 'delete-dialog-title';
-  title.textContent = 'Delete Project';
+  title.textContent = t('delete.title');
   dialog.appendChild(title);
 
   // Warning text
   const warning = document.createElement('p');
   warning.className = 'delete-dialog-warning';
-  warning.textContent = 'This action cannot be undone. This will permanently delete the project and all associated files.';
+  warning.textContent = t('delete.warning');
   dialog.appendChild(warning);
 
   // Project name display
   const nameDisplay = document.createElement('p');
   nameDisplay.className = 'delete-dialog-name';
-  nameDisplay.innerHTML = `Please type <strong>${escapeHtml(projectName)}</strong> to confirm.`;
+  nameDisplay.innerHTML = t('delete.prompt', { name: escapeHtml(projectName) });
   dialog.appendChild(nameDisplay);
 
   // Confirmation input
   const input = document.createElement('input');
   input.type = 'text';
   input.className = 'delete-dialog-input';
-  input.placeholder = 'Type project name to confirm';
-  input.setAttribute('aria-label', 'Type project name to confirm deletion');
+  input.placeholder = t('delete.inputPlaceholder');
+  input.setAttribute('aria-label', t('delete.inputPlaceholder'));
   dialog.appendChild(input);
 
   // Status message area
@@ -60,12 +61,12 @@ export function showDeleteDialog(projectName: string): void {
   const cancelBtn = document.createElement('button');
   cancelBtn.type = 'button';
   cancelBtn.className = 'delete-dialog-cancel';
-  cancelBtn.textContent = 'Cancel';
+  cancelBtn.textContent = t('delete.cancel');
 
   const confirmBtn = document.createElement('button');
   confirmBtn.type = 'button';
   confirmBtn.className = 'delete-dialog-confirm';
-  confirmBtn.textContent = 'Delete';
+  confirmBtn.textContent = t('delete.confirm');
   confirmBtn.disabled = true;
 
   buttonRow.appendChild(cancelBtn);
@@ -111,15 +112,15 @@ export function showDeleteDialog(projectName: string): void {
     confirmBtn.disabled = true;
     cancelBtn.disabled = true;
     input.disabled = true;
-    confirmBtn.textContent = 'Deleting…';
+    confirmBtn.textContent = t('delete.deleting');
     statusEl.className = 'delete-dialog-status delete-dialog-status--loading';
-    statusEl.textContent = 'Deleting project…';
+    statusEl.textContent = t('delete.deleting');
 
     const result = await deleteProject(projectName);
 
     if (result.ok) {
       statusEl.className = 'delete-dialog-status delete-dialog-status--success';
-      statusEl.textContent = `Project "${projectName}" has been deleted.`;
+      statusEl.textContent = t('delete.success', { name: projectName });
       invalidateSearchIndex();
       // Navigate to home after a brief delay
       setTimeout(() => {
@@ -134,7 +135,7 @@ export function showDeleteDialog(projectName: string): void {
       confirmBtn.disabled = false;
       cancelBtn.disabled = false;
       input.disabled = false;
-      confirmBtn.textContent = 'Delete';
+      confirmBtn.textContent = t('delete.confirm');
     }
   });
 }
