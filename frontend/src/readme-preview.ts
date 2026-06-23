@@ -1,4 +1,4 @@
-import { Marked } from 'marked';
+import { marked } from './shared-markdown';
 
 /**
  * Options for creating a ReadmePreview component.
@@ -6,8 +6,6 @@ import { Marked } from 'marked';
 export interface ReadmePreviewOptions {
   /** Container element to render into */
   container: HTMLElement;
-  /** Shared Marked instance (already configured with highlight.js) */
-  markedInstance: Marked;
   /** Text area config */
   textareaId?: string;
   maxLength?: number;
@@ -52,7 +50,7 @@ function escapeHtml(html: string): string {
  * Edit/Preview toggle for rendering markdown content.
  */
 export function createReadmePreview(options: ReadmePreviewOptions): ReadmePreviewAPI {
-  const { container, markedInstance, textareaId, maxLength, placeholder, rows } = options;
+  const { container, textareaId, maxLength, placeholder, rows } = options;
 
   let currentMode: 'edit' | 'preview' = 'preview';
 
@@ -177,7 +175,7 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
     try {
       // Escape HTML in the raw markdown to prevent XSS
       const escapedContent = escapeHtml(content);
-      const rendered = await markedInstance.parse(escapedContent);
+      const rendered = await marked.parse(escapedContent);
       previewContent.innerHTML = rendered;
     } catch {
       previewContent.innerHTML = '';
