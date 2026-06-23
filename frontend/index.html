@@ -1427,6 +1427,93 @@
         pointer-events: none;
       }
 
+      /* ─── Landing Page ─── */
+      .landing-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 3rem 0;
+        animation: fadeIn 300ms ease;
+      }
+
+      .landing-heading {
+        font-family: var(--font-body);
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--color-text);
+        letter-spacing: -0.03em;
+        margin-bottom: 0.75rem;
+      }
+
+      .landing-description {
+        font-size: 1.05rem;
+        color: var(--color-text-muted);
+        line-height: 1.7;
+        max-width: 540px;
+        margin-bottom: 2.5rem;
+      }
+
+      .landing-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+        width: 100%;
+      }
+
+      .landing-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        text-decoration: none;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        min-height: 44px;
+        transition: all var(--transition);
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+      }
+
+      .landing-card:hover {
+        border-color: var(--color-accent);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+      }
+
+      .landing-card:active {
+        transform: translateY(0);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .landing-card:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px var(--color-accent-subtle);
+      }
+
+      .landing-card:focus:not(:focus-visible) {
+        outline: none;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .landing-card h2 {
+        font-family: var(--font-mono);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-text);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.01em;
+      }
+
+      .landing-card p {
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        line-height: 1.6;
+      }
+
       /* ─── Dark Theme ─── */
       html[data-theme="dark"] {
         --color-bg: #1a1a1e;
@@ -1482,6 +1569,30 @@
         nav a {
           padding: 0.35rem 0.5rem;
           font-size: 0.75rem;
+        }
+        .landing-page {
+          padding: 2rem 0;
+        }
+        .landing-heading {
+          font-size: 1.5rem;
+        }
+        .landing-description {
+          font-size: 0.95rem;
+        }
+        .landing-cards-grid {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        .landing-card {
+          width: 100%;
+          min-height: 44px;
+          padding: 1.25rem;
+        }
+        .landing-card h2 {
+          font-size: 1rem;
+        }
+        .landing-card p {
+          font-size: 0.875rem;
         }
       }
     </style>
