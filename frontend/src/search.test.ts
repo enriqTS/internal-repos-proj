@@ -167,7 +167,7 @@ describe('search module', () => {
       renderResults([], container);
       const noResults = container.querySelector('.card-grid-empty');
       expect(noResults).not.toBeNull();
-      expect(noResults!.textContent).toBe('No results found');
+      expect(noResults!.textContent).toBe('Nenhum resultado encontrado');
     });
 
     it('should render a grid of results with name, description, and tags', () => {
