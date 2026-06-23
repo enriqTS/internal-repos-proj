@@ -46,7 +46,7 @@ export async function renderProjectDetail(
 
   // Back navigation link — rendered before fetch so it's always visible
   const backLink = document.createElement('a');
-  backLink.href = '#/';
+  backLink.href = '#/projects';
   backLink.className = 'back-link';
   backLink.textContent = '← Back to search';
   container.appendChild(backLink);
