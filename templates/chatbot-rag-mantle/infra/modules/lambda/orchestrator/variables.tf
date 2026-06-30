@@ -66,3 +66,13 @@ variable "log_level" {
   type        = string
   default     = "INFO"
 }
+
+variable "responses_table_arn" {
+  description = "ARN of the responses DynamoDB table"
+  type        = string
+}
+
+variable "responses_table_name" {
+  description = "Name of the responses DynamoDB table"
+  type        = string
+}

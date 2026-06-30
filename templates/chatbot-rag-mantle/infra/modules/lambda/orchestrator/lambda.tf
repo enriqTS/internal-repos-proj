@@ -27,6 +27,7 @@ resource "aws_lambda_function" "orchestrator" {
       AI_CALLER_FUNCTION_NAME     = var.ai_caller_function_name
       TOOL_EXECUTOR_FUNCTION_NAME = var.tool_executor_function_name
       DYNAMODB_TABLE_NAME         = var.dynamodb_table_name
+      RESPONSES_TABLE_NAME        = var.responses_table_name
       POWERTOOLS_SERVICE_NAME     = "orchestrator"
       POWERTOOLS_LOG_LEVEL        = var.log_level
     }

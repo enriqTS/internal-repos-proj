@@ -36,6 +36,8 @@ module "orchestrator" {
   tool_executor_arn           = module.tool_executor.function_arn
   tool_executor_function_name = module.tool_executor.function_name
   shared_layer_arn            = module.shared_layer.layer_arn
+  responses_table_arn         = module.dynamodb_responses.table_arn
+  responses_table_name        = module.dynamodb_responses.table_name
   max_conversation_history    = var.max_conversation_history
   max_retry_attempts          = var.max_retry_attempts
   log_level                   = var.log_level

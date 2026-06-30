@@ -54,4 +54,12 @@ data "aws_iam_policy_document" "orchestrator_permissions" {
       var.tool_executor_arn,
     ]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "dynamodb:PutItem",
+    ]
+    resources = [var.responses_table_arn]
+  }
 }
