@@ -1,7 +1,7 @@
 """Shared data models and types used across Lambda functions."""
 
-from dataclasses import dataclass, field
-from typing import Optional, List
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -11,8 +11,8 @@ class ChatMessage:
     role: str  # "user" | "assistant" | "tool"
     content: str
     timestamp: str
-    tool_calls: Optional[List[dict]] = None
-    tool_results: Optional[List[dict]] = None
+    tool_calls: list[dict[str, Any]] | None = None
+    tool_results: list[dict[str, Any]] | None = None
 
 
 @dataclass
