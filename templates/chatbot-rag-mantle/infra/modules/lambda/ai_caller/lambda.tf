@@ -11,9 +11,13 @@ resource "aws_lambda_function" "ai_caller" {
   filename         = data.archive_file.ai_caller.output_path
   source_code_hash = data.archive_file.ai_caller.output_base64sha256
   role             = aws_iam_role.ai_caller.arn
-  timeout          = 30
+  timeout          = 90
 
   layers = [var.shared_layer_arn]
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
