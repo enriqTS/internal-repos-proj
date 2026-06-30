@@ -1,8 +1,5 @@
 """Shared test fixtures for all Lambda function tests."""
 
-import os
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 

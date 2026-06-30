@@ -24,8 +24,6 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "ANN"]
 ignore = [
-    "ANN101",  # missing type annotation for self
-    "ANN102",  # missing type annotation for cls
     "ANN401",  # Dynamically typed expressions (typing.Any) — allowed with comment
 ]
 

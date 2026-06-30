@@ -1,6 +1,5 @@
 """Tool Executor Lambda — executes tool calls (RAG search)."""
 
-import json
 import os
 import time
 import traceback

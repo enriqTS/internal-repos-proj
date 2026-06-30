@@ -1,13 +1,12 @@
 """AI Caller Lambda — invokes Bedrock Mantle API via OpenAI SDK."""
 
-import json
 import os
 import time
 from typing import Any
 
-from openai import OpenAI, OpenAIError
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
+from openai import OpenAI, OpenAIError
 from shared.logging_config import get_logger, log_ai_interaction
 
 logger = get_logger("ai_caller")
@@ -16,15 +15,13 @@ metrics = Metrics(namespace="ChatbotRAG", service="ai-caller")
 # PLACEHOLDER: Replace this system prompt with your own instructions.
 SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own instructions."
 
-MANTLE_BASE_URL = os.environ.get(
-    "MANTLE_BASE_URL", "https://bedrock-mantle.us-east-1.api.aws/v1"
-)
+MANTLE_BASE_URL = os.environ.get("MANTLE_BASE_URL", "https://bedrock-mantle.us-east-1.api.aws/v1")
 MODEL_ID = os.environ.get("MODEL_ID", "your-model-id")
 
 
 @metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
-def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: aws_lambda_powertools.utilities.typing.LambdaContext
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # noqa: ANN401
     """Invoke Mantle API with conversation and return response.
 
     Expected event payload:
@@ -102,9 +99,7 @@ def invoke_mantle(messages: list[dict[str, Any]], tools: list[dict[str, Any]], c
                 "latencyMs": latency_ms,
             },
         )
-        raise RuntimeError(
-            f"Mantle API error: {type(e).__name__}: {str(e)}"
-        ) from e
+        raise RuntimeError(f"Mantle API error: {type(e).__name__}: {str(e)}") from e
 
     latency_ms = int((time.time() - start_time) * 1000)
     metrics.add_metric(name="AIModelLatency", unit=MetricUnit.Milliseconds, value=latency_ms)
@@ -123,9 +118,7 @@ def invoke_mantle(messages: list[dict[str, Any]], tools: list[dict[str, Any]], c
     )
 
     # Check for tool calls in output and log at INFO level
-    tool_calls = [
-        item for item in response.output if item.type == "function_call"
-    ]
+    tool_calls = [item for item in response.output if item.type == "function_call"]
     if tool_calls:
         tool_names = [tc.name for tc in tool_calls]
         logger.info(
@@ -139,9 +132,7 @@ def invoke_mantle(messages: list[dict[str, Any]], tools: list[dict[str, Any]], c
 
     # Build response payload for the orchestrator
     result = {
-        "output": [
-            _serialize_output_item(item) for item in response.output
-        ],
+        "output": [_serialize_output_item(item) for item in response.output],
         "usage": {
             "inputTokens": response.usage.input_tokens if response.usage else None,
             "outputTokens": response.usage.output_tokens if response.usage else None,
@@ -158,11 +149,7 @@ def _serialize_output_item(item: Any) -> dict[str, Any]:  # item: openai.types.r
     serialized = {"type": item.type}
 
     if item.type == "message":
-        serialized["content"] = [
-            {"type": c.type, "text": c.text}
-            for c in item.content
-            if hasattr(c, "text")
-        ]
+        serialized["content"] = [{"type": c.type, "text": c.text} for c in item.content if hasattr(c, "text")]
     elif item.type == "function_call":
         serialized["name"] = item.name
         serialized["arguments"] = item.arguments

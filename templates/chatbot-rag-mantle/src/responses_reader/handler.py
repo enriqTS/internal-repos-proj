@@ -22,7 +22,7 @@ CORS_HEADERS = {
 
 
 @logger.inject_lambda_context
-def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext (aws_lambda_powertools.utilities.typing)
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # noqa: ANN401
     """API Gateway proxy handler for GET /responses/{messageId}."""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS_HEADERS, "body": ""}

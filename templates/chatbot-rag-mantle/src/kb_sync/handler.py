@@ -16,7 +16,7 @@ bedrock_client = boto3.client("bedrock-agent")
 
 
 @logger.inject_lambda_context
-def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext (aws_lambda_powertools.utilities.typing)
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # noqa: ANN401
     """S3 event trigger handler — starts KB ingestion job."""
     records: list[dict[str, Any]] = event.get("Records", [])
     logger.info(

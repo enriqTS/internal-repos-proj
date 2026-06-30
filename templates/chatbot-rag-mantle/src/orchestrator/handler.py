@@ -6,11 +6,9 @@ import time
 from typing import Any
 
 import boto3
-
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from shared.logging_config import get_logger
-from shared.models import ChatMessage
 
 logger = get_logger("orchestrator")
 metrics = Metrics(namespace="ChatbotRAG", service="orchestrator")
@@ -45,7 +43,7 @@ def _retry_with_backoff(func: Any, *args: Any, correlation_id: str = "", **kwarg
             return True, result
         except Exception as e:
             last_error = e
-            backoff = BACKOFF_BASE ** attempt
+            backoff = BACKOFF_BASE**attempt
             logger.warning(
                 "Retry attempt",
                 extra={
@@ -72,15 +70,17 @@ def _write_response(message_id: str, status: str, response: str = "", error: str
     expires_at = now + 604800  # 7 days
 
     try:
-        responses_table.put_item(Item={
-            "messageId": message_id,
-            "status": status,
-            "response": response,
-            "error": error,
-            "userId": user_id,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "expiresAt": expires_at,
-        })
+        responses_table.put_item(
+            Item={
+                "messageId": message_id,
+                "status": status,
+                "response": response,
+                "error": error,
+                "userId": user_id,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "expiresAt": expires_at,
+            }
+        )
         logger.info(
             "Response written",
             extra={"messageId": message_id, "status": status},
@@ -203,9 +203,7 @@ def _process_message(user_id: str, message: str, correlation_id: str, timestamp:
         )
 
         if not success:
-            raise RuntimeError(
-                f"AI Caller invocation failed after {MAX_RETRY_ATTEMPTS} attempts: {result}"
-            )
+            raise RuntimeError(f"AI Caller invocation failed after {MAX_RETRY_ATTEMPTS} attempts: {result}")
 
         ai_response = result
         function_calls = ai_response.get("function_calls", [])
@@ -246,10 +244,7 @@ def _process_message(user_id: str, message: str, correlation_id: str, timestamp:
             messages_for_ai.append(tool_message)
     else:
         # Max iterations reached without a text-only response
-        raise RuntimeError(
-            f"Conversation exceeded maximum allowed tool-use iterations "
-            f"({MAX_TOOL_ITERATIONS})."
-        )
+        raise RuntimeError(f"Conversation exceeded maximum allowed tool-use iterations ({MAX_TOOL_ITERATIONS}).")
 
     # Step 4: Append assistant response to history
     assistant_response_message = {
@@ -354,9 +349,7 @@ def invoke_ai_caller(messages: list[dict[str, Any]], correlation_id: str) -> dic
     response_payload = json.loads(response["Payload"].read())
 
     if "FunctionError" in response:
-        raise RuntimeError(
-            f"AI Caller invocation failed: {response_payload}"
-        )
+        raise RuntimeError(f"AI Caller invocation failed: {response_payload}")
 
     return response_payload
 
@@ -388,14 +381,18 @@ def invoke_tool_executor(tool_calls: list[dict[str, Any]], correlation_id: str) 
                     "error": response_payload,
                 },
             )
-            results.append({
-                "tool_call_id": tool_call.get("call_id", ""),
-                "result": {"error": str(response_payload)},
-            })
+            results.append(
+                {
+                    "tool_call_id": tool_call.get("call_id", ""),
+                    "result": {"error": str(response_payload)},
+                }
+            )
         else:
-            results.append({
-                "tool_call_id": tool_call.get("call_id", ""),
-                "result": response_payload,
-            })
+            results.append(
+                {
+                    "tool_call_id": tool_call.get("call_id", ""),
+                    "result": response_payload,
+                }
+            )
 
     return results
