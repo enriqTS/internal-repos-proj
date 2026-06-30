@@ -2,12 +2,16 @@
 # Bedrock Knowledge Base — RAG Document Indexing
 # ------------------------------------------------------------------------------
 
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+}
+
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 # IAM Role for Bedrock KB to access S3
 resource "aws_iam_role" "bedrock_kb" {
-  name = "${var.project_prefix}-bedrock-kb-role"
+  name = "${local.name_prefix}-bedrock-kb-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -25,7 +29,7 @@ resource "aws_iam_role" "bedrock_kb" {
 }
 
 resource "aws_iam_role_policy" "bedrock_kb_s3_access" {
-  name = "${var.project_prefix}-bedrock-kb-s3-access"
+  name = "${local.name_prefix}-bedrock-kb-s3-access"
   role = aws_iam_role.bedrock_kb.id
 
   policy = jsonencode({
@@ -41,7 +45,7 @@ resource "aws_iam_role_policy" "bedrock_kb_s3_access" {
 }
 
 resource "aws_iam_role_policy" "bedrock_kb_model_access" {
-  name = "${var.project_prefix}-bedrock-kb-model-access"
+  name = "${local.name_prefix}-bedrock-kb-model-access"
   role = aws_iam_role.bedrock_kb.id
 
   policy = jsonencode({
@@ -50,7 +54,7 @@ resource "aws_iam_role_policy" "bedrock_kb_model_access" {
       {
         Effect   = "Allow"
         Action   = ["bedrock:InvokeModel"]
-        Resource = ["arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.titan-embed-text-v2:0"]
+        Resource = ["arn:aws:bedrock:${data.aws_region.current.region}::foundation-model/amazon.titan-embed-text-v2:0"]
       }
     ]
   })
@@ -58,13 +62,13 @@ resource "aws_iam_role_policy" "bedrock_kb_model_access" {
 
 # Bedrock Knowledge Base
 resource "aws_bedrockagent_knowledge_base" "main" {
-  name     = "${var.project_prefix}-knowledge-base"
+  name     = "${local.name_prefix}-knowledge-base"
   role_arn = aws_iam_role.bedrock_kb.arn
 
   knowledge_base_configuration {
     type = "VECTOR"
     vector_knowledge_base_configuration {
-      embedding_model_arn = "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.titan-embed-text-v2:0"
+      embedding_model_arn = "arn:aws:bedrock:${data.aws_region.current.region}::foundation-model/amazon.titan-embed-text-v2:0"
     }
   }
 
@@ -72,7 +76,7 @@ resource "aws_bedrockagent_knowledge_base" "main" {
     type = "OPENSEARCH_SERVERLESS"
     opensearch_serverless_configuration {
       collection_arn    = var.opensearch_collection_arn
-      vector_index_name = "${var.project_prefix}-index"
+      vector_index_name = "${local.name_prefix}-index"
       field_mapping {
         vector_field   = "embedding"
         text_field     = "text"
@@ -80,16 +84,11 @@ resource "aws_bedrockagent_knowledge_base" "main" {
       }
     }
   }
-
-  tags = {
-    Name    = "${var.project_prefix}-knowledge-base"
-    Project = var.project_prefix
-  }
 }
 
 # S3 Data Source for the Knowledge Base
 resource "aws_bedrockagent_data_source" "s3" {
-  name              = "${var.project_prefix}-s3-data-source"
+  name              = "${local.name_prefix}-s3-data-source"
   knowledge_base_id = aws_bedrockagent_knowledge_base.main.id
 
   data_source_configuration {

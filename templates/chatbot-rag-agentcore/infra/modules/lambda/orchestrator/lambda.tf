@@ -1,3 +1,7 @@
+locals {
+  function_name = "${var.project_name}-${var.environment}-orchestrator"
+}
+
 data "archive_file" "orchestrator" {
   type        = "zip"
   source_dir  = "${path.root}/../../../src/orchestrator"
@@ -5,7 +9,7 @@ data "archive_file" "orchestrator" {
 }
 
 resource "aws_lambda_function" "orchestrator" {
-  function_name    = "${var.project_prefix}-orchestrator"
+  function_name    = local.function_name
   runtime          = "python3.12"
   handler          = "handler.handler"
   filename         = data.archive_file.orchestrator.output_path

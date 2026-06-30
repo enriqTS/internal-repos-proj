@@ -2,6 +2,10 @@
 # Bedrock AgentCore — Agent, Alias, and Action Group
 # ------------------------------------------------------------------------------
 
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+}
+
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
@@ -25,12 +29,12 @@ data "aws_iam_policy_document" "agent_assume" {
 }
 
 resource "aws_iam_role" "agent" {
-  name               = "${var.project_prefix}-agentcore-role"
+  name               = "${local.name_prefix}-agentcore-role"
   assume_role_policy = data.aws_iam_policy_document.agent_assume.json
 }
 
 resource "aws_iam_role_policy" "agent_model_invocation" {
-  name   = "${var.project_prefix}-agent-model-invocation"
+  name   = "${local.name_prefix}-agent-model-invocation"
   role   = aws_iam_role.agent.id
   policy = data.aws_iam_policy_document.agent_model_invocation.json
 }
@@ -40,14 +44,14 @@ data "aws_iam_policy_document" "agent_model_invocation" {
     effect  = "Allow"
     actions = ["bedrock:InvokeModel"]
     resources = [
-      "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/${var.model_id}"
+      "arn:aws:bedrock:${data.aws_region.current.region}::foundation-model/${var.model_id}"
     ]
   }
 }
 
 # Bedrock Agent
 resource "aws_bedrockagent_agent" "chatbot" {
-  agent_name                  = "${var.project_prefix}-agent"
+  agent_name                  = "${local.name_prefix}-agent"
   agent_resource_role_arn     = aws_iam_role.agent.arn
   foundation_model            = var.model_id
   instruction                 = var.agent_instruction
@@ -57,15 +61,15 @@ resource "aws_bedrockagent_agent" "chatbot" {
 # Agent Alias — points to the latest prepared version
 resource "aws_bedrockagent_agent_alias" "chatbot" {
   agent_id         = aws_bedrockagent_agent.chatbot.agent_id
-  agent_alias_name = "${var.project_prefix}-alias"
-  description      = "Production alias for ${var.project_prefix} agent"
+  agent_alias_name = "${local.name_prefix}-alias"
+  description      = "Production alias for ${local.name_prefix} agent"
 }
 
 # Action Group — registers the Tool Executor Lambda for tool execution
 resource "aws_bedrockagent_agent_action_group" "tools" {
   agent_id          = aws_bedrockagent_agent.chatbot.agent_id
   agent_version     = "DRAFT"
-  action_group_name = "${var.project_prefix}-tools"
+  action_group_name = "${local.name_prefix}-tools"
   description       = "Action group for RAG tool execution"
 
   action_group_executor {

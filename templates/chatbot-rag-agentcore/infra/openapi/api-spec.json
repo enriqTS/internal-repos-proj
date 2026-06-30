@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "${project_prefix}-chatbot-api",
+    "title": "${name_prefix}-chatbot-api",
     "description": "Chatbot RAG API",
     "version": "1.0.0"
   },

@@ -2,12 +2,12 @@
 # S3 Bucket — RAG Documents
 ################################################################################
 
-resource "aws_s3_bucket" "rag_documents" {
-  bucket = "${var.project_prefix}-rag-documents"
+locals {
+  bucket_name = "${var.project_name}-${var.environment}-rag-documents"
+}
 
-  tags = {
-    Name = "${var.project_prefix}-rag-documents"
-  }
+resource "aws_s3_bucket" "rag_documents" {
+  bucket = local.bucket_name
 }
 
 resource "aws_s3_bucket_versioning" "rag_documents" {

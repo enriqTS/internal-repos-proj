@@ -2,8 +2,12 @@
 # CloudWatch Dashboard
 # ------------------------------------------------------------------------------
 
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+}
+
 resource "aws_cloudwatch_dashboard" "main" {
-  dashboard_name = "${var.project_prefix}-dashboard"
+  dashboard_name = "${local.name_prefix}-dashboard"
 
   dashboard_body = jsonencode({
     widgets = [
@@ -112,7 +116,7 @@ resource "aws_cloudwatch_dashboard" "main" {
 # ------------------------------------------------------------------------------
 
 resource "aws_cloudwatch_metric_alarm" "lambda_error_rate" {
-  alarm_name          = "${var.project_prefix}-lambda-error-rate"
+  alarm_name          = "${local.name_prefix}-lambda-error-rate"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   threshold           = 5
@@ -153,14 +157,10 @@ resource "aws_cloudwatch_metric_alarm" "lambda_error_rate" {
   }
 
   alarm_actions = var.sns_alarm_topic_arn != "" ? [var.sns_alarm_topic_arn] : []
-
-  tags = {
-    Project = var.project_prefix
-  }
 }
 
 resource "aws_cloudwatch_metric_alarm" "p99_latency" {
-  alarm_name          = "${var.project_prefix}-p99-latency"
+  alarm_name          = "${local.name_prefix}-p99-latency"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Duration"
@@ -176,14 +176,10 @@ resource "aws_cloudwatch_metric_alarm" "p99_latency" {
   }
 
   alarm_actions = var.sns_alarm_topic_arn != "" ? [var.sns_alarm_topic_arn] : []
-
-  tags = {
-    Project = var.project_prefix
-  }
 }
 
 resource "aws_cloudwatch_metric_alarm" "dlq_depth" {
-  alarm_name          = "${var.project_prefix}-dlq-depth"
+  alarm_name          = "${local.name_prefix}-dlq-depth"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "ApproximateNumberOfMessagesVisible"
@@ -199,8 +195,4 @@ resource "aws_cloudwatch_metric_alarm" "dlq_depth" {
   }
 
   alarm_actions = var.sns_alarm_topic_arn != "" ? [var.sns_alarm_topic_arn] : []
-
-  tags = {
-    Project = var.project_prefix
-  }
 }

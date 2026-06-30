@@ -1,3 +1,7 @@
+locals {
+  function_name = "${var.project_name}-${var.environment}-responses-reader"
+}
+
 data "archive_file" "responses_reader" {
   type        = "zip"
   source_dir  = "${path.root}/../../../src/responses_reader"
@@ -5,7 +9,7 @@ data "archive_file" "responses_reader" {
 }
 
 resource "aws_lambda_function" "responses_reader" {
-  function_name    = "${var.project_prefix}-responses-reader"
+  function_name    = local.function_name
   runtime          = "python3.12"
   handler          = "handler.handler"
   filename         = data.archive_file.responses_reader.output_path

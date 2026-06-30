@@ -1,3 +1,7 @@
+locals {
+  function_name = "${var.project_name}-${var.environment}-ai-caller"
+}
+
 data "archive_file" "ai_caller" {
   type        = "zip"
   source_dir  = "${path.root}/../../../src/ai_caller"
@@ -5,7 +9,7 @@ data "archive_file" "ai_caller" {
 }
 
 resource "aws_lambda_function" "ai_caller" {
-  function_name    = "${var.project_prefix}-ai-caller"
+  function_name    = local.function_name
   runtime          = "python3.12"
   handler          = "handler.handler"
   filename         = data.archive_file.ai_caller.output_path

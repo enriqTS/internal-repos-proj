@@ -1,5 +1,9 @@
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+}
+
 resource "aws_api_gateway_rest_api" "chatbot" {
-  name        = "${var.project_prefix}-entry-api"
+  name        = "${local.name_prefix}-entry-api"
   description = "Chatbot RAG REST API"
   body        = var.openapi_spec
 
@@ -41,7 +45,7 @@ resource "aws_api_gateway_method_settings" "all" {
 }
 
 resource "aws_api_gateway_usage_plan" "main" {
-  name = "${var.project_prefix}-usage-plan"
+  name = "${local.name_prefix}-usage-plan"
 
   api_stages {
     api_id = aws_api_gateway_rest_api.chatbot.id
@@ -60,7 +64,7 @@ resource "aws_api_gateway_usage_plan" "main" {
 }
 
 resource "aws_api_gateway_api_key" "default" {
-  name    = "${var.project_prefix}-default-key"
+  name    = "${local.name_prefix}-default-key"
   enabled = true
 }
 
@@ -80,7 +84,7 @@ resource "aws_lambda_permission" "apigw_invoke_responses_reader" {
 
 # IAM role for API Gateway to send messages to SQS
 resource "aws_iam_role" "api_gateway" {
-  name = "${var.project_prefix}-apigw-role"
+  name = "${local.name_prefix}-apigw-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -97,7 +101,7 @@ resource "aws_iam_role" "api_gateway" {
 }
 
 resource "aws_iam_role_policy" "api_gateway_sqs" {
-  name = "${var.project_prefix}-apigw-sqs-policy"
+  name = "${local.name_prefix}-apigw-sqs-policy"
   role = aws_iam_role.api_gateway.id
 
   policy = jsonencode({

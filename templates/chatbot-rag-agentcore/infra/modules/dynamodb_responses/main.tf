@@ -1,5 +1,9 @@
+locals {
+  table_name = "${var.project_name}-${var.environment}-responses"
+}
+
 resource "aws_dynamodb_table" "responses" {
-  name         = "${var.project_prefix}-responses"
+  name         = local.table_name
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "messageId"
 
@@ -11,10 +15,5 @@ resource "aws_dynamodb_table" "responses" {
   ttl {
     attribute_name = "expiresAt"
     enabled        = true
-  }
-
-  tags = {
-    Name    = "${var.project_prefix}-responses"
-    Project = var.project_prefix
   }
 }

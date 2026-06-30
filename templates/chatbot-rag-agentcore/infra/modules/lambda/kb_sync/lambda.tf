@@ -1,3 +1,7 @@
+locals {
+  function_name = "${var.project_name}-${var.environment}-kb-sync"
+}
+
 data "archive_file" "kb_sync" {
   type        = "zip"
   source_dir  = "${path.root}/../../../src/kb_sync"
@@ -5,7 +9,7 @@ data "archive_file" "kb_sync" {
 }
 
 resource "aws_lambda_function" "kb_sync" {
-  function_name    = "${var.project_prefix}-kb-sync"
+  function_name    = local.function_name
   runtime          = "python3.12"
   handler          = "handler.handler"
   filename         = data.archive_file.kb_sync.output_path

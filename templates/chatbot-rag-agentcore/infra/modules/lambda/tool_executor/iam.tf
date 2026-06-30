@@ -11,7 +11,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_iam_role" "tool_executor" {
-  name               = "${var.project_prefix}-tool-executor-role"
+  name               = "${var.project_name}-${var.environment}-tool-executor-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
@@ -21,7 +21,7 @@ resource "aws_iam_role_policy_attachment" "tool_executor_basic_execution" {
 }
 
 resource "aws_iam_role_policy" "tool_executor_permissions" {
-  name   = "${var.project_prefix}-tool-executor-permissions"
+  name   = "${var.project_name}-${var.environment}-tool-executor-permissions"
   role   = aws_iam_role.tool_executor.id
   policy = data.aws_iam_policy_document.tool_executor_permissions.json
 }

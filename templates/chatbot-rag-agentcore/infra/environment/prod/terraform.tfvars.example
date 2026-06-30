@@ -1,5 +1,13 @@
-# Project prefix for all resource names (e.g., "my-chatbot-prod")
-project_prefix = "my-chatbot-prod"
+# Project name — lowercase alphanumeric and hyphens, max 20 chars.
+# Combined with environment to form resource name prefix: <project_name>-<environment>-<function>
+# Example result: my-chatbot-prod-orchestrator
+project_name = "my-chatbot"
+
+# Deployment environment (allowed: dev, staging, prod)
+environment = "prod"
+
+# Client name for cost allocation and tagging
+client = "acme-corp"
 
 # AWS region for deployment
 aws_region = "us-east-1"
@@ -7,8 +15,8 @@ aws_region = "us-east-1"
 # AWS account ID for ARN construction
 aws_account_id = "123456789012"
 
-# AI model identifier - Replace with an available Bedrock model
-model_id = "your-model-id"
+# AI model identifier — Replace with an available Bedrock model
+model_id = "us.anthropic.claude-sonnet-4-20250514"
 
 # Maximum messages to retain in conversation context
 max_conversation_history = 50
@@ -18,3 +26,10 @@ max_retry_attempts = 3
 
 # Powertools log level (DEBUG, INFO, WARNING, ERROR)
 log_level = "INFO"
+
+# OpenSearch Serverless collection ARN for the Bedrock Knowledge Base
+opensearch_collection_arn = "arn:aws:aoss:us-east-1:123456789012:collection/your-collection-id"
+
+# NOTE: The combined prefix (project_name + environment) plus function suffix
+# must not exceed 63 characters to respect AWS naming limits.
+# Example: "my-chatbot" + "prod" + "orchestrator" = "my-chatbot-prod-orchestrator" (29 chars ✓)
