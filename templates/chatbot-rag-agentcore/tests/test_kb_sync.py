@@ -12,7 +12,7 @@ _KB_SYNC_SRC = str(Path(__file__).resolve().parent.parent / "src" / "kb_sync")
 
 
 @pytest.fixture(autouse=True)
-def _isolate_kb_sync_import():
+def _isolate_kb_sync_import() -> None:
     """Ensure we import kb_sync's handler cleanly on each test."""
     sys.path.insert(0, _KB_SYNC_SRC)
     sys.modules.pop("handler", None)

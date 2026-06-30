@@ -5,10 +5,10 @@ It receives events in the Bedrock Agent action group format and returns results
 back to the AgentCore Runtime (not the orchestrator).
 """
 
-import json
 import os
 import time
 import traceback
+from typing import Any
 
 import boto3
 from aws_lambda_powertools import Metrics
@@ -25,7 +25,7 @@ s3_client = boto3.client("s3")
 
 @metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
-def handler(event, context):
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext (no typed stub)
     """Execute the requested tool and return results to AgentCore Runtime.
 
     Receives a Bedrock Agent action group event with:
@@ -60,11 +60,11 @@ def handler(event, context):
     try:
         # Parse parameters from the action group event format
         parameters = event.get("parameters", [])
-        arguments = {param["name"]: param["value"] for param in parameters}
+        arguments: dict[str, str] = {param["name"]: param["value"] for param in parameters}
 
         # TODO: Add additional tool routing here as you implement more tools.
         # Map function names to their corresponding handler functions.
-        tool_registry = {
+        tool_registry: dict[str, Any] = {
             "search_knowledge_base": search_knowledge_base,
         }
 
@@ -127,7 +127,7 @@ def handler(event, context):
                 "functionResponse": {
                     "responseBody": {
                         "TEXT": {
-                            "body": f"Error executing {function_name}: {str(e)}",
+                            "body": f"Error executing {function_name}: {e!s}",
                         }
                     }
                 },
@@ -155,7 +155,7 @@ def search_knowledge_base(query: str) -> str:
     prefix = query.strip()
 
     # TODO: Implement pagination if your knowledge base has many matching objects.
-    response = s3_client.list_objects_v2(
+    response: Any = s3_client.list_objects_v2(  # boto3 response (no typed stub)
         Bucket=RAG_BUCKET,
         Prefix=prefix,
         MaxKeys=5,
@@ -165,10 +165,10 @@ def search_knowledge_base(query: str) -> str:
         return f"No documents found matching query: {query}"
 
     # TODO: Add relevance filtering here to rank and select the most relevant documents.
-    results = []
+    results: list[str] = []
     for obj in response["Contents"]:
         key = obj["Key"]
-        obj_response = s3_client.get_object(Bucket=RAG_BUCKET, Key=key)
+        obj_response: Any = s3_client.get_object(Bucket=RAG_BUCKET, Key=key)  # boto3 response (no typed stub)
         content = obj_response["Body"].read().decode("utf-8")
         results.append(f"--- {key} ---\n{content}")
 

@@ -12,7 +12,7 @@ _AI_CALLER_SRC = str(Path(__file__).resolve().parent.parent / "src" / "ai_caller
 
 
 @pytest.fixture(autouse=True)
-def _isolate_ai_caller_import():
+def _isolate_ai_caller_import() -> None:
     """Ensure we import ai_caller's handler (not orchestrator's) by path priority."""
     sys.path.insert(0, _AI_CALLER_SRC)
     # Remove cached handler module so we reimport from ai_caller path
@@ -61,7 +61,7 @@ def mock_lambda_context() -> MagicMock:
 def mock_agent_response() -> dict:
     """Mock Bedrock Agent Runtime invoke_agent response with streaming completion."""
     # Simulate the streaming response object from invoke_agent
-    chunk_bytes = "I can help you with searching our knowledge base!".encode("utf-8")
+    chunk_bytes = b"I can help you with searching our knowledge base!"
 
     chunk_event = {
         "chunk": {"bytes": chunk_bytes},

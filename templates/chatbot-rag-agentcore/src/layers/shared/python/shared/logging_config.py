@@ -1,7 +1,8 @@
 """Logging configuration using aws-lambda-powertools."""
 
+from typing import Any
+
 from aws_lambda_powertools import Logger, Tracer
-from aws_lambda_powertools.logging import correlation_paths
 
 
 def get_logger(service_name: str) -> Logger:
@@ -14,7 +15,7 @@ def get_tracer(service_name: str) -> Tracer:
     return Tracer(service=service_name)
 
 
-def log_ai_interaction(logger: Logger, **kwargs) -> None:
+def log_ai_interaction(logger: Logger, **kwargs: Any) -> None:
     """
     Log an AI interaction entry with logType='ai-interaction'.
 
@@ -25,6 +26,6 @@ def log_ai_interaction(logger: Logger, **kwargs) -> None:
         "AI interaction",
         extra={
             "logType": "ai-interaction",
-            **kwargs
-        }
+            **kwargs,
+        },
     )

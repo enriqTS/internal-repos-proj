@@ -12,7 +12,7 @@ _RESPONSES_READER_SRC = str(Path(__file__).resolve().parent.parent / "src" / "re
 
 
 @pytest.fixture(autouse=True)
-def _isolate_responses_reader_import():
+def _isolate_responses_reader_import() -> None:
     """Ensure we import responses_reader's handler by path priority."""
     sys.path.insert(0, _RESPONSES_READER_SRC)
     sys.modules.pop("handler", None)

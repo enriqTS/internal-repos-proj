@@ -8,13 +8,12 @@ back — no tool-use iteration loop is needed.
 import json
 import os
 import time
+from typing import Any
 
 import boto3
-
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from shared.logging_config import get_logger
-from shared.models import ChatMessage
 
 logger = get_logger("orchestrator")
 metrics = Metrics(namespace="ChatbotRAG", service="orchestrator")
@@ -38,16 +37,16 @@ responses_table = dynamodb.Table(RESPONSES_TABLE_NAME) if RESPONSES_TABLE_NAME e
 BACKOFF_BASE = 2  # seconds
 
 
-def _retry_with_backoff(func, *args, correlation_id="", **kwargs):
+def _retry_with_backoff(func: Any, *args: Any, correlation_id: str = "", **kwargs: Any) -> tuple[bool, Any]:
     """Retry a callable with exponential backoff. Returns (success, result_or_error)."""
-    last_error = None
+    last_error: Exception | None = None
     for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
         try:
             result = func(*args, **kwargs)
             return True, result
         except Exception as e:
             last_error = e
-            backoff = BACKOFF_BASE ** attempt
+            backoff = BACKOFF_BASE**attempt
             logger.warning(
                 "Retry attempt",
                 extra={
@@ -64,7 +63,7 @@ def _retry_with_backoff(func, *args, correlation_id="", **kwargs):
     return False, last_error
 
 
-def _write_response(message_id, status, response="", error="", user_id=""):
+def _write_response(message_id: str, status: str, response: str = "", error: str = "", user_id: str = "") -> None:
     """Write processing result to the Responses Table."""
     if not responses_table:
         logger.warning("RESPONSES_TABLE_NAME not configured — skipping response write")
@@ -74,15 +73,17 @@ def _write_response(message_id, status, response="", error="", user_id=""):
     expires_at = now + 604800  # 7 days
 
     try:
-        responses_table.put_item(Item={
-            "messageId": message_id,
-            "status": status,
-            "response": response,
-            "error": error,
-            "userId": user_id,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "expiresAt": expires_at,
-        })
+        responses_table.put_item(
+            Item={
+                "messageId": message_id,
+                "status": status,
+                "response": response,
+                "error": error,
+                "userId": user_id,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "expiresAt": expires_at,
+            }
+        )
         logger.info(
             "Response written",
             extra={"messageId": message_id, "status": status},
@@ -100,7 +101,7 @@ def _write_response(message_id, status, response="", error="", user_id=""):
 
 @logger.inject_lambda_context
 @metrics.log_metrics(capture_cold_start_metric=True)
-def handler(event, context):
+def handler(event: dict[str, Any], context: Any) -> dict[str, int]:  # context: LambdaContext (no typed stub)
     """SQS trigger handler — processes one message at a time (batch size 1)."""
     start_time = time.time()
 
@@ -167,7 +168,7 @@ def handler(event, context):
     return {"statusCode": 200}
 
 
-def _process_message(user_id, message, correlation_id, timestamp):
+def _process_message(user_id: str, message: str, correlation_id: str, timestamp: str) -> str:
     """Core processing logic: retrieve history, invoke AI Caller, save response.
 
     Unlike the Mantle variant, no tool-use loop is needed here. The AgentCore
@@ -202,9 +203,7 @@ def _process_message(user_id, message, correlation_id, timestamp):
     )
 
     if not success:
-        raise RuntimeError(
-            f"AI Caller invocation failed after {MAX_RETRY_ATTEMPTS} attempts: {result}"
-        )
+        raise RuntimeError(f"AI Caller invocation failed after {MAX_RETRY_ATTEMPTS} attempts: {result}")
 
     ai_response = result
 
@@ -226,7 +225,7 @@ def _process_message(user_id, message, correlation_id, timestamp):
     return ai_response.get("response", ai_response.get("content", ""))
 
 
-def retrieve_conversation_history(user_id, correlation_id):
+def retrieve_conversation_history(user_id: str, correlation_id: str) -> list[dict[str, Any]]:
     """
     Retrieve conversation history from DynamoDB, trimmed to max length.
 
@@ -265,7 +264,7 @@ def retrieve_conversation_history(user_id, correlation_id):
         return []
 
 
-def save_conversation_history(user_id, messages, correlation_id):
+def save_conversation_history(user_id: str, messages: list[dict[str, Any]], correlation_id: str) -> None:
     """
     Save updated conversation history to DynamoDB.
 
@@ -298,7 +297,7 @@ def save_conversation_history(user_id, messages, correlation_id):
         )
 
 
-def invoke_ai_caller(messages, correlation_id):
+def invoke_ai_caller(messages: list[dict[str, Any]], correlation_id: str) -> dict[str, Any]:
     """Synchronously invoke the AI Caller Lambda.
 
     The AI Caller invokes Bedrock AgentCore Runtime, which manages tool calls
@@ -318,8 +317,6 @@ def invoke_ai_caller(messages, correlation_id):
     response_payload = json.loads(response["Payload"].read())
 
     if "FunctionError" in response:
-        raise RuntimeError(
-            f"AI Caller invocation failed: {response_payload}"
-        )
+        raise RuntimeError(f"AI Caller invocation failed: {response_payload}")
 
     return response_payload

@@ -1,12 +1,13 @@
 """AI Caller Lambda — invokes Bedrock AgentCore Runtime."""
 
-import json
 import os
 import time
+from typing import Any
+
 import boto3
-from botocore.exceptions import ClientError
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
+from botocore.exceptions import ClientError
 from shared.logging_config import get_logger, log_ai_interaction
 
 logger = get_logger("ai_caller")
@@ -24,7 +25,7 @@ bedrock_agent_runtime = boto3.client("bedrock-agent-runtime")
 
 @metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
-def handler(event, context):
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext (no typed stub)
     """Invoke AgentCore Runtime with conversation and return response.
 
     Expected event payload:
@@ -71,8 +72,8 @@ def handler(event, context):
 
 
 def invoke_agentcore(
-    session_id: str, messages: list, tools: list, correlation_id: str
-) -> dict:
+    session_id: str, messages: list[dict[str, Any]], tools: list[dict[str, Any]], correlation_id: str
+) -> dict[str, Any]:
     """Call AgentCore Runtime API with session management.
 
     Uses the userId as the sessionId to create new or resume existing sessions.
@@ -101,12 +102,12 @@ def invoke_agentcore(
     )
 
     # Build session state with system prompt
-    session_state = {
+    session_state: dict[str, Any] = {
         "systemPrompt": SYSTEM_PROMPT,
     }
 
     # Build invoke_agent parameters
-    invoke_params = {
+    invoke_params: dict[str, Any] = {
         "agentId": AGENT_ID,
         "agentAliasId": AGENT_ALIAS_ID,
         "sessionId": session_id,
@@ -115,7 +116,7 @@ def invoke_agentcore(
     }
 
     try:
-        response = bedrock_agent_runtime.invoke_agent(**invoke_params)
+        response: Any = bedrock_agent_runtime.invoke_agent(**invoke_params)  # boto3 response (no typed stub)
     except ClientError as e:
         latency_ms = int((time.time() - start_time) * 1000)
         error_code = e.response["Error"]["Code"]
@@ -129,17 +130,15 @@ def invoke_agentcore(
                 "latencyMs": latency_ms,
             },
         )
-        raise RuntimeError(
-            f"AgentCore Runtime error: {error_code}: {error_message}"
-        ) from e
+        raise RuntimeError(f"AgentCore Runtime error: {error_code}: {error_message}") from e
 
     # Process the streaming response from AgentCore
     completion_text = ""
-    input_tokens = None
-    output_tokens = None
-    total_tokens = None
-    finish_reason = None
-    tool_calls_requested = []
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
+    finish_reason: str | None = None
+    tool_calls_requested: list[str] = []
 
     if "completion" in response:
         for event_chunk in response["completion"]:
@@ -208,7 +207,7 @@ def invoke_agentcore(
         )
 
     # Build response payload for the orchestrator
-    result = {
+    result: dict[str, Any] = {
         "response": completion_text,
         "usage": {
             "inputTokens": input_tokens,
