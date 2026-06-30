@@ -4,9 +4,12 @@ import json
 import os
 import time
 from openai import OpenAI, OpenAIError
+from aws_lambda_powertools import Metrics
+from aws_lambda_powertools.metrics import MetricUnit
 from shared.logging_config import get_logger, log_ai_interaction
 
 logger = get_logger("ai_caller")
+metrics = Metrics(namespace="ChatbotRAG", service="ai-caller")
 
 # PLACEHOLDER: Replace this system prompt with your own instructions.
 SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own instructions."
@@ -17,6 +20,7 @@ MANTLE_BASE_URL = os.environ.get(
 MODEL_ID = os.environ.get("MODEL_ID", "your-model-id")
 
 
+@metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
 def handler(event, context):
     """Invoke Mantle API with conversation and return response.
@@ -101,6 +105,7 @@ def invoke_mantle(messages: list, tools: list, correlation_id: str) -> dict:
         ) from e
 
     latency_ms = int((time.time() - start_time) * 1000)
+    metrics.add_metric(name="AIModelLatency", unit=MetricUnit.Milliseconds, value=latency_ms)
 
     # Log AI interaction AFTER response
     log_ai_interaction(
