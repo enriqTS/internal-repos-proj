@@ -14,10 +14,18 @@ provider "aws" {
 module "api_gateway" {
   source         = "../../modules/api_gateway"
   project_prefix = var.project_prefix
-  openapi_spec   = file("${path.root}/../../openapi/api-spec.json")
-  aws_region     = var.aws_region
-  sqs_queue_url  = module.sqs.queue_url
-  sqs_queue_arn  = module.sqs.queue_arn
+  openapi_spec   = templatefile("${path.root}/../../openapi/api-spec.json", {
+    project_prefix              = var.project_prefix
+    region                      = var.aws_region
+    api_gateway_role_arn        = "arn:aws:iam::${var.aws_account_id}:role/${var.project_prefix}-apigw-role"
+    sqs_queue_url               = module.sqs.queue_url
+    responses_reader_lambda_uri = module.responses_reader.invoke_arn
+  })
+  aws_region                     = var.aws_region
+  sqs_queue_url                  = module.sqs.queue_url
+  sqs_queue_arn                  = module.sqs.queue_arn
+  responses_reader_invoke_arn    = module.responses_reader.invoke_arn
+  responses_reader_function_name = module.responses_reader.function_name
 }
 
 module "sqs" {
