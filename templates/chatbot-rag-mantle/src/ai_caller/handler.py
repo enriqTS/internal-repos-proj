@@ -3,6 +3,8 @@
 import json
 import os
 import time
+from typing import Any
+
 from openai import OpenAI, OpenAIError
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
@@ -22,7 +24,7 @@ MODEL_ID = os.environ.get("MODEL_ID", "your-model-id")
 
 @metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
-def handler(event, context):
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: aws_lambda_powertools.utilities.typing.LambdaContext
     """Invoke Mantle API with conversation and return response.
 
     Expected event payload:
@@ -60,7 +62,7 @@ def handler(event, context):
         raise
 
 
-def invoke_mantle(messages: list, tools: list, correlation_id: str) -> dict:
+def invoke_mantle(messages: list[dict[str, Any]], tools: list[dict[str, Any]], correlation_id: str) -> dict[str, Any]:
     """Call Mantle POST /responses with OpenAI SDK (stream=False)."""
     start_time = time.time()
 
@@ -151,7 +153,7 @@ def invoke_mantle(messages: list, tools: list, correlation_id: str) -> dict:
     return result
 
 
-def _serialize_output_item(item) -> dict:
+def _serialize_output_item(item: Any) -> dict[str, Any]:  # item: openai.types.responses.ResponseOutputItem (union type)
     """Serialize a response output item to a dict for Lambda response."""
     serialized = {"type": item.type}
 
