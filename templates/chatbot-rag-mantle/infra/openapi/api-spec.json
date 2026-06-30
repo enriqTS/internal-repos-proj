@@ -39,6 +39,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "messageId": {
+                      "type": "string",
+                      "description": "Unique message identifier for polling responses"
+                    },
                     "response": {
                       "type": "string",
                       "description": "AI-generated response text"
@@ -116,12 +120,196 @@
             "default": {
               "statusCode": "200",
               "responseTemplates": {
-                "application/json": "{\"response\": \"Message accepted\", \"conversationId\": \"$context.requestId\", \"timestamp\": \"$context.requestTime\"}"
+                "application/json": "{\"messageId\": \"$context.requestId\", \"response\": \"Message accepted\", \"conversationId\": \"$context.requestId\", \"timestamp\": \"$context.requestTime\"}"
               }
             }
           },
           "passthroughBehavior": "never",
           "timeoutInMillis": 29000
+        }
+      }
+    },
+    "/responses/{messageId}": {
+      "get": {
+        "summary": "Get response by message ID",
+        "operationId": "getResponse",
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Unique message identifier returned from POST /chat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response found",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Methods": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Headers": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "messageId": {
+                      "type": "string",
+                      "description": "Unique message identifier"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["pending", "completed", "failed"],
+                      "description": "Processing status of the message"
+                    },
+                    "response": {
+                      "type": "string",
+                      "description": "AI-generated response text"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "description": "User who sent the original message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Timestamp when the response was created"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Response not found",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error code"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error code"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "uri": "${responses_reader_lambda_uri}",
+          "httpMethod": "POST",
+          "passthroughBehavior": "when_no_match",
+          "timeoutInMillis": 29000
+        }
+      },
+      "options": {
+        "summary": "CORS preflight for /responses/{messageId}",
+        "operationId": "optionsResponse",
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CORS preflight response",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Methods": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Headers": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              }
+            }
+          },
+          "passthroughBehavior": "when_no_match"
         }
       }
     }
