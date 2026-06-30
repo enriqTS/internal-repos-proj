@@ -66,8 +66,10 @@ Clients should implement polling with a reasonable interval (e.g., 1–2 seconds
 ## Prerequisites
 
 - AWS account with Bedrock model access enabled
+- [uv](https://docs.astral.sh/uv/) (Astral Python package manager)
 - Terraform >= 1.5
 - Python 3.12
+- GNU Make
 - AWS CLI configured with appropriate credentials
 
 ## Project Structure
@@ -76,47 +78,45 @@ Clients should implement polling with a reasonable interval (e.g., 1–2 seconds
 chatbot-rag-agentcore/
 ├── README.md
 ├── metadata.json
+├── pyproject.toml                      # Centralized Python deps + tool config
+├── uv.lock                             # Committed lock file (reproducibility)
+├── Makefile                            # Lambda packaging automation
 ├── .gitignore
-├── build/                          # Zip artifacts (gitignored)
-│   ├── orchestrator.zip
-│   ├── ai_caller.zip
-│   ├── tool_executor.zip
-│   ├── responses_reader.zip
-│   ├── kb_sync.zip
-│   └── shared-layer.zip
+├── tests/                              # Pytest test directory
+│   ├── conftest.py                     # Shared fixtures (env vars, mocks)
+│   ├── test_orchestrator.py
+│   ├── test_ai_caller.py
+│   ├── test_tool_executor.py
+│   ├── test_responses_reader.py
+│   └── test_kb_sync.py
 ├── src/
 │   ├── layers/
-│   │   └── shared/                 # Lambda Layer — shared utilities
-│   │       ├── python/
-│   │       │   └── shared/
-│   │       │       ├── __init__.py
-│   │       │       ├── logging_config.py
-│   │       │       └── models.py
-│   │       └── requirements.txt
+│   │   └── shared/                     # Lambda Layer — shared utilities
+│   │       └── python/
+│   │           └── shared/
+│   │               ├── __init__.py
+│   │               ├── logging_config.py
+│   │               └── models.py
 │   ├── orchestrator/
-│   │   ├── handler.py              # Conversation flow (no tool-use loop)
-│   │   └── requirements.txt
+│   │   └── handler.py                  # Conversation flow (no tool-use loop)
 │   ├── ai_caller/
-│   │   ├── handler.py              # AgentCore Runtime integration
-│   │   └── requirements.txt
+│   │   └── handler.py                  # AgentCore Runtime integration
 │   ├── tool_executor/
-│   │   ├── handler.py              # RAG search tool implementation
-│   │   └── requirements.txt
+│   │   └── handler.py                  # RAG search tool implementation
 │   ├── responses_reader/
-│   │   ├── handler.py              # GET /responses/{messageId} handler
-│   │   └── requirements.txt
+│   │   └── handler.py                  # GET /responses/{messageId} handler
 │   └── kb_sync/
-│       ├── handler.py              # S3 event → Bedrock StartIngestionJob
-│       └── requirements.txt
+│       └── handler.py                  # S3 event → Bedrock StartIngestionJob
 └── infra/
     ├── openapi/
-    │   └── api-spec.json           # OpenAPI 3.0 spec for the REST API
+    │   └── api-spec.json               # OpenAPI 3.0 spec for the REST API
     ├── environment/
     │   ├── dev/
-    │   │   ├── main.tf
-    │   │   ├── variables.tf
-    │   │   ├── outputs.tf
-    │   │   ├── backend.tf
+    │   │   ├── backend.tf              # S3 backend configuration
+    │   │   ├── providers.tf            # Provider + required_providers
+    │   │   ├── main.tf                 # Module calls
+    │   │   ├── variables.tf            # Variable declarations
+    │   │   ├── outputs.tf              # Output declarations
     │   │   └── terraform.tfvars.example
     │   ├── staging/
     │   └── prod/
@@ -138,6 +138,46 @@ chatbot-rag-agentcore/
         └── monitoring/
 ```
 
+## Development Setup
+
+Install all dependencies (runtime + dev):
+
+```bash
+uv sync
+```
+
+Format code:
+
+```bash
+uv run ruff format .
+```
+
+Lint code:
+
+```bash
+uv run ruff check .
+```
+
+Run tests:
+
+```bash
+uv run pytest
+```
+
+> **Note:** The `uv.lock` file is committed to version control for reproducibility. When you add or update dependencies in `pyproject.toml`, run `uv lock` to regenerate the lock file and commit both files together.
+
+## Testing
+
+Run the full test suite:
+
+```bash
+uv run pytest
+```
+
+Test directory convention: `tests/test_<function_name>.py`
+
+Tests mock all AWS services — no real credentials or live services needed. Each test file demonstrates the mocking pattern using `unittest.mock.patch` for AWS SDK clients and `pytest.MonkeyPatch` (via `monkeypatch` fixture) for environment variables. Shared fixtures in `tests/conftest.py` set the required Lambda environment variables automatically for all tests.
+
 ## Configuration
 
 ### Terraform Variables
@@ -152,7 +192,9 @@ Key variables:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `project_prefix` | Prefix for all resource names | `"my-chatbot-dev"` |
+| `project_name` | Project name (lowercase, hyphens, max 20 chars) | `"my-chatbot"` |
+| `environment` | Deployment environment (dev, staging, prod) | `"dev"` |
+| `client` | Client name for cost allocation tags | `"acme-corp"` |
 | `aws_region` | AWS region for deployment | `"us-east-1"` |
 | `aws_account_id` | AWS account ID for ARN construction | `"123456789012"` |
 | `model_id` | Bedrock foundation model identifier | `"us.anthropic.claude-sonnet-4-20250514"` |
@@ -160,6 +202,28 @@ Key variables:
 | `max_retry_attempts` | Max retry attempts for message processing | `3` |
 | `log_level` | Powertools log level | `"INFO"` |
 | `opensearch_collection_arn` | ARN of OpenSearch Serverless collection for Bedrock KB | (required) |
+
+Resource names are computed as `${project_name}-${environment}-<function>` (e.g., `my-chatbot-dev-orchestrator`).
+
+### Backend Setup
+
+Before running `terraform init`, replace the placeholders in `infra/environment/<env>/backend.tf`:
+
+- `<cliente>` → your upd8 client slug (e.g., `acme`)
+- `<project>` → your project identifier (e.g., `chatbot-rag-agentcore/dev`)
+
+The S3 bucket (`upd8-tfstate-<cliente>`) and DynamoDB table (`upd8-tfstate-lock`) must exist before running `terraform init`. If they don't exist yet, create them:
+
+```bash
+aws s3api create-bucket --bucket upd8-tfstate-<cliente> --region us-east-1
+aws s3api put-bucket-versioning --bucket upd8-tfstate-<cliente> --versioning-configuration Status=Enabled
+aws dynamodb create-table \
+  --table-name upd8-tfstate-lock \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region us-east-1
+```
 
 ### System Prompt
 
@@ -174,7 +238,7 @@ The default placeholder value is:
 SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own instructions."
 ```
 
-Replace this with your own instructions to customize the chatbot's persona and behavior. The template works correctly with the placeholder text — deploying without modification will produce valid AI responses using the generic assistant prompt.
+Replace this with your own instructions to customize the chatbot's persona and behavior. The system prompt is passed to the AgentCore Runtime, which uses it when orchestrating tool calls and generating responses. The template works correctly with the placeholder text — deploying without modification will produce valid AI responses using the generic assistant prompt.
 
 ### AI Model
 
@@ -188,22 +252,18 @@ The model ID is passed to the AgentCore module as a variable and used when provi
 
 ## Deployment
 
-### 1. Install Dependencies
-
-Install Python dependencies for each Lambda function and the shared layer:
+### 1. Package Lambda Dependencies
 
 ```bash
-pip install -r src/layers/shared/requirements.txt -t src/layers/shared/python/
-pip install -r src/orchestrator/requirements.txt -t src/orchestrator/package/
-pip install -r src/ai_caller/requirements.txt -t src/ai_caller/package/
-pip install -r src/tool_executor/requirements.txt -t src/tool_executor/package/
+make all
 ```
+
+This exports runtime dependencies from `pyproject.toml` via `uv export --format requirements-txt` and installs them into each Lambda's source directory, targeting the Lambda runtime platform (`manylinux2014_x86_64`). Terraform's `archive_file` then zips each directory for deployment.
 
 ### 2. Configure Environment
 
 ```bash
-cd infra/environment/dev
-cp terraform.tfvars.example terraform.tfvars
+cp infra/environment/dev/terraform.tfvars.example infra/environment/dev/terraform.tfvars
 # Edit terraform.tfvars with your values
 ```
 
@@ -258,7 +318,7 @@ The template includes multiple layers of fault tolerance:
 - **Immediate retry with exponential backoff** — the Orchestrator retries transient failures up to a configurable number of attempts (default: 3) with exponential backoff before marking a message as failed
 - **Failure feedback** — on failure, the client receives a `failed` status via the responses table with an error message (clients are never left waiting indefinitely)
 - **DLQ safety net** — a dead-letter queue captures messages that cause catastrophic Lambda failures (crash, OOM) as a last-resort safety net
-- **SQS visibility timeout alignment** — set to 6x the Orchestrator timeout (900s) to prevent message redelivery during retries and tool-use loops
+- **SQS visibility timeout alignment** — set to 6x the Orchestrator timeout (900s) to prevent message redelivery during retries
 
 ## Observability
 
