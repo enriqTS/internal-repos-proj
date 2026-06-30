@@ -2,6 +2,7 @@
 
 import json
 import os
+from typing import Any
 
 import boto3
 from shared.logging_config import get_logger
@@ -21,12 +22,12 @@ CORS_HEADERS = {
 
 
 @logger.inject_lambda_context
-def handler(event, context):
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext (aws_lambda_powertools.utilities.typing)
     """API Gateway proxy handler for GET /responses/{messageId}."""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS_HEADERS, "body": ""}
 
-    message_id = event.get("pathParameters", {}).get("messageId", "")
+    message_id: str = event.get("pathParameters", {}).get("messageId", "")
 
     if not message_id:
         return {
@@ -36,7 +37,7 @@ def handler(event, context):
         }
 
     try:
-        result = table.get_item(Key={"messageId": message_id})
+        result: Any = table.get_item(Key={"messageId": message_id})  # boto3 DynamoDB response type not available
     except Exception as e:
         logger.error("DynamoDB read failed", extra={"messageId": message_id, "error": str(e)})
         return {
@@ -52,7 +53,7 @@ def handler(event, context):
             "body": json.dumps({"error": "not_found", "message": f"No response found for messageId: {message_id}"}),
         }
 
-    record = result["Item"]
+    record: dict[str, Any] = result["Item"]
     # Convert Decimal types to int for JSON serialization
     if "expiresAt" in record:
         record["expiresAt"] = int(record["expiresAt"])
