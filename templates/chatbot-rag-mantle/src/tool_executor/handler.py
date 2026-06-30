@@ -4,6 +4,7 @@ import json
 import os
 import time
 import traceback
+from typing import Any
 
 import boto3
 from aws_lambda_powertools import Metrics
@@ -20,7 +21,7 @@ s3_client = boto3.client("s3")
 
 @metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
-def handler(event, context):
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext
     """Execute the requested tool and return results.
 
     Receives a tool call request with tool_name, arguments, and correlationId.
