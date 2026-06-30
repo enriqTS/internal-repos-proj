@@ -1,7 +1,7 @@
 """Tests for the AI Caller Lambda handler."""
 
-import importlib
 import sys
+from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -12,7 +12,7 @@ _AI_CALLER_SRC = str(Path(__file__).resolve().parent.parent / "src" / "ai_caller
 
 
 @pytest.fixture(autouse=True)
-def _isolate_ai_caller_import():
+def _isolate_ai_caller_import() -> Generator[None, None, None]:
     """Ensure we import ai_caller's handler (not orchestrator's) by path priority."""
     sys.path.insert(0, _AI_CALLER_SRC)
     # Remove cached handler module so we reimport from ai_caller path
