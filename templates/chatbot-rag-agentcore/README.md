@@ -8,12 +8,19 @@ The template provides a fully deployable project scaffold with Python Lambda app
 
 ## Architecture
 
-The application uses a non-streaming, synchronous request-response architecture:
+The application uses an asynchronous request-response architecture with client polling:
 
 ```
 Client → API Gateway (REST) → SQS FIFO → Orchestrator Lambda → AI Caller Lambda → AgentCore Runtime
-                                                ↕                                        ↕
-                                          DynamoDB                              Tool Executor Lambda → S3 RAG Bucket
+              ↕                                  ↕                                        ↕
+    GET /responses/{messageId}             DynamoDB (context)                    Tool Executor Lambda → Bedrock KB
+              ↕                            DynamoDB (responses)
+    Responses Reader Lambda                      ↕
+                                          Retry (exponential backoff)
+
+S3 RAG Bucket → (S3 Events) → KB Sync Lambda → Bedrock Knowledge Base (Titan Embed)
+
+CloudWatch Dashboard + Alarms ← X-Ray + Powertools Metrics ← All Lambdas
 ```
 
 ### Components
@@ -24,9 +31,14 @@ Client → API Gateway (REST) → SQS FIFO → Orchestrator Lambda → AI Caller
 | **SQS FIFO Queue** | Asynchronous message processing with ordering guarantees |
 | **Orchestrator Lambda** | Manages conversation flow and context storage |
 | **AI Caller Lambda** | Invokes Bedrock AgentCore Runtime with session management |
-| **Tool Executor Lambda** | Executes tool calls (RAG document retrieval from S3) |
-| **DynamoDB** | Stores per-user conversation history and context |
+| **Tool Executor Lambda** | Executes tool calls (RAG document retrieval via Bedrock KB) |
+| **DynamoDB (Context)** | Stores per-user conversation history and context |
+| **DynamoDB (Responses)** | Stores async processing results for client polling (7-day TTL) |
 | **S3 RAG Bucket** | Stores knowledge base documents for retrieval |
+| **Responses Reader Lambda** | GET /responses/{messageId} — returns processing status and AI response |
+| **KB Sync Lambda** | Triggered by S3 events — calls Bedrock StartIngestionJob for RAG re-indexing |
+| **Bedrock Knowledge Base** | Managed RAG indexing with Amazon Titan Embed v2 and OpenSearch Serverless |
+| **Monitoring Module** | CloudWatch Dashboard, alarms (error rate, p99 latency, DLQ depth), X-Ray tracing |
 
 ### Tool Calling (AgentCore)
 
@@ -39,6 +51,17 @@ In this template, the **AgentCore Runtime manages tool calling internally**:
 5. AgentCore Runtime produces the final response and returns it to the AI Caller
 
 The Orchestrator does not manage a tool-use loop — AgentCore handles it end-to-end.
+
+## Response Polling
+
+The API uses an asynchronous pattern where clients poll for results:
+
+1. **POST /chat** accepts the user message and returns a `messageId` immediately
+2. **Client polls GET /responses/{messageId}** until the status is `completed` or `failed`
+3. Responses are stored in DynamoDB with a **7-day TTL** — no manual cleanup needed
+4. Status flow: `pending` → `completed` | `failed`
+
+Clients should implement polling with a reasonable interval (e.g., 1–2 seconds) and a maximum timeout.
 
 ## Prerequisites
 
@@ -58,6 +81,8 @@ chatbot-rag-agentcore/
 │   ├── orchestrator.zip
 │   ├── ai_caller.zip
 │   ├── tool_executor.zip
+│   ├── responses_reader.zip
+│   ├── kb_sync.zip
 │   └── shared-layer.zip
 ├── src/
 │   ├── layers/
@@ -74,8 +99,14 @@ chatbot-rag-agentcore/
 │   ├── ai_caller/
 │   │   ├── handler.py              # AgentCore Runtime integration
 │   │   └── requirements.txt
-│   └── tool_executor/
-│       ├── handler.py              # RAG search tool implementation
+│   ├── tool_executor/
+│   │   ├── handler.py              # RAG search tool implementation
+│   │   └── requirements.txt
+│   ├── responses_reader/
+│   │   ├── handler.py              # GET /responses/{messageId} handler
+│   │   └── requirements.txt
+│   └── kb_sync/
+│       ├── handler.py              # S3 event → Bedrock StartIngestionJob
 │       └── requirements.txt
 └── infra/
     ├── openapi/
@@ -96,10 +127,15 @@ chatbot-rag-agentcore/
         │   ├── orchestrator/
         │   ├── ai_caller/
         │   ├── tool_executor/
+        │   ├── responses_reader/
+        │   ├── kb_sync/
         │   └── shared_layer/
         ├── dynamodb/
+        ├── dynamodb_responses/
         ├── s3/
-        └── agentcore/              # AgentCore-specific resources
+        ├── agentcore/              # AgentCore-specific resources
+        ├── bedrock_kb/
+        └── monitoring/
 ```
 
 ## Configuration
@@ -123,6 +159,7 @@ Key variables:
 | `max_conversation_history` | Max messages retained in context | `50` |
 | `max_retry_attempts` | Max retry attempts for message processing | `3` |
 | `log_level` | Powertools log level | `"INFO"` |
+| `opensearch_collection_arn` | ARN of OpenSearch Serverless collection for Bedrock KB | (required) |
 
 ### System Prompt
 
@@ -183,7 +220,15 @@ Repeat for `staging/` and `prod/` environments as needed.
 
 ## RAG Knowledge Base
 
-The template provisions an S3 bucket (`{prefix}-rag-documents`) for storing knowledge base documents used by the chatbot's retrieval tool.
+The template provisions a fully managed **Bedrock Knowledge Base** backed by Amazon Titan Embed v2 and OpenSearch Serverless. An S3 bucket (`{prefix}-rag-documents`) stores the source documents, and uploads/deletions automatically trigger re-indexing — no manual steps needed.
+
+### Automatic Re-Indexing
+
+Documents uploaded to (or removed from) the S3 RAG bucket automatically trigger the **KB Sync Lambda** via S3 event notifications. The Lambda calls Bedrock's `StartIngestionJob` API to re-index the data source. This means:
+
+- No manual re-indexing needed — S3 event notifications handle it
+- Both `ObjectCreated` and `ObjectRemoved` events are captured
+- The Knowledge Base uses Amazon Titan Embed v2 for vector embeddings
 
 ### Supported Formats
 
@@ -204,9 +249,18 @@ aws s3 cp document.pdf s3://{prefix}-rag-documents/
 aws s3 cp ./docs/ s3://{prefix}-rag-documents/docs/ --recursive
 ```
 
-The bucket is created empty by default. The `search_knowledge_base` tool in `src/tool_executor/handler.py` provides a placeholder implementation that retrieves documents by key prefix — customize it with your own retrieval logic (vector search, chunking, relevance filtering).
+Re-indexing starts automatically within seconds of upload.
 
-## Logging & Observability
+## Reliability
+
+The template includes multiple layers of fault tolerance:
+
+- **Immediate retry with exponential backoff** — the Orchestrator retries transient failures up to a configurable number of attempts (default: 3) with exponential backoff before marking a message as failed
+- **Failure feedback** — on failure, the client receives a `failed` status via the responses table with an error message (clients are never left waiting indefinitely)
+- **DLQ safety net** — a dead-letter queue captures messages that cause catastrophic Lambda failures (crash, OOM) as a last-resort safety net
+- **SQS visibility timeout alignment** — set to 6x the Orchestrator timeout (900s) to prevent message redelivery during retries and tool-use loops
+
+## Observability
 
 All Lambda functions use **aws-lambda-powertools** for structured JSON logging with consistent fields:
 
@@ -214,6 +268,31 @@ All Lambda functions use **aws-lambda-powertools** for structured JSON logging w
 - `level` — Log level (INFO, ERROR, etc.)
 - `service` — Lambda function name
 - `correlation_id` — Unique request identifier traced across all functions
+
+### X-Ray Distributed Tracing
+
+X-Ray active tracing is enabled across all Lambdas and API Gateway, providing end-to-end request visualization from client to AgentCore Runtime and back.
+
+### Custom CloudWatch Metrics
+
+Business metrics emitted via Powertools Metrics (EMF):
+
+- `MessageProcessingLatency` — total time from SQS receive to response write
+- `AIModelLatency` — time spent waiting for AgentCore Runtime responses
+- `ToolExecutionLatency` — time spent in tool executor calls
+- `ConversationLength` — number of messages in the conversation context
+
+### CloudWatch Dashboard
+
+A pre-configured dashboard (`{prefix}-dashboard`) provides widgets for all custom metrics, Lambda invocations/errors/duration, SQS queue depth, and DLQ depth.
+
+### Alarms
+
+| Alarm | Condition | Default Threshold |
+|-------|-----------|-------------------|
+| Lambda Error Rate | Error percentage exceeds threshold | > 5% |
+| P99 Latency | 99th percentile duration exceeds SLA | Configurable |
+| DLQ Depth | Messages in dead-letter queue | > 0 |
 
 ### Correlation ID Tracing
 
@@ -240,6 +319,18 @@ Filter AI-specific logs in CloudWatch:
 ```
 { $.logType = "ai-interaction" }
 ```
+
+## API Throttling
+
+The API Gateway is configured with usage plans to protect backend resources:
+
+| Setting | Default | Configurable |
+|---------|---------|--------------|
+| Rate limit | 100 requests/second | Yes |
+| Burst limit | 200 requests | Yes |
+| Daily quota | 10,000 per API key | Yes |
+
+Response caching is enabled on **GET /responses/{messageId}** to reduce Lambda invocations for repeated polling requests.
 
 ## Customization
 
