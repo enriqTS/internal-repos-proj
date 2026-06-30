@@ -3,6 +3,7 @@
 import json
 import os
 import time
+from typing import Any
 
 import boto3
 
@@ -35,9 +36,9 @@ responses_table = dynamodb.Table(RESPONSES_TABLE_NAME) if RESPONSES_TABLE_NAME e
 BACKOFF_BASE = 2  # seconds
 
 
-def _retry_with_backoff(func, *args, correlation_id="", **kwargs):
+def _retry_with_backoff(func: Any, *args: Any, correlation_id: str = "", **kwargs: Any) -> tuple[bool, Any]:
     """Retry a callable with exponential backoff. Returns (success, result_or_error)."""
-    last_error = None
+    last_error: Exception | None = None
     for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
         try:
             result = func(*args, **kwargs)
@@ -61,7 +62,7 @@ def _retry_with_backoff(func, *args, correlation_id="", **kwargs):
     return False, last_error
 
 
-def _write_response(message_id, status, response="", error="", user_id=""):
+def _write_response(message_id: str, status: str, response: str = "", error: str = "", user_id: str = "") -> None:
     """Write processing result to the Responses Table."""
     if not responses_table:
         logger.warning("RESPONSES_TABLE_NAME not configured — skipping response write")
@@ -97,7 +98,7 @@ def _write_response(message_id, status, response="", error="", user_id=""):
 
 @logger.inject_lambda_context
 @metrics.log_metrics(capture_cold_start_metric=True)
-def handler(event, context):
+def handler(event: dict[str, Any], context: Any) -> dict[str, int]:  # context: LambdaContext (no typed stub)
     """SQS trigger handler — processes one message at a time (batch size 1)."""
     start_time = time.time()
 
@@ -164,7 +165,7 @@ def handler(event, context):
     return {"statusCode": 200}
 
 
-def _process_message(user_id, message, correlation_id, timestamp):
+def _process_message(user_id: str, message: str, correlation_id: str, timestamp: str) -> str:
     """Core processing logic: retrieve history, invoke AI, handle tool loop, save.
 
     Returns the final response text on success. Raises on unrecoverable failure.
@@ -265,7 +266,7 @@ def _process_message(user_id, message, correlation_id, timestamp):
     return final_response.get("content", "")
 
 
-def retrieve_conversation_history(user_id, correlation_id):
+def retrieve_conversation_history(user_id: str, correlation_id: str) -> list[dict[str, Any]]:
     """
     Retrieve conversation history from DynamoDB, trimmed to max length.
 
@@ -304,7 +305,7 @@ def retrieve_conversation_history(user_id, correlation_id):
         return []
 
 
-def save_conversation_history(user_id, messages, correlation_id):
+def save_conversation_history(user_id: str, messages: list[dict[str, Any]], correlation_id: str) -> None:
     """
     Save updated conversation history to DynamoDB.
 
@@ -337,7 +338,7 @@ def save_conversation_history(user_id, messages, correlation_id):
         )
 
 
-def invoke_ai_caller(messages, correlation_id):
+def invoke_ai_caller(messages: list[dict[str, Any]], correlation_id: str) -> dict[str, Any]:
     """Synchronously invoke the AI Caller Lambda."""
     payload = {
         "messages": messages,
@@ -360,7 +361,7 @@ def invoke_ai_caller(messages, correlation_id):
     return response_payload
 
 
-def invoke_tool_executor(tool_calls, correlation_id):
+def invoke_tool_executor(tool_calls: list[dict[str, Any]], correlation_id: str) -> list[dict[str, Any]]:
     """Invoke the Tool Executor Lambda for each tool call and collect results."""
     results = []
 
