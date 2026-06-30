@@ -11,7 +11,11 @@ resource "aws_lambda_function" "orchestrator" {
   filename         = data.archive_file.orchestrator.output_path
   source_code_hash = data.archive_file.orchestrator.output_base64sha256
   role             = aws_iam_role.orchestrator.arn
-  timeout          = 30
+  timeout          = 150
+
+  tracing_config {
+    mode = "Active"
+  }
 
   layers = [var.shared_layer_arn]
 
@@ -21,6 +25,7 @@ resource "aws_lambda_function" "orchestrator" {
       MAX_RETRY_ATTEMPTS       = var.max_retry_attempts
       AI_CALLER_FUNCTION_NAME  = var.ai_caller_function_name
       DYNAMODB_TABLE_NAME      = var.dynamodb_table_name
+      RESPONSES_TABLE_NAME     = var.responses_table_name
       POWERTOOLS_SERVICE_NAME  = "orchestrator"
       POWERTOOLS_LOG_LEVEL     = var.log_level
     }

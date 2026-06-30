@@ -26,3 +26,26 @@ resource "aws_s3_bucket_public_access_block" "rag_documents" {
   block_public_policy     = true
   restrict_public_buckets = true
 }
+
+################################################################################
+# S3 Event Notification — trigger KB Sync Lambda on document changes
+################################################################################
+
+resource "aws_s3_bucket_notification" "rag_documents" {
+  count  = var.kb_sync_lambda_arn != "" ? 1 : 0
+  bucket = aws_s3_bucket.rag_documents.id
+
+  lambda_function {
+    lambda_function_arn = var.kb_sync_lambda_arn
+    events             = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+  }
+}
+
+resource "aws_lambda_permission" "s3_invoke_kb_sync" {
+  count         = var.kb_sync_lambda_arn != "" ? 1 : 0
+  statement_id  = "AllowS3InvokeKBSync"
+  action        = "lambda:InvokeFunction"
+  function_name = var.kb_sync_lambda_function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.rag_documents.arn
+}

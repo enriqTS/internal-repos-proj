@@ -11,15 +11,19 @@ import time
 import traceback
 
 import boto3
+from aws_lambda_powertools import Metrics
+from aws_lambda_powertools.metrics import MetricUnit
 from shared.logging_config import get_logger
 
 logger = get_logger("tool_executor")
+metrics = Metrics(namespace="ChatbotRAG", service="tool-executor")
 
 RAG_BUCKET = os.environ["RAG_BUCKET_NAME"]
 
 s3_client = boto3.client("s3")
 
 
+@metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
 def handler(event, context):
     """Execute the requested tool and return results to AgentCore Runtime.
@@ -70,6 +74,7 @@ def handler(event, context):
         result = tool_registry[function_name](**arguments)
 
         duration_ms = int((time.time() - start_time) * 1000)
+        metrics.add_metric(name="ToolExecutionLatency", unit=MetricUnit.Milliseconds, value=duration_ms)
         logger.info(
             "Tool execution completed",
             extra={

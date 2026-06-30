@@ -13,6 +13,10 @@ resource "aws_lambda_function" "tool_executor" {
   role             = aws_iam_role.tool_executor.arn
   timeout          = 30
 
+  tracing_config {
+    mode = "Active"
+  }
+
   layers = [var.shared_layer_arn]
 
   environment {

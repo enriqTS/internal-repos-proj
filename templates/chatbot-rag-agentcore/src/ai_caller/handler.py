@@ -5,9 +5,12 @@ import os
 import time
 import boto3
 from botocore.exceptions import ClientError
+from aws_lambda_powertools import Metrics
+from aws_lambda_powertools.metrics import MetricUnit
 from shared.logging_config import get_logger, log_ai_interaction
 
 logger = get_logger("ai_caller")
+metrics = Metrics(namespace="ChatbotRAG", service="ai-caller")
 
 # PLACEHOLDER: Replace this system prompt with your own instructions.
 SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own instructions."
@@ -19,6 +22,7 @@ AGENT_ID = os.environ.get("AGENT_ID", "")
 bedrock_agent_runtime = boto3.client("bedrock-agent-runtime")
 
 
+@metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
 def handler(event, context):
     """Invoke AgentCore Runtime with conversation and return response.
@@ -176,6 +180,8 @@ def invoke_agentcore(
     # Default finish reason if not found in trace
     if finish_reason is None and completion_text:
         finish_reason = "end_turn"
+
+    metrics.add_metric(name="AIModelLatency", unit=MetricUnit.Milliseconds, value=latency_ms)
 
     # Log AI interaction AFTER response
     log_ai_interaction(

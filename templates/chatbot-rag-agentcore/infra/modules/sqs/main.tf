@@ -17,7 +17,7 @@ resource "aws_sqs_queue" "message_queue" {
   name                        = "${var.project_prefix}-message-queue.fifo"
   fifo_queue                  = true
   content_based_deduplication = true
-  visibility_timeout_seconds  = 60
+  visibility_timeout_seconds  = 900
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.message_queue_dlq.arn

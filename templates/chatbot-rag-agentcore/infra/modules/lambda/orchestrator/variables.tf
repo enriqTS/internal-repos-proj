@@ -45,8 +45,24 @@ variable "max_retry_attempts" {
   default     = "3"
 }
 
+variable "max_tool_iterations" {
+  description = "Maximum number of tool-use loop iterations (unused in AgentCore variant)"
+  type        = string
+  default     = "10"
+}
+
 variable "log_level" {
   description = "Log level for aws-lambda-powertools"
   type        = string
   default     = "INFO"
+}
+
+variable "responses_table_arn" {
+  description = "ARN of the responses DynamoDB table"
+  type        = string
+}
+
+variable "responses_table_name" {
+  description = "Name of the responses DynamoDB table"
+  type        = string
 }

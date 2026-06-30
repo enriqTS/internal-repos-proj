@@ -49,6 +49,16 @@ data "aws_iam_policy_document" "orchestrator_permissions" {
   statement {
     effect    = "Allow"
     actions   = ["lambda:InvokeFunction"]
-    resources = [var.ai_caller_arn]
+    resources = [
+      var.ai_caller_arn,
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "dynamodb:PutItem",
+    ]
+    resources = [var.responses_table_arn]
   }
 }
