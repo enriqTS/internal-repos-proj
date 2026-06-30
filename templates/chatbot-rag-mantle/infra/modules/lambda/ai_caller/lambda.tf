@@ -1,3 +1,7 @@
+locals {
+  function_name = "${var.project_name}-${var.environment}-ai-caller"
+}
+
 data "archive_file" "ai_caller" {
   type        = "zip"
   source_dir  = "${path.root}/../../../src/ai_caller"
@@ -5,7 +9,7 @@ data "archive_file" "ai_caller" {
 }
 
 resource "aws_lambda_function" "ai_caller" {
-  function_name    = "${var.project_prefix}-ai-caller"
+  function_name    = local.function_name
   runtime          = "python3.12"
   handler          = "handler.handler"
   filename         = data.archive_file.ai_caller.output_path
@@ -21,10 +25,10 @@ resource "aws_lambda_function" "ai_caller" {
 
   environment {
     variables = {
-      MANTLE_BASE_URL        = var.mantle_base_url
-      MODEL_ID               = var.model_id
+      MANTLE_BASE_URL         = var.mantle_base_url
+      MODEL_ID                = var.model_id
       POWERTOOLS_SERVICE_NAME = "ai-caller"
-      POWERTOOLS_LOG_LEVEL   = var.log_level
+      POWERTOOLS_LOG_LEVEL    = var.log_level
     }
   }
 }

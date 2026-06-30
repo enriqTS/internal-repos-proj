@@ -1,3 +1,7 @@
+locals {
+  function_name = "${var.project_name}-${var.environment}-tool-executor"
+}
+
 data "archive_file" "tool_executor" {
   type        = "zip"
   source_dir  = "${path.root}/../../../src/tool_executor"
@@ -5,7 +9,7 @@ data "archive_file" "tool_executor" {
 }
 
 resource "aws_lambda_function" "tool_executor" {
-  function_name    = "${var.project_prefix}-tool-executor"
+  function_name    = local.function_name
   runtime          = "python3.12"
   handler          = "handler.handler"
   filename         = data.archive_file.tool_executor.output_path
@@ -21,9 +25,9 @@ resource "aws_lambda_function" "tool_executor" {
 
   environment {
     variables = {
-      RAG_BUCKET_NAME        = var.rag_bucket_name
+      RAG_BUCKET_NAME         = var.rag_bucket_name
       POWERTOOLS_SERVICE_NAME = "tool-executor"
-      POWERTOOLS_LOG_LEVEL   = var.log_level
+      POWERTOOLS_LOG_LEVEL    = var.log_level
     }
   }
 }

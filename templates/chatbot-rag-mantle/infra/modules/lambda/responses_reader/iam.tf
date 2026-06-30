@@ -11,7 +11,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_iam_role" "responses_reader" {
-  name               = "${var.project_prefix}-responses-reader-role"
+  name               = "${var.project_name}-${var.environment}-responses-reader-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
@@ -21,7 +21,7 @@ resource "aws_iam_role_policy_attachment" "responses_reader_basic_execution" {
 }
 
 resource "aws_iam_role_policy" "responses_reader_permissions" {
-  name   = "${var.project_prefix}-responses-reader-permissions"
+  name   = "${var.project_name}-${var.environment}-responses-reader-permissions"
   role   = aws_iam_role.responses_reader.id
   policy = data.aws_iam_policy_document.responses_reader_permissions.json
 }

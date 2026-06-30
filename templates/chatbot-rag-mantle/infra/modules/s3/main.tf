@@ -2,11 +2,15 @@
 # S3 Bucket — RAG Documents
 ################################################################################
 
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+}
+
 resource "aws_s3_bucket" "rag_documents" {
-  bucket = "${var.project_prefix}-rag-documents"
+  bucket = "${local.name_prefix}-rag-documents"
 
   tags = {
-    Name = "${var.project_prefix}-rag-documents"
+    Name = "${local.name_prefix}-rag-documents"
   }
 }
 
@@ -37,7 +41,7 @@ resource "aws_s3_bucket_notification" "rag_documents" {
 
   lambda_function {
     lambda_function_arn = var.kb_sync_lambda_arn
-    events             = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
   }
 }
 

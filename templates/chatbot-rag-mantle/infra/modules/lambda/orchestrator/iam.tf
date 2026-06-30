@@ -11,7 +11,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_iam_role" "orchestrator" {
-  name               = "${var.project_prefix}-orchestrator-role"
+  name               = "${var.project_name}-${var.environment}-orchestrator-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
@@ -21,7 +21,7 @@ resource "aws_iam_role_policy_attachment" "orchestrator_basic_execution" {
 }
 
 resource "aws_iam_role_policy" "orchestrator_permissions" {
-  name   = "${var.project_prefix}-orchestrator-permissions"
+  name   = "${var.project_name}-${var.environment}-orchestrator-permissions"
   role   = aws_iam_role.orchestrator.id
   policy = data.aws_iam_policy_document.orchestrator_permissions.json
 }
@@ -47,8 +47,8 @@ data "aws_iam_policy_document" "orchestrator_permissions" {
   }
 
   statement {
-    effect    = "Allow"
-    actions   = ["lambda:InvokeFunction"]
+    effect  = "Allow"
+    actions = ["lambda:InvokeFunction"]
     resources = [
       var.ai_caller_arn,
       var.tool_executor_arn,

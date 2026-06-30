@@ -1,5 +1,10 @@
-variable "project_prefix" {
-  description = "Prefix used to construct the S3 bucket name (e.g. myproject-rag-documents)"
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+}
+
+variable "environment" {
+  description = "Deployment environment (dev, staging, prod)"
   type        = string
 }
 
