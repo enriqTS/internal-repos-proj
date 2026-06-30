@@ -76,7 +76,35 @@ module "dynamodb_responses" {
   project_prefix = var.project_prefix
 }
 
+module "responses_reader" {
+  source               = "../../modules/lambda/responses_reader"
+  project_prefix       = var.project_prefix
+  shared_layer_arn     = module.shared_layer.layer_arn
+  responses_table_arn  = module.dynamodb_responses.table_arn
+  responses_table_name = module.dynamodb_responses.table_name
+  log_level            = var.log_level
+}
+
 module "s3" {
-  source         = "../../modules/s3"
-  project_prefix = var.project_prefix
+  source                       = "../../modules/s3"
+  project_prefix               = var.project_prefix
+  kb_sync_lambda_arn           = module.kb_sync.function_arn
+  kb_sync_lambda_function_name = module.kb_sync.function_name
+}
+
+module "bedrock_kb" {
+  source                    = "../../modules/bedrock_kb"
+  project_prefix            = var.project_prefix
+  aws_region                = var.aws_region
+  rag_bucket_arn            = module.s3.bucket_arn
+  opensearch_collection_arn = var.opensearch_collection_arn
+}
+
+module "kb_sync" {
+  source            = "../../modules/lambda/kb_sync"
+  project_prefix    = var.project_prefix
+  shared_layer_arn  = module.shared_layer.layer_arn
+  knowledge_base_id = module.bedrock_kb.knowledge_base_id
+  data_source_id    = module.bedrock_kb.data_source_id
+  log_level         = var.log_level
 }

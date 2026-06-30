@@ -43,3 +43,8 @@ variable "log_level" {
   type        = string
   default     = "INFO"
 }
+
+variable "opensearch_collection_arn" {
+  description = "ARN of the OpenSearch Serverless collection for the Bedrock Knowledge Base"
+  type        = string
+}
