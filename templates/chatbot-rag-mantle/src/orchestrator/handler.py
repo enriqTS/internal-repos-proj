@@ -96,6 +96,7 @@ def _write_response(message_id, status, response="", error="", user_id=""):
 
 
 @logger.inject_lambda_context
+@metrics.log_metrics(capture_cold_start_metric=True)
 def handler(event, context):
     """SQS trigger handler — processes one message at a time (batch size 1)."""
     start_time = time.time()
@@ -105,6 +106,7 @@ def handler(event, context):
 
     user_id = body.get("userId", "")
     message = body.get("message", "")
+    message_id = body.get("messageId", context.aws_request_id)
     correlation_id = body.get("correlationId", context.aws_request_id)
     timestamp = body.get("timestamp", "")
 
@@ -114,12 +116,22 @@ def handler(event, context):
         extra={
             "correlationId": correlation_id,
             "userId": user_id,
+            "messageId": message_id,
         },
     )
 
+    # Write pending status immediately
+    _write_response(message_id, status="pending", user_id=user_id)
+
     try:
-        response = _process_message(user_id, message, correlation_id, timestamp)
+        response_text = _process_message(user_id, message, correlation_id, timestamp)
         duration_ms = int((time.time() - start_time) * 1000)
+
+        # Write completed response
+        _write_response(message_id, status="completed", response=response_text, user_id=user_id)
+
+        metrics.add_metric(name="MessageProcessingLatency", unit=MetricUnit.Milliseconds, value=duration_ms)
+
         logger.info(
             "Processing completed successfully",
             extra={
@@ -128,12 +140,15 @@ def handler(event, context):
                 "durationMs": duration_ms,
             },
         )
-        return response
 
     except Exception as e:
         duration_ms = int((time.time() - start_time) * 1000)
-        logger.exception(
-            "Processing failed",
+
+        # Write failed response — DO NOT re-raise
+        _write_response(message_id, status="failed", error=str(e), user_id=user_id)
+
+        logger.error(
+            "Processing failed — all retries exhausted",
             extra={
                 "correlationId": correlation_id,
                 "status": "failure",
@@ -141,15 +156,19 @@ def handler(event, context):
                 "errorType": type(e).__name__,
                 "errorMessage": str(e),
                 "userId": user_id,
-                "messageBody": message,
-                "attempts": MAX_RETRY_ATTEMPTS,
+                "messageId": message_id,
             },
         )
-        raise
+
+    # Always return success so SQS deletes the message
+    return {"statusCode": 200}
 
 
 def _process_message(user_id, message, correlation_id, timestamp):
-    """Core processing logic: retrieve history, invoke AI, handle tool loop, save."""
+    """Core processing logic: retrieve history, invoke AI, handle tool loop, save.
+
+    Returns the final response text on success. Raises on unrecoverable failure.
+    """
     # Step 1: Retrieve conversation history
     conversation_history = retrieve_conversation_history(user_id, correlation_id)
 
@@ -175,11 +194,19 @@ def _process_message(user_id, message, correlation_id, timestamp):
             },
         )
 
-        ai_response = invoke_ai_caller(
+        # Use retry with backoff for AI Caller invocation
+        success, result = _retry_with_backoff(
+            invoke_ai_caller,
             messages=messages_for_ai,
             correlation_id=correlation_id,
         )
 
+        if not success:
+            raise RuntimeError(
+                f"AI Caller invocation failed after {MAX_RETRY_ATTEMPTS} attempts: {result}"
+            )
+
+        ai_response = result
         function_calls = ai_response.get("function_calls", [])
 
         if not function_calls:
@@ -218,25 +245,10 @@ def _process_message(user_id, message, correlation_id, timestamp):
             messages_for_ai.append(tool_message)
     else:
         # Max iterations reached without a text-only response
-        logger.error(
-            "Max tool-use iterations reached",
-            extra={
-                "correlationId": correlation_id,
-                "maxIterations": MAX_TOOL_ITERATIONS,
-                "userId": user_id,
-            },
+        raise RuntimeError(
+            f"Conversation exceeded maximum allowed tool-use iterations "
+            f"({MAX_TOOL_ITERATIONS})."
         )
-        return {
-            "statusCode": 500,
-            "body": json.dumps({
-                "error": True,
-                "correlationId": correlation_id,
-                "message": (
-                    f"Conversation exceeded maximum allowed tool-use iterations "
-                    f"({MAX_TOOL_ITERATIONS})."
-                ),
-            }),
-        }
 
     # Step 4: Append assistant response to history
     assistant_response_message = {
@@ -249,16 +261,8 @@ def _process_message(user_id, message, correlation_id, timestamp):
     # Step 5: Save updated conversation history
     save_conversation_history(user_id, conversation_history, correlation_id)
 
-    # Step 6: Return final response
-    return {
-        "statusCode": 200,
-        "body": json.dumps({
-            "response": final_response.get("content", ""),
-            "conversationId": user_id,
-            "timestamp": timestamp,
-            "correlationId": correlation_id,
-        }),
-    }
+    # Step 6: Return final response text
+    return final_response.get("content", "")
 
 
 def retrieve_conversation_history(user_id, correlation_id):
