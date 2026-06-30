@@ -108,3 +108,14 @@ module "kb_sync" {
   data_source_id    = module.bedrock_kb.data_source_id
   log_level         = var.log_level
 }
+
+module "monitoring" {
+  source                      = "../../modules/monitoring"
+  project_prefix              = var.project_prefix
+  aws_region                  = var.aws_region
+  orchestrator_function_name  = module.orchestrator.function_name
+  ai_caller_function_name     = module.ai_caller.function_name
+  tool_executor_function_name = module.tool_executor.function_name
+  kb_sync_function_name       = module.kb_sync.function_name
+  dlq_name                    = module.sqs.dlq_name
+}
