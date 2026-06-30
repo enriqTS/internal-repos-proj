@@ -1,6 +1,7 @@
 """KB Sync Lambda — triggers Bedrock Knowledge Base ingestion on S3 events."""
 
 import os
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -15,22 +16,22 @@ bedrock_client = boto3.client("bedrock-agent")
 
 
 @logger.inject_lambda_context
-def handler(event, context):
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext (aws_lambda_powertools.utilities.typing)
     """S3 event trigger handler — starts KB ingestion job."""
-    records = event.get("Records", [])
+    records: list[dict[str, Any]] = event.get("Records", [])
     logger.info(
         "KB Sync triggered",
         extra={"eventRecordCount": len(records)},
     )
 
     try:
-        response = bedrock_client.start_ingestion_job(
+        response: Any = bedrock_client.start_ingestion_job(  # boto3 response type not available
             knowledgeBaseId=KNOWLEDGE_BASE_ID,
             dataSourceId=DATA_SOURCE_ID,
         )
 
-        ingestion_job = response.get("ingestionJob", {})
-        job_id = ingestion_job.get("ingestionJobId", "unknown")
+        ingestion_job: dict[str, Any] = response.get("ingestionJob", {})
+        job_id: str = ingestion_job.get("ingestionJobId", "unknown")
 
         logger.info(
             "Ingestion job started",
