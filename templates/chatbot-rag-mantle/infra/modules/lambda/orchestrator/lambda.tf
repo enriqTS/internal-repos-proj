@@ -11,7 +11,11 @@ resource "aws_lambda_function" "orchestrator" {
   filename         = data.archive_file.orchestrator.output_path
   source_code_hash = data.archive_file.orchestrator.output_base64sha256
   role             = aws_iam_role.orchestrator.arn
-  timeout          = 30
+  timeout          = 150
+
+  tracing_config {
+    mode = "Active"
+  }
 
   layers = [var.shared_layer_arn]
 
