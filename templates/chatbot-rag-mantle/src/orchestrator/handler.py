@@ -6,10 +6,13 @@ import time
 
 import boto3
 
+from aws_lambda_powertools import Metrics
+from aws_lambda_powertools.metrics import MetricUnit
 from shared.logging_config import get_logger
 from shared.models import ChatMessage
 
 logger = get_logger("orchestrator")
+metrics = Metrics(namespace="ChatbotRAG", service="orchestrator")
 
 # Configuration from environment variables
 MAX_CONVERSATION_HISTORY = int(os.environ.get("MAX_CONVERSATION_HISTORY", "50"))
@@ -18,11 +21,78 @@ MAX_TOOL_ITERATIONS = int(os.environ.get("MAX_TOOL_ITERATIONS", "10"))
 AI_CALLER_FUNCTION_NAME = os.environ.get("AI_CALLER_FUNCTION_NAME", "")
 TOOL_EXECUTOR_FUNCTION_NAME = os.environ.get("TOOL_EXECUTOR_FUNCTION_NAME", "")
 DYNAMODB_TABLE_NAME = os.environ.get("DYNAMODB_TABLE_NAME", "")
+RESPONSES_TABLE_NAME = os.environ.get("RESPONSES_TABLE_NAME", "")
 
 # AWS clients
 lambda_client = boto3.client("lambda")
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(DYNAMODB_TABLE_NAME) if DYNAMODB_TABLE_NAME else None
+responses_table = dynamodb.Table(RESPONSES_TABLE_NAME) if RESPONSES_TABLE_NAME else None
+
+
+# --- Utility helpers ---
+
+BACKOFF_BASE = 2  # seconds
+
+
+def _retry_with_backoff(func, *args, correlation_id="", **kwargs):
+    """Retry a callable with exponential backoff. Returns (success, result_or_error)."""
+    last_error = None
+    for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
+        try:
+            result = func(*args, **kwargs)
+            return True, result
+        except Exception as e:
+            last_error = e
+            backoff = BACKOFF_BASE ** attempt
+            logger.warning(
+                "Retry attempt",
+                extra={
+                    "correlationId": correlation_id,
+                    "attempt": attempt,
+                    "maxAttempts": MAX_RETRY_ATTEMPTS,
+                    "errorType": type(e).__name__,
+                    "errorMessage": str(e),
+                    "backoffSeconds": backoff,
+                },
+            )
+            if attempt < MAX_RETRY_ATTEMPTS:
+                time.sleep(backoff)
+    return False, last_error
+
+
+def _write_response(message_id, status, response="", error="", user_id=""):
+    """Write processing result to the Responses Table."""
+    if not responses_table:
+        logger.warning("RESPONSES_TABLE_NAME not configured — skipping response write")
+        return
+
+    now = int(time.time())
+    expires_at = now + 604800  # 7 days
+
+    try:
+        responses_table.put_item(Item={
+            "messageId": message_id,
+            "status": status,
+            "response": response,
+            "error": error,
+            "userId": user_id,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "expiresAt": expires_at,
+        })
+        logger.info(
+            "Response written",
+            extra={"messageId": message_id, "status": status},
+        )
+    except Exception as e:
+        logger.error(
+            "Failed to write response",
+            extra={
+                "messageId": message_id,
+                "errorType": type(e).__name__,
+                "errorMessage": str(e),
+            },
+        )
 
 
 @logger.inject_lambda_context
