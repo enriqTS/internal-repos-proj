@@ -1,20 +1,27 @@
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+}
+
 module "api_gateway" {
-  source         = "../../modules/api_gateway"
-  project_prefix = var.project_prefix
-  openapi_spec   = file("${path.root}/../../openapi/api-spec.json")
-  aws_region     = var.aws_region
-  sqs_queue_url  = module.sqs.queue_url
-  sqs_queue_arn  = module.sqs.queue_arn
+  source       = "../../modules/api_gateway"
+  project_name = var.project_name
+  environment  = var.environment
+  openapi_spec = file("${path.root}/../../openapi/api-spec.json")
+  aws_region   = var.aws_region
+  sqs_queue_url = module.sqs.queue_url
+  sqs_queue_arn = module.sqs.queue_arn
 }
 
 module "sqs" {
-  source         = "../../modules/sqs"
-  project_prefix = var.project_prefix
+  source       = "../../modules/sqs"
+  project_name = var.project_name
+  environment  = var.environment
 }
 
 module "orchestrator" {
   source                      = "../../modules/lambda/orchestrator"
-  project_prefix              = var.project_prefix
+  project_name                = var.project_name
+  environment                 = var.environment
   sqs_queue_arn               = module.sqs.queue_arn
   dynamodb_table_arn          = module.dynamodb.table_arn
   dynamodb_table_name         = module.dynamodb.table_name
@@ -30,7 +37,8 @@ module "orchestrator" {
 
 module "ai_caller" {
   source           = "../../modules/lambda/ai_caller"
-  project_prefix   = var.project_prefix
+  project_name     = var.project_name
+  environment      = var.environment
   shared_layer_arn = module.shared_layer.layer_arn
   mantle_base_url  = var.mantle_base_url
   model_id         = var.model_id
@@ -39,7 +47,8 @@ module "ai_caller" {
 
 module "tool_executor" {
   source           = "../../modules/lambda/tool_executor"
-  project_prefix   = var.project_prefix
+  project_name     = var.project_name
+  environment      = var.environment
   rag_bucket_name  = module.s3.bucket_name
   rag_bucket_arn   = module.s3.bucket_arn
   shared_layer_arn = module.shared_layer.layer_arn
@@ -47,16 +56,19 @@ module "tool_executor" {
 }
 
 module "shared_layer" {
-  source         = "../../modules/lambda/shared_layer"
-  project_prefix = var.project_prefix
+  source       = "../../modules/lambda/shared_layer"
+  project_name = var.project_name
+  environment  = var.environment
 }
 
 module "dynamodb" {
-  source         = "../../modules/dynamodb"
-  project_prefix = var.project_prefix
+  source       = "../../modules/dynamodb"
+  project_name = var.project_name
+  environment  = var.environment
 }
 
 module "s3" {
-  source         = "../../modules/s3"
-  project_prefix = var.project_prefix
+  source       = "../../modules/s3"
+  project_name = var.project_name
+  environment  = var.environment
 }
