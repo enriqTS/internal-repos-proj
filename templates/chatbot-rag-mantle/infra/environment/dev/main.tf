@@ -1,16 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
 module "api_gateway" {
   source         = "../../modules/api_gateway"
   project_prefix = var.project_prefix
