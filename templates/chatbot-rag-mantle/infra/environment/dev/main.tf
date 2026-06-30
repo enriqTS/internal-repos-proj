@@ -69,6 +69,11 @@ module "dynamodb" {
   project_prefix = var.project_prefix
 }
 
+module "dynamodb_responses" {
+  source         = "../../modules/dynamodb_responses"
+  project_prefix = var.project_prefix
+}
+
 module "s3" {
   source         = "../../modules/s3"
   project_prefix = var.project_prefix
