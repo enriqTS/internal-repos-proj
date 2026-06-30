@@ -37,7 +37,7 @@ CloudWatch Dashboard + Alarms ← X-Ray + Powertools Metrics ← All Lambdas
 | **S3 RAG Bucket** | Stores knowledge base documents for retrieval |
 | **Responses Reader Lambda** | GET /responses/{messageId} — returns processing status and AI response |
 | **KB Sync Lambda** | Triggered by S3 events — calls Bedrock StartIngestionJob for RAG re-indexing |
-| **Bedrock Knowledge Base** | Managed RAG indexing with Amazon Titan Embed v2 and OpenSearch Serverless |
+| **Bedrock Knowledge Base** | Managed RAG indexing with Amazon Titan Embed v2 and S3 Vectors |
 | **Monitoring Module** | CloudWatch Dashboard, alarms (error rate, p99 latency, DLQ depth), X-Ray tracing |
 
 ### Tool-Use Loop (Mantle)
@@ -198,7 +198,6 @@ Key variables:
 | `max_conversation_history` | Max messages retained in context | `50` |
 | `max_retry_attempts` | Max retry attempts for message processing | `3` |
 | `log_level` | Powertools log level | `"INFO"` |
-| `opensearch_collection_arn` | ARN of OpenSearch Serverless collection for Bedrock KB | (required) |
 
 Resource names are computed as `${project_name}-${environment}-<function>` (e.g., `my-chatbot-dev-orchestrator`).
 
@@ -277,7 +276,7 @@ Repeat for `staging/` and `prod/` environments as needed.
 
 ## RAG Knowledge Base
 
-The template provisions a fully managed **Bedrock Knowledge Base** backed by Amazon Titan Embed v2 and OpenSearch Serverless. An S3 bucket (`{prefix}-rag-documents`) stores the source documents, and uploads/deletions automatically trigger re-indexing — no manual steps needed.
+The template provisions a fully managed **Bedrock Knowledge Base** backed by Amazon Titan Embed v2 and S3 Vectors. An S3 bucket (`{prefix}-rag-documents`) stores the source documents, and uploads/deletions automatically trigger re-indexing — no manual steps needed.
 
 ### Automatic Re-Indexing
 

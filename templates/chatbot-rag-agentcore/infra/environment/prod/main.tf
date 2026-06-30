@@ -109,12 +109,10 @@ module "s3" {
 }
 
 module "bedrock_kb" {
-  source                    = "../../modules/bedrock_kb"
-  project_name              = var.project_name
-  environment               = var.environment
-  aws_region                = var.aws_region
-  rag_bucket_arn            = module.s3.bucket_arn
-  opensearch_collection_arn = var.opensearch_collection_arn
+  source       = "../../modules/bedrock_kb"
+  project_name = var.project_name
+  environment  = var.environment
+  rag_bucket_arn = module.s3.bucket_arn
 }
 
 module "kb_sync" {

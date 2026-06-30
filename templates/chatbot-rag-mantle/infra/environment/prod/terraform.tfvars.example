@@ -30,9 +30,6 @@ max_retry_attempts = 3
 # Powertools log level (DEBUG, INFO, WARNING, ERROR)
 log_level = "INFO"
 
-# OpenSearch Serverless collection ARN for the Bedrock Knowledge Base
-opensearch_collection_arn = "arn:aws:aoss:us-east-1:123456789012:collection/your-collection-id"
-
 # NOTE: The combined prefix (project_name + environment) plus function suffix
 # must not exceed 63 characters to respect AWS naming limits.
 # Example: "my-chatbot" + "prod" + "orchestrator" = "my-chatbot-prod-orchestrator" (29 chars ✓)

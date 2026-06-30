@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# Bedrock Knowledge Base — RAG Document Indexing
+# Bedrock Knowledge Base — RAG Document Indexing (S3 Vectors)
 # ------------------------------------------------------------------------------
 
 locals {
@@ -54,10 +54,48 @@ resource "aws_iam_role_policy" "bedrock_kb_model_access" {
       {
         Effect   = "Allow"
         Action   = ["bedrock:InvokeModel"]
-        Resource = ["arn:aws:bedrock:${data.aws_region.current.region}::foundation-model/amazon.titan-embed-text-v2:0"]
+        Resource = ["arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.titan-embed-text-v2:0"]
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy" "bedrock_kb_s3vectors_access" {
+  name = "${local.name_prefix}-bedrock-kb-s3vectors-access"
+  role = aws_iam_role.bedrock_kb.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3vectors:CreateIndex",
+          "s3vectors:DeleteIndex",
+          "s3vectors:GetIndex",
+          "s3vectors:ListIndexes",
+          "s3vectors:PutVectors",
+          "s3vectors:GetVectors",
+          "s3vectors:DeleteVectors",
+          "s3vectors:QueryVectors"
+        ]
+        Resource = ["*"]
+      }
+    ]
+  })
+}
+
+# S3 Vectors — Vector Bucket + Index
+resource "aws_s3vectors_vector_bucket" "kb" {
+  vector_bucket_name = "${local.name_prefix}-vectors"
+}
+
+resource "aws_s3vectors_index" "main" {
+  vector_bucket_name = aws_s3vectors_vector_bucket.kb.vector_bucket_name
+  index_name         = "${local.name_prefix}-idx"
+  data_type          = "float32"
+  dimension          = 1024 # Titan Embed Text v2
+  distance_metric    = "cosine"
 }
 
 # Bedrock Knowledge Base
@@ -67,22 +105,30 @@ resource "aws_bedrockagent_knowledge_base" "main" {
 
   knowledge_base_configuration {
     type = "VECTOR"
+
     vector_knowledge_base_configuration {
-      embedding_model_arn = "arn:aws:bedrock:${data.aws_region.current.region}::foundation-model/amazon.titan-embed-text-v2:0"
+      embedding_model_arn = "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.titan-embed-text-v2:0"
+
+      embedding_model_configuration {
+        bedrock_embedding_model_configuration {
+          dimensions          = 1024
+          embedding_data_type = "FLOAT32"
+        }
+      }
     }
   }
 
   storage_configuration {
-    type = "OPENSEARCH_SERVERLESS"
-    opensearch_serverless_configuration {
-      collection_arn    = var.opensearch_collection_arn
-      vector_index_name = "${local.name_prefix}-index"
-      field_mapping {
-        vector_field   = "embedding"
-        text_field     = "text"
-        metadata_field = "metadata"
-      }
+    type = "S3_VECTORS"
+
+    s3_vectors_configuration {
+      index_arn = aws_s3vectors_index.main.index_arn
     }
+  }
+
+  tags = {
+    Name    = "${local.name_prefix}-knowledge-base"
+    Project = var.project_name
   }
 }
 
@@ -93,8 +139,22 @@ resource "aws_bedrockagent_data_source" "s3" {
 
   data_source_configuration {
     type = "S3"
+
     s3_configuration {
       bucket_arn = var.rag_bucket_arn
     }
   }
+
+  vector_ingestion_configuration {
+    chunking_configuration {
+      chunking_strategy = "FIXED_SIZE"
+
+      fixed_size_chunking_configuration {
+        max_tokens         = 300
+        overlap_percentage = 20
+      }
+    }
+  }
+
+  data_deletion_policy = "RETAIN"
 }
