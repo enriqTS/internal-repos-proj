@@ -1,0 +1,117 @@
+<mxfile host="drawio" modified="2025-01-20T00:00:00.000Z" agent="Kiro" version="24.0.0">
+  <diagram id="diagram-1" name="chatbot-rag-agentcore-ws-streaming">
+    <mxGraphModel dx="1426" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="700">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Title -->
+        <mxCell id="title" value="chatbot-rag-agentcore-ws-streaming&#xa;Lambda | WebSocket | Streaming | AgentCore" style="text;html=1;align=center;verticalAlign=middle;resizable=0;autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="350" y="10" width="500" height="50" as="geometry" />
+        </mxCell>
+        <!-- AWS Cloud Group -->
+        <mxCell id="aws-cloud" value="AWS Cloud" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="180" y="70" width="1100" height="560" as="geometry" />
+        </mxCell>
+        <!-- Client (outside AWS Cloud) -->
+        <mxCell id="client" value="Client" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3E;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.users;" vertex="1" parent="1">
+          <mxGeometry x="50" y="290" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- API Gateway WebSocket API -->
+        <mxCell id="apigw" value="API Gateway&#xa;WebSocket API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
+          <mxGeometry x="240" y="281" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- Connection Manager Lambda -->
+        <mxCell id="conn-mgr" value="Connection&#xa;Manager" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="420" y="130" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- SQS FIFO Queue -->
+        <mxCell id="sqs" value="SQS FIFO&#xa;Queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#FF4F8B;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;" vertex="1" parent="1">
+          <mxGeometry x="420" y="400" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- Orchestrator Lambda -->
+        <mxCell id="orchestrator" value="Orchestrator" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="600" y="281" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- AI Caller Lambda -->
+        <mxCell id="ai-caller" value="AI Caller" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="800" y="281" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- Bedrock AgentCore -->
+        <mxCell id="ai-service" value="Bedrock&#xa;AgentCore" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#4AB29A;gradientDirection=north;fillColor=#116D5B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="281" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- Tool Executor Lambda -->
+        <mxCell id="tool-exec" value="Tool Executor" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="130" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- S3 RAG Bucket -->
+        <mxCell id="s3-rag" value="S3 RAG&#xa;Bucket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#60A337;gradientDirection=north;fillColor=#277116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="130" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- DynamoDB User Context -->
+        <mxCell id="ddb-context" value="DynamoDB&#xa;User Context" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" vertex="1" parent="1">
+          <mxGeometry x="600" y="130" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- DynamoDB Connections -->
+        <mxCell id="ddb-conn" value="DynamoDB&#xa;Connections" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" vertex="1" parent="1">
+          <mxGeometry x="420" y="530" width="60" height="60" as="geometry" />
+        </mxCell>
+        <!-- EDGES -->
+        <!-- Client -> API Gateway (WebSocket) -->
+        <mxCell id="e1" value="WebSocket" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;strokeColor=#232F3E;strokeWidth=2;fontColor=#232F3E;" edge="1" parent="1" source="client" target="apigw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- API Gateway -> Connection Manager ($connect/$disconnect) -->
+        <mxCell id="e2" value="$connect / $disconnect" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#232F3E;strokeWidth=1.5;fontColor=#232F3E;" edge="1" parent="1" source="apigw" target="conn-mgr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- API Gateway -> SQS (sendMessage) -->
+        <mxCell id="e3" value="sendMessage" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#232F3E;strokeWidth=1.5;fontColor=#232F3E;" edge="1" parent="1" source="apigw" target="sqs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Connection Manager -> DynamoDB Connections (PutItem/DeleteItem) -->
+        <mxCell id="e4" value="PutItem / DeleteItem" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#3334B9;strokeWidth=1.5;fontColor=#3334B9;" edge="1" parent="1" source="conn-mgr" target="ddb-conn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- SQS -> Orchestrator (SQS trigger) -->
+        <mxCell id="e5" value="SQS trigger" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#232F3E;strokeWidth=1.5;fontColor=#232F3E;" edge="1" parent="1" source="sqs" target="orchestrator">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Orchestrator -> AI Caller (Invoke) -->
+        <mxCell id="e6" value="Invoke" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#232F3E;strokeWidth=1.5;fontColor=#232F3E;" edge="1" parent="1" source="orchestrator" target="ai-caller">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Orchestrator -> DynamoDB User Context (GetItem/PutItem) -->
+        <mxCell id="e7" value="GetItem / PutItem" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#3334B9;strokeWidth=1.5;fontColor=#3334B9;" edge="1" parent="1" source="orchestrator" target="ddb-context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Orchestrator -> API Gateway (@connections POST - stream chunks) - DASHED for streaming -->
+        <mxCell id="e8" value="@connections POST&#xa;(stream chunks)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#5A30B5;strokeWidth=2;fontColor=#5A30B5;dashed=1;dashPattern=8 4;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="orchestrator" target="apigw">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="560" y="311" />
+              <mxPoint x="560" y="340" />
+              <mxPoint x="300" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- AI Caller -> Bedrock AgentCore (InvokeAgent stream) - DASHED for streaming -->
+        <mxCell id="e9" value="InvokeAgent (stream)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#116D5B;strokeWidth=1.5;fontColor=#116D5B;dashed=1;dashPattern=8 4;" edge="1" parent="1" source="ai-caller" target="ai-service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- AgentCore -> Tool Executor (InvokeAction) -->
+        <mxCell id="e10" value="InvokeAction" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#116D5B;strokeWidth=1.5;fontColor=#116D5B;" edge="1" parent="1" source="ai-service" target="tool-exec">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Tool Executor -> S3 (GetObject) -->
+        <mxCell id="e11" value="GetObject" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#277116;strokeWidth=1.5;fontColor=#277116;" edge="1" parent="1" source="tool-exec" target="s3-rag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Streaming legend note -->
+        <mxCell id="legend" value="--- Dashed edges = streaming data path" style="text;html=1;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontSize=10;fontStyle=2;fontColor=#5A30B5;" vertex="1" parent="1">
+          <mxGeometry x="200" y="640" width="250" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
