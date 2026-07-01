@@ -114,6 +114,12 @@ aws s3 cp docs/ s3://<rag-bucket-name>/ --recursive
 }
 ```
 
+| Field | Type | Constraints |
+|-------|------|-------------|
+| `action` | string | Required, must be `"sendMessage"` |
+| `userId` | string | Required, 1–256 characters |
+| `message` | string | Required, 1–4096 characters |
+
 ### Server-to-Client
 
 **Complete response (non-streaming):**
@@ -135,6 +141,12 @@ aws s3 cp docs/ s3://<rag-bucket-name>/ --recursive
 ```json
 {"type": "error", "message": "Processing failed", "correlationId": "req-abc"}
 ```
+
+| Message Type | Fields | Description |
+|--------------|--------|-------------|
+| `message` | `type`, `response`, `conversationId`, `timestamp` | Complete AI response |
+| `status` | `type`, `message` | Processing status during tool-use loop |
+| `error` | `type`, `message`, `correlationId` | Processing error |
 
 ### JavaScript Client Example
 
