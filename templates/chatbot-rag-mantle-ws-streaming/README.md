@@ -23,7 +23,7 @@ The architecture follows a serverless event-driven pattern with a streaming tool
 7. Each token chunk is forwarded to client via `@connections` POST
 8. After stream completes, `done` message sent and full response saved to history
 
-See `docs/architecture.drawio` for the full diagram.
+See `docs/arquitetura/chatbot-mantle-ws-streaming.drawio` for the full diagram.
 
 ## Prerequisites
 
