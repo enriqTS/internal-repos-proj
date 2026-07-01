@@ -1,0 +1,178 @@
+<mxfile host="drawio-mcp" modified="2025-07-01T00:00:00.000Z" agent="DrawioMCP" version="1.0.0">
+  <diagram id="diagram-1" name="chatbot-rag-mantle-ecs-ws">
+    <mxGraphModel dx="1426" dy="850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="chatbot-rag-mantle-ecs-ws&#xa;(Bedrock Mantle API | ECS Fargate | WebSocket | Non-Streaming)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="400" y="10" width="600" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Client -->
+        <mxCell id="client" value="Client" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.client;" vertex="1" parent="1">
+          <mxGeometry x="30" y="350" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- AWS Cloud Group -->
+        <mxCell id="aws-cloud" value="AWS Cloud" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="140" y="70" width="1300" height="680" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway WebSocket -->
+        <mxCell id="apigw" value="API Gateway&#xa;WebSocket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
+          <mxGeometry x="180" y="350" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- VPC Group -->
+        <mxCell id="vpc" value="VPC (10.0.0.0/16)" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc2;strokeColor=#8C4FFF;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#AAB7B8;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="310" y="100" width="650" height="620" as="geometry" />
+        </mxCell>
+
+        <!-- Public Subnet -->
+        <mxCell id="public-subnet" value="Public Subnet" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;grStroke=0;strokeColor=#7AA116;fillColor=#F2F6E8;verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="330" y="120" width="610" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- NAT Gateway -->
+        <mxCell id="nat-gw" value="NAT Gateway" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#5A30B5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;" vertex="1" parent="1">
+          <mxGeometry x="540" y="155" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Private Subnet -->
+        <mxCell id="private-subnet" value="Private Subnet" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;grStroke=0;strokeColor=#00A4A6;fillColor=#E6F6F7;verticalAlign=top;align=left;spacingLeft=30;fontColor=#147EBA;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="330" y="300" width="610" height="390" as="geometry" />
+        </mxCell>
+
+        <!-- NLB -->
+        <mxCell id="nlb" value="NLB" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#5A30B5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.network_load_balancer;" vertex="1" parent="1">
+          <mxGeometry x="380" y="440" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ECS Fargate Service -->
+        <mxCell id="fargate" value="ECS Fargate&#xa;Service" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.fargate;" vertex="1" parent="1">
+          <mxGeometry x="510" y="340" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ECS Modules Container -->
+        <mxCell id="ecs-modules" value="ECS Service Modules" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;verticalAlign=top;fontSize=10;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="490" y="420" width="420" height="240" as="geometry" />
+        </mxCell>
+
+        <!-- Module: Orchestrator -->
+        <mxCell id="mod-orch" value="Orchestrator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="510" y="460" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Module: AI Caller -->
+        <mxCell id="mod-ai" value="AI Caller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="510" y="520" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Module: Tool Executor -->
+        <mxCell id="mod-tool" value="Tool Executor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="680" y="460" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Module: Connection Manager -->
+        <mxCell id="mod-conn" value="Connection Manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="680" y="520" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Module: Message Sender -->
+        <mxCell id="mod-sender" value="Message Sender" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="595" y="590" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Bedrock Mantle API -->
+        <mxCell id="bedrock" value="Bedrock&#xa;Mantle API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#4AB29A;gradientDirection=north;fillColor=#116D5B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="150" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ECR -->
+        <mxCell id="ecr" value="ECR&#xa;Repository" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecs;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="150" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- DynamoDB Connection_Table -->
+        <mxCell id="ddb-conn" value="DynamoDB&#xa;Connection_Table" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="350" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- DynamoDB User_Context -->
+        <mxCell id="ddb-context" value="DynamoDB&#xa;User_Context" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="500" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- S3 RAG Bucket -->
+        <mxCell id="s3-rag" value="S3&#xa;RAG Bucket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#60A337;gradientDirection=north;fillColor=#277116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="640" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES -->
+
+        <!-- Client -> API Gateway: WebSocket -->
+        <mxCell id="e1" value="WebSocket" style="strokeColor=#232F3E;fontSize=10;html=1;endArrow=block;endFill=1;rounded=0;" edge="1" parent="1" source="client" target="apigw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway -> NLB: VPC Link -->
+        <mxCell id="e2" value="VPC Link" style="strokeColor=#232F3E;fontSize=10;html=1;endArrow=block;endFill=1;rounded=0;" edge="1" parent="1" source="apigw" target="nlb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- NLB -> ECS Fargate: TCP -->
+        <mxCell id="e3" value="TCP" style="strokeColor=#232F3E;fontSize=10;html=1;endArrow=block;endFill=1;rounded=0;" edge="1" parent="1" source="nlb" target="fargate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orchestrator -> AI Caller: in-process call -->
+        <mxCell id="e4" value="in-process call" style="strokeColor=#6c8ebf;fontSize=9;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mod-orch" target="mod-ai">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orchestrator -> Tool Executor: in-process call -->
+        <mxCell id="e5" value="in-process call" style="strokeColor=#6c8ebf;fontSize=9;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mod-orch" target="mod-tool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orchestrator -> Connection Manager: in-process call -->
+        <mxCell id="e6" value="in-process call" style="strokeColor=#6c8ebf;fontSize=9;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mod-orch" target="mod-conn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- AI Caller -> Bedrock: Responses API -->
+        <mxCell id="e7" value="Responses API" style="strokeColor=#116D5B;fontSize=10;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mod-ai" target="bedrock">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Connection Manager -> DynamoDB Conn: GetItem/PutItem -->
+        <mxCell id="e8" value="GetItem/PutItem" style="strokeColor=#3334B9;fontSize=10;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mod-conn" target="ddb-conn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orchestrator -> DynamoDB Context: GetItem/PutItem -->
+        <mxCell id="e9" value="GetItem/PutItem" style="strokeColor=#3334B9;fontSize=10;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mod-orch" target="ddb-context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Tool Executor -> S3: GetObject -->
+        <mxCell id="e10" value="GetObject" style="strokeColor=#277116;fontSize=10;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mod-tool" target="s3-rag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Message Sender -> API Gateway: @connections POST -->
+        <mxCell id="e11" value="@connections POST" style="strokeColor=#5A30B5;fontSize=10;html=1;endArrow=block;endFill=1;curved=1;" edge="1" parent="1" source="mod-sender" target="apigw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ECS -> NAT Gateway: outbound -->
+        <mxCell id="e12" value="outbound HTTPS" style="strokeColor=#999999;fontSize=9;html=1;endArrow=block;endFill=1;dashed=1;" edge="1" parent="1" source="fargate" target="nat-gw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
