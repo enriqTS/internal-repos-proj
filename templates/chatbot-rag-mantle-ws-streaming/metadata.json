@@ -2,5 +2,5 @@
   "name": "chatbot-rag-mantle-ws-streaming",
   "description": "Chatbot RAG with Bedrock Mantle API, Lambda compute, WebSocket transport, streaming AI responses",
   "tags": ["chatbot", "rag", "python", "terraform", "bedrock-mantle", "websocket", "streaming"],
-  "date": "2024-01-20"
+  "date": "2026-07-01"
 }

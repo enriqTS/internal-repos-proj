@@ -2,5 +2,5 @@
   "name": "chatbot-rag-mantle-ecs-ws",
   "description": "Chatbot RAG with Bedrock Mantle API, ECS Fargate compute, WebSocket transport, non-streaming",
   "tags": ["chatbot", "rag", "python", "terraform", "bedrock-mantle", "ecs", "websocket"],
-  "date": "2025-01-20"
+  "date": "2026-07-01"
 }

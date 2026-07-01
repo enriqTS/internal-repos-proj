@@ -1,0 +1,6 @@
+{
+  "name": "chatbot-rag-agentcore-ecs",
+  "description": "Chatbot RAG with Bedrock AgentCore Runtime, ECS Fargate compute, REST transport, non-streaming",
+  "tags": ["chatbot", "rag", "python", "terraform", "bedrock-agentcore", "ecs"],
+  "date": "2026-07-01"
+}

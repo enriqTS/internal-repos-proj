@@ -1,0 +1,6 @@
+{
+  "name": "chatbot-rag-mantle-ws",
+  "description": "Chatbot RAG with Bedrock Mantle API, Lambda compute, WebSocket transport, non-streaming",
+  "tags": ["chatbot", "rag", "python", "terraform", "bedrock-mantle", "websocket"],
+  "date": "2026-07-01"
+}

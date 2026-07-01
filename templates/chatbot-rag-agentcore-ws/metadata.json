@@ -1,0 +1,6 @@
+{
+  "name": "chatbot-rag-agentcore-ws",
+  "description": "Chatbot RAG with Bedrock AgentCore Runtime, Lambda compute, WebSocket transport, non-streaming",
+  "tags": ["chatbot", "rag", "python", "terraform", "bedrock-agentcore", "websocket"],
+  "date": "2026-07-01"
+}
