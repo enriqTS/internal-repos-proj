@@ -1,0 +1,6 @@
+{
+  "name": "chatbot-rag-mantle-ecs-ws-streaming",
+  "description": "Chatbot RAG with Bedrock Mantle API, ECS Fargate compute, WebSocket transport, streaming AI responses",
+  "tags": ["chatbot", "rag", "python", "terraform", "bedrock-mantle", "ecs", "websocket", "streaming"],
+  "date": "2025-01-20"
+}
