@@ -1,0 +1,30 @@
+[project]
+name = "chatbot-rag-agentcore-ws-streaming"
+version = "0.1.0"
+description = "Chatbot RAG with Bedrock AgentCore Runtime, Lambda compute, WebSocket transport, streaming AI responses"
+requires-python = ">=3.12"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "hypothesis>=6.100",
+    "moto>=5.0",
+    "boto3-stubs[dynamodb,s3,apigatewaymanagementapi,bedrock-agent-runtime]>=1.34",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "ANN", "B", "A", "COM", "C4", "PT", "RET", "SIM"]
+ignore = ["ANN101", "ANN102", "ANN401"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src/layers/shared/python", "src"]
