@@ -1,0 +1,64 @@
+# Project name — lowercase alphanumeric and hyphens, max 20 chars.
+# Combined with environment to form resource name prefix: <project_name>-<environment>-<function>
+# Example result: my-chatbot-dev-cluster
+project_name = "my-chatbot"
+
+# Deployment environment (allowed: dev, staging, prod)
+environment = "dev"
+
+# Client name for cost allocation and tagging
+client = "acme-corp"
+
+# AWS region for deployment
+aws_region = "us-east-1"
+
+# AI model identifier — Replace with an available Bedrock model
+model_id = "us.anthropic.claude-sonnet-4-20250514"
+
+# Maximum messages to retain in conversation context
+max_conversation_history = 50
+
+# Powertools log level (DEBUG, INFO, WARNING, ERROR)
+log_level = "INFO"
+
+################################################################################
+# ECS Configuration
+################################################################################
+
+# ECS service desired task count
+desired_count = 1
+
+# ECS task CPU units (256, 512, 1024, 2048, 4096)
+cpu_units = 512
+
+# ECS task memory in MiB (must be compatible with cpu_units)
+memory_mib = 1024
+
+# Container port for the FastAPI application
+container_port = 8080
+
+# VPC CIDR block (default: 10.0.0.0/16)
+vpc_cidr = "10.0.0.0/16"
+
+################################################################################
+# Health Check Configuration
+################################################################################
+
+# NLB health check interval in seconds
+health_check_interval = 30
+
+# NLB health check timeout in seconds
+health_check_timeout = 5
+
+# Consecutive successful checks to be healthy
+healthy_threshold = 2
+
+# Consecutive failed checks to be unhealthy
+unhealthy_threshold = 3
+
+# Target group deregistration delay in seconds
+deregistration_delay = 30
+
+# NOTE: The combined prefix (project_name + environment) plus function suffix
+# must not exceed 63 characters to respect AWS naming limits.
+# Example: "my-chatbot" + "dev" + "cluster" = "my-chatbot-dev-cluster" (22 chars)
