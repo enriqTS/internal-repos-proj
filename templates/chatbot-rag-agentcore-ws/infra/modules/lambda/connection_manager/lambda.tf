@@ -25,8 +25,8 @@ resource "aws_lambda_function" "connection_manager" {
 
   environment {
     variables = {
-      CONNECTION_TABLE_NAME  = var.connections_table_name
-      CONNECTION_TTL_SECONDS = var.connection_ttl_seconds
+      CONNECTION_TABLE_NAME   = var.connections_table_name
+      CONNECTION_TTL_SECONDS  = var.connection_ttl_seconds
       POWERTOOLS_SERVICE_NAME = "connection-manager"
       POWERTOOLS_LOG_LEVEL    = var.log_level
     }

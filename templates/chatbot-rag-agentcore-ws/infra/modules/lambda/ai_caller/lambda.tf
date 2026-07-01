@@ -25,8 +25,8 @@ resource "aws_lambda_function" "ai_caller" {
 
   environment {
     variables = {
-      AGENT_ID               = var.agent_id
-      AGENT_ALIAS_ID         = var.agent_alias_id
+      AGENT_ID                = var.agent_id
+      AGENT_ALIAS_ID          = var.agent_alias_id
       POWERTOOLS_SERVICE_NAME = "ai-caller"
       POWERTOOLS_LOG_LEVEL    = var.log_level
     }

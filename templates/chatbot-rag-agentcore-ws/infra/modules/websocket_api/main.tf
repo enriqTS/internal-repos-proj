@@ -56,12 +56,12 @@ resource "aws_apigatewayv2_integration" "disconnect" {
 
 # sendMessage → SQS FIFO via AWS service integration
 resource "aws_apigatewayv2_integration" "send_message" {
-  api_id                = aws_apigatewayv2_api.websocket.id
-  integration_type      = "AWS"
-  integration_uri       = "arn:aws:apigateway:${var.aws_region}:sqs:action/SendMessage"
-  integration_method    = "POST"
-  credentials_arn       = aws_iam_role.apigw_sqs.arn
-  passthrough_behavior  = "NEVER"
+  api_id                        = aws_apigatewayv2_api.websocket.id
+  integration_type              = "AWS"
+  integration_uri               = "arn:aws:apigateway:${var.aws_region}:sqs:action/SendMessage"
+  integration_method            = "POST"
+  credentials_arn               = aws_iam_role.apigw_sqs.arn
+  passthrough_behavior          = "NEVER"
   template_selection_expression = "\\$default"
 
   request_templates = {
