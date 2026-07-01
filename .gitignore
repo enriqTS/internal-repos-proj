@@ -16,3 +16,7 @@ infra/lambda.zip
 *.tfstate
 *.tfstate.backup
 *.tfplan
+
+# Python
+.hypothesis/
+__pycache__/
