@@ -1,0 +1,120 @@
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+}
+
+variable "environment" {
+  description = "Deployment environment (dev, staging, prod)"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region for CloudWatch Logs configuration"
+  type        = string
+}
+
+variable "desired_count" {
+  description = "ECS service desired task count"
+  type        = number
+  default     = 1
+}
+
+variable "cpu_units" {
+  description = "ECS task CPU units"
+  type        = number
+  default     = 512
+}
+
+variable "memory_mib" {
+  description = "ECS task memory in MiB"
+  type        = number
+  default     = 1024
+}
+
+variable "container_port" {
+  description = "Container port for the application"
+  type        = number
+  default     = 8080
+}
+
+variable "log_level" {
+  description = "Powertools log level (DEBUG, INFO, WARNING, ERROR)"
+  type        = string
+  default     = "INFO"
+}
+
+variable "max_conversation_history" {
+  description = "Maximum messages retained in conversation context"
+  type        = number
+  default     = 50
+}
+
+variable "ecr_repository_url" {
+  description = "URL of the ECR repository for the container image"
+  type        = string
+}
+
+variable "ecr_repository_arn" {
+  description = "ARN of the ECR repository for IAM permissions"
+  type        = string
+}
+
+variable "dynamodb_table_name" {
+  description = "Name of the DynamoDB user context table"
+  type        = string
+}
+
+variable "dynamodb_table_arn" {
+  description = "ARN of the DynamoDB user context table"
+  type        = string
+}
+
+variable "rag_bucket_name" {
+  description = "Name of the S3 RAG documents bucket"
+  type        = string
+}
+
+variable "rag_bucket_arn" {
+  description = "ARN of the S3 RAG documents bucket"
+  type        = string
+}
+
+variable "agent_id" {
+  description = "Bedrock AgentCore agent ID"
+  type        = string
+}
+
+variable "agent_alias_id" {
+  description = "Bedrock AgentCore agent alias ID"
+  type        = string
+}
+
+variable "agent_arn" {
+  description = "ARN of the Bedrock AgentCore agent for IAM permissions"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "ID of the VPC"
+  type        = string
+}
+
+variable "private_subnet_ids" {
+  description = "IDs of the private subnets for ECS tasks"
+  type        = list(string)
+}
+
+variable "target_group_arn" {
+  description = "ARN of the ALB target group"
+  type        = string
+}
+
+variable "alb_listener_arn" {
+  description = "ARN of the ALB listener (used for dependency ordering)"
+  type        = string
+}
+
+variable "alb_security_group_id" {
+  description = "Security group ID of the ALB (for ingress rules)"
+  type        = string
+}
