@@ -52,7 +52,10 @@ function mockSuccessfulRender(overrides?: {
   });
 
   // 2. HEAD request for architecture image
-  mockFetch.mockResolvedValueOnce({ ok: archHeadOk });
+  mockFetch.mockResolvedValueOnce({
+    ok: archHeadOk,
+    headers: new Headers(archHeadOk ? { 'content-type': 'image/svg+xml' } : {}),
+  });
 
   // 3. readme.md fetch
   mockFetch.mockResolvedValueOnce({
@@ -133,7 +136,10 @@ describe('renderTemplateDetail', () => {
       });
 
       // architecture HEAD succeeds
-      mockFetch.mockResolvedValueOnce({ ok: true });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'image/svg+xml' }),
+      });
 
       // readme fails
       mockFetch.mockResolvedValueOnce({
@@ -174,7 +180,7 @@ describe('renderTemplateDetail', () => {
       // After SVG HEAD resolves with ok:false, resolveArchitectureImageUrl tries PNG HEAD.
 
       // SVG HEAD fails (call #2 - from resolveArchitectureImageUrl)
-      mockFetch.mockResolvedValueOnce({ ok: false });
+      mockFetch.mockResolvedValueOnce({ ok: false, headers: new Headers() });
 
       // readme succeeds (call #3 - from fetchTemplateReadme)
       mockFetch.mockResolvedValueOnce({
@@ -183,7 +189,7 @@ describe('renderTemplateDetail', () => {
       });
 
       // PNG HEAD fails (call #4 - from resolveArchitectureImageUrl after SVG fails)
-      mockFetch.mockResolvedValueOnce({ ok: false });
+      mockFetch.mockResolvedValueOnce({ ok: false, headers: new Headers() });
 
       const container = createContainer();
       await renderTemplateDetail({ name: 'basic-lambda' }, container);
@@ -273,7 +279,10 @@ describe('renderTemplateDetail', () => {
       });
 
       // Direct HEAD for architecture.png succeeds
-      mockFetch.mockResolvedValueOnce({ ok: true });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'image/png' }),
+      });
 
       // readme succeeds
       mockFetch.mockResolvedValueOnce({
@@ -313,7 +322,10 @@ describe('renderTemplateDetail', () => {
       });
 
       // SVG HEAD succeeds (fallback path)
-      mockFetch.mockResolvedValueOnce({ ok: true });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'image/svg+xml' }),
+      });
 
       // readme succeeds
       mockFetch.mockResolvedValueOnce({

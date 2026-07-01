@@ -202,19 +202,20 @@ jobs:
               "s3://$S3_BUCKET/$S3_PREFIX/readme.md" \
               --content-type "text/markdown"
 
-            # 4. Upload architecture diagram (prefer PNG, fallback to SVG)
+            # 4. Upload architecture diagrams (upload both SVG and PNG if available, prefer SVG)
+            if ls "$TEMPLATE_DIR"/docs/arquitetura/*.svg 1>/dev/null 2>&1; then
+              ARCH_FILE=$(ls "$TEMPLATE_DIR"/docs/arquitetura/*.svg | head -1)
+              echo "  Uploading architecture.svg..."
+              aws s3 cp "$ARCH_FILE" \
+                "s3://$S3_BUCKET/$S3_PREFIX/architecture.svg" \
+                --content-type "image/svg+xml"
+            fi
             if ls "$TEMPLATE_DIR"/docs/arquitetura/*.png 1>/dev/null 2>&1; then
               ARCH_FILE=$(ls "$TEMPLATE_DIR"/docs/arquitetura/*.png | head -1)
               echo "  Uploading architecture.png..."
               aws s3 cp "$ARCH_FILE" \
                 "s3://$S3_BUCKET/$S3_PREFIX/architecture.png" \
                 --content-type "image/png"
-            elif ls "$TEMPLATE_DIR"/docs/arquitetura/*.svg 1>/dev/null 2>&1; then
-              ARCH_FILE=$(ls "$TEMPLATE_DIR"/docs/arquitetura/*.svg | head -1)
-              echo "  Uploading architecture.svg..."
-              aws s3 cp "$ARCH_FILE" \
-                "s3://$S3_BUCKET/$S3_PREFIX/architecture.svg" \
-                --content-type "image/svg+xml"
             fi
 
             # 5. Upload artifact.zip
@@ -254,11 +255,11 @@ jobs:
               METADATA=$(aws s3 cp "s3://$S3_BUCKET/$METADATA_KEY" -)
               ENTRY=$(echo "$METADATA" | jq --arg path "$PREFIX" '. + {path: $path}')
 
-              # Detect architecture image format
-              if aws s3api head-object --bucket "$S3_BUCKET" --key "${PREFIX}architecture.png" 2>/dev/null; then
-                ENTRY=$(echo "$ENTRY" | jq '. + {architectureImage: "architecture.png"}')
-              elif aws s3api head-object --bucket "$S3_BUCKET" --key "${PREFIX}architecture.svg" 2>/dev/null; then
+              # Detect architecture image format (prefer SVG)
+              if aws s3api head-object --bucket "$S3_BUCKET" --key "${PREFIX}architecture.svg" 2>/dev/null; then
                 ENTRY=$(echo "$ENTRY" | jq '. + {architectureImage: "architecture.svg"}')
+              elif aws s3api head-object --bucket "$S3_BUCKET" --key "${PREFIX}architecture.png" 2>/dev/null; then
+                ENTRY=$(echo "$ENTRY" | jq '. + {architectureImage: "architecture.png"}')
               fi
 
               INDEX=$(echo "$INDEX" | jq --argjson entry "$ENTRY" '. + [$entry]')

@@ -17,7 +17,7 @@ function getBaseUrl(): string {
  * If metadata.architectureImage is "architecture.png" or "architecture.svg",
  * construct the direct URL and HEAD-check it; return URL if ok, null otherwise.
  *
- * If absent or any other value, try PNG first (HEAD), then SVG (HEAD);
+ * If absent or any other value, try SVG first (HEAD), then PNG (HEAD);
  * return first successful URL or null.
  */
 export async function resolveArchitectureImageUrl(
@@ -34,7 +34,8 @@ export async function resolveArchitectureImageUrl(
     const url = `${baseUrl}/templates/${name}/${metadata.architectureImage}`;
     try {
       const res = await fetch(url, { method: 'HEAD' });
-      return res.ok ? url : null;
+      if (res.ok && isImageContentType(res)) return url;
+      return null;
     } catch {
       return null;
     }
@@ -44,7 +45,7 @@ export async function resolveArchitectureImageUrl(
   const svgUrl = `${baseUrl}/templates/${name}/architecture.svg`;
   try {
     const svgRes = await fetch(svgUrl, { method: 'HEAD' });
-    if (svgRes.ok) return svgUrl;
+    if (svgRes.ok && isImageContentType(svgRes)) return svgUrl;
   } catch {
     // continue to PNG
   }
@@ -52,12 +53,21 @@ export async function resolveArchitectureImageUrl(
   const pngUrl = `${baseUrl}/templates/${name}/architecture.png`;
   try {
     const pngRes = await fetch(pngUrl, { method: 'HEAD' });
-    if (pngRes.ok) return pngUrl;
+    if (pngRes.ok && isImageContentType(pngRes)) return pngUrl;
   } catch {
     // no image available
   }
 
   return null;
+}
+
+/**
+ * Check if the response has an image content-type header.
+ * Returns true if no content-type is present (optimistic) or if it starts with "image/".
+ */
+function isImageContentType(res: Response): boolean {
+  const ct = res.headers.get('content-type');
+  return !ct || ct.startsWith('image/');
 }
 
 /**
