@@ -25,8 +25,8 @@ resource "aws_lambda_function" "ai_caller" {
 
   environment {
     variables = {
-      MANTLE_BASE_URL        = var.mantle_base_url
-      MODEL_ID               = var.model_id
+      MANTLE_BASE_URL         = var.mantle_base_url
+      MODEL_ID                = var.model_id
       POWERTOOLS_SERVICE_NAME = "ai-caller"
       POWERTOOLS_LOG_LEVEL    = var.log_level
     }

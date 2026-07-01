@@ -53,8 +53,8 @@ module "websocket_api" {
   environment  = var.environment
   aws_region   = var.aws_region
 
-  nlb_arn        = module.nlb.nlb_arn
-  nlb_dns_name   = module.nlb.nlb_dns_name
+  nlb_arn             = module.nlb.nlb_arn
+  nlb_dns_name        = module.nlb.nlb_dns_name
   vpc_link_subnet_ids = module.vpc.private_subnet_ids
 }
 
