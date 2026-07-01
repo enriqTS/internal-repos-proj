@@ -134,3 +134,18 @@ variable "max_chunk_size" {
     error_message = "max_chunk_size must be between 1 and 50."
   }
 }
+
+################################################################################
+# Bedrock Knowledge Base — KB Sync Lambda
+################################################################################
+
+variable "knowledge_base_id" {
+  description = "Bedrock Knowledge Base ID for KB Sync Lambda"
+  type        = string
+}
+
+variable "data_source_id" {
+  description = "Bedrock Knowledge Base Data Source ID for KB Sync Lambda"
+  type        = string
+}
+

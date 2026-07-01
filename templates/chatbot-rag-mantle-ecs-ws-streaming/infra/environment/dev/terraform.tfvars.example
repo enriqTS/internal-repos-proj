@@ -71,3 +71,14 @@ deregistration_delay = 30
 # Maximum tokens per WebSocket frame (1-50).
 # Higher values reduce WebSocket frame overhead but increase perceived latency.
 max_chunk_size = 1
+
+################################################################################
+# Bedrock Knowledge Base — KB Sync Lambda
+################################################################################
+
+# Bedrock Knowledge Base ID (created via console or separate IaC)
+knowledge_base_id = "YOUR_KNOWLEDGE_BASE_ID"
+
+# Bedrock Knowledge Base Data Source ID
+data_source_id = "YOUR_DATA_SOURCE_ID"
+

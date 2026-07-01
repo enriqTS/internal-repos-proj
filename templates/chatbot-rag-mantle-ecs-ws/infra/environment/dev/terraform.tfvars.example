@@ -63,3 +63,14 @@ unhealthy_threshold = 3
 
 # Target group deregistration delay in seconds
 deregistration_delay = 30
+
+################################################################################
+# Bedrock Knowledge Base — KB Sync Lambda
+################################################################################
+
+# Bedrock Knowledge Base ID (created via console or separate IaC)
+knowledge_base_id = "YOUR_KNOWLEDGE_BASE_ID"
+
+# Bedrock Knowledge Base Data Source ID
+data_source_id = "YOUR_DATA_SOURCE_ID"
+

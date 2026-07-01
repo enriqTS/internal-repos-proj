@@ -68,3 +68,18 @@ variable "connection_ttl_seconds" {
   type        = number
   default     = 86400
 }
+
+################################################################################
+# Bedrock Knowledge Base — KB Sync Lambda
+################################################################################
+
+variable "knowledge_base_id" {
+  description = "Bedrock Knowledge Base ID for KB Sync Lambda"
+  type        = string
+}
+
+variable "data_source_id" {
+  description = "Bedrock Knowledge Base Data Source ID for KB Sync Lambda"
+  type        = string
+}
+

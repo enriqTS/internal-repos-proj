@@ -71,3 +71,14 @@ deregistration_delay = 30
 # Higher values batch more tokens per frame, reducing frame overhead
 # at the cost of slightly less progressive display on the client.
 max_chunk_size = 1
+
+################################################################################
+# Bedrock Knowledge Base — KB Sync Lambda
+################################################################################
+
+# Bedrock Knowledge Base ID (created via console or separate IaC)
+knowledge_base_id = "YOUR_KNOWLEDGE_BASE_ID"
+
+# Bedrock Knowledge Base Data Source ID
+data_source_id = "YOUR_DATA_SOURCE_ID"
+

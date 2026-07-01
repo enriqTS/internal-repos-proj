@@ -36,3 +36,14 @@ connection_ttl_seconds = 86400
 # NOTE: The combined prefix (project_name + environment) plus function suffix
 # must not exceed 63 characters to respect AWS naming limits.
 # Example: "my-chatbot" + "dev" + "orchestrator" = "my-chatbot-dev-orchestrator" (28 chars)
+
+################################################################################
+# Bedrock Knowledge Base — KB Sync Lambda
+################################################################################
+
+# Bedrock Knowledge Base ID (created via console or separate IaC)
+knowledge_base_id = "YOUR_KNOWLEDGE_BASE_ID"
+
+# Bedrock Knowledge Base Data Source ID
+data_source_id = "YOUR_DATA_SOURCE_ID"
+

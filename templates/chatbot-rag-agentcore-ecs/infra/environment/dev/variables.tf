@@ -119,3 +119,18 @@ variable "deregistration_delay" {
   type        = number
   default     = 30
 }
+
+################################################################################
+# Bedrock Knowledge Base — KB Sync Lambda
+################################################################################
+
+variable "knowledge_base_id" {
+  description = "Bedrock Knowledge Base ID for KB Sync Lambda"
+  type        = string
+}
+
+variable "data_source_id" {
+  description = "Bedrock Knowledge Base Data Source ID for KB Sync Lambda"
+  type        = string
+}
+

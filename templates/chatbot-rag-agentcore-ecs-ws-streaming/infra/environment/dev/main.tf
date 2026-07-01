@@ -131,7 +131,29 @@ module "dynamodb" {
 ################################################################################
 
 module "s3" {
-  source       = "../../modules/s3"
+  source                       = "../../modules/s3"
+  project_name                 = var.project_name
+  environment                  = var.environment
+  kb_sync_lambda_arn           = module.kb_sync.function_arn
+  kb_sync_lambda_function_name = module.kb_sync.function_name
+}
+
+################################################################################
+# KB Sync Lambda (S3 event → Bedrock Knowledge Base ingestion)
+################################################################################
+
+module "shared_layer" {
+  source       = "../../modules/lambda/shared_layer"
   project_name = var.project_name
   environment  = var.environment
+}
+
+module "kb_sync" {
+  source            = "../../modules/lambda/kb_sync"
+  project_name      = var.project_name
+  environment       = var.environment
+  shared_layer_arn  = module.shared_layer.layer_arn
+  knowledge_base_id = var.knowledge_base_id
+  data_source_id    = var.data_source_id
+  log_level         = var.log_level
 }
