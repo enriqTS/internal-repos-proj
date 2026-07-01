@@ -1,0 +1,43 @@
+[project]
+name = "chatbot-rag-mantle-ecs-ws"
+version = "0.1.0"
+description = "Chatbot RAG with Bedrock Mantle API, ECS Fargate compute, WebSocket transport"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "boto3>=1.34",
+    "openai>=1.50",
+    "aws-lambda-powertools>=2.40",
+    "pydantic>=2.7",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "hypothesis>=6.100",
+    "moto>=5.0",
+    "boto3-stubs[dynamodb,s3]>=1.34",
+    "httpx>=0.27",
+    "pytest-asyncio>=0.23",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "ANN", "B", "A", "COM", "C4", "PT", "RET", "SIM"]
+ignore = ["ANN101", "ANN102", "ANN401"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
