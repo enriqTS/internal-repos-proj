@@ -40,19 +40,19 @@ export async function resolveArchitectureImageUrl(
     }
   }
 
-  // Fallback: try PNG first, then SVG
-  const pngUrl = `${baseUrl}/templates/${name}/architecture.png`;
-  try {
-    const pngRes = await fetch(pngUrl, { method: 'HEAD' });
-    if (pngRes.ok) return pngUrl;
-  } catch {
-    // continue to SVG
-  }
-
+  // Fallback: try SVG first, then PNG
   const svgUrl = `${baseUrl}/templates/${name}/architecture.svg`;
   try {
     const svgRes = await fetch(svgUrl, { method: 'HEAD' });
     if (svgRes.ok) return svgUrl;
+  } catch {
+    // continue to PNG
+  }
+
+  const pngUrl = `${baseUrl}/templates/${name}/architecture.png`;
+  try {
+    const pngRes = await fetch(pngUrl, { method: 'HEAD' });
+    if (pngRes.ok) return pngUrl;
   } catch {
     // no image available
   }

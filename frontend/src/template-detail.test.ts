@@ -170,10 +170,10 @@ describe('renderTemplateDetail', () => {
       });
 
       // Promise.all starts resolveArchitectureImageUrl and fetchTemplateReadme concurrently.
-      // resolveArchitectureImageUrl calls fetch first (PNG HEAD), then fetchTemplateReadme calls fetch.
-      // After PNG HEAD resolves with ok:false, resolveArchitectureImageUrl tries SVG HEAD.
+      // resolveArchitectureImageUrl calls fetch first (SVG HEAD), then fetchTemplateReadme calls fetch.
+      // After SVG HEAD resolves with ok:false, resolveArchitectureImageUrl tries PNG HEAD.
 
-      // PNG HEAD fails (call #2 - from resolveArchitectureImageUrl)
+      // SVG HEAD fails (call #2 - from resolveArchitectureImageUrl)
       mockFetch.mockResolvedValueOnce({ ok: false });
 
       // readme succeeds (call #3 - from fetchTemplateReadme)
@@ -182,7 +182,7 @@ describe('renderTemplateDetail', () => {
         text: () => Promise.resolve('# Docs'),
       });
 
-      // SVG HEAD fails (call #4 - from resolveArchitectureImageUrl after PNG fails)
+      // PNG HEAD fails (call #4 - from resolveArchitectureImageUrl after SVG fails)
       mockFetch.mockResolvedValueOnce({ ok: false });
 
       const container = createContainer();
@@ -300,7 +300,7 @@ describe('renderTemplateDetail', () => {
   });
 
   describe('invalid architectureImage value triggers fallback strategy', () => {
-    it('tries PNG then SVG when architectureImage is an invalid value', async () => {
+    it('tries SVG then PNG when architectureImage is an invalid value', async () => {
       const metadataInvalidImage = {
         ...validMetadata,
         architectureImage: 'other.jpg' as any,
@@ -312,7 +312,7 @@ describe('renderTemplateDetail', () => {
         json: () => Promise.resolve(metadataInvalidImage),
       });
 
-      // PNG HEAD succeeds (fallback path)
+      // SVG HEAD succeeds (fallback path)
       mockFetch.mockResolvedValueOnce({ ok: true });
 
       // readme succeeds
@@ -324,12 +324,12 @@ describe('renderTemplateDetail', () => {
       const container = createContainer();
       await renderTemplateDetail({ name: 'basic-lambda' }, container);
 
-      // Architecture section rendered (PNG fallback succeeded)
+      // Architecture section rendered (SVG fallback succeeded)
       expect(container.querySelector('.template-architecture')).not.toBeNull();
 
-      // The HEAD call should be for architecture.png (fallback), not "other.jpg"
+      // The HEAD call should be for architecture.svg (fallback), not "other.jpg"
       const headCall = mockFetch.mock.calls[1];
-      expect(headCall[0]).toBe('https://cdn.example.com/templates/basic-lambda/architecture.png');
+      expect(headCall[0]).toBe('https://cdn.example.com/templates/basic-lambda/architecture.svg');
       expect(headCall[1]).toEqual({ method: 'HEAD' });
     });
   });
