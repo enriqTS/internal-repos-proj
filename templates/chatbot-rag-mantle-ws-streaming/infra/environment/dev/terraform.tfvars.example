@@ -1,0 +1,42 @@
+# Project name — lowercase alphanumeric and hyphens, max 20 chars.
+# Combined with environment to form resource name prefix: <project_name>-<environment>-<function>
+# Example result: my-chatbot-dev-orchestrator
+project_name = "my-chatbot"
+
+# Deployment environment (allowed: dev, staging, prod)
+environment = "dev"
+
+# Client name for cost allocation and tagging
+client = "acme-corp"
+
+# AWS region for deployment
+aws_region = "us-east-1"
+
+# AWS account ID for ARN construction
+aws_account_id = "123456789012"
+
+# Bedrock model identifier — Replace with an available Bedrock model
+model_id = "us.anthropic.claude-sonnet-4-20250514"
+
+# Bedrock Mantle API base URL (OpenAI-compatible endpoint)
+mantle_base_url = "https://bedrock-mantle.us-east-1.api.aws/v1"
+
+# Maximum messages to retain in conversation context
+max_conversation_history = 50
+
+# Maximum tool-use loop iterations before returning an error
+max_tool_iterations = 10
+
+# Powertools log level (DEBUG, INFO, WARNING, ERROR)
+log_level = "INFO"
+
+# TTL in seconds for WebSocket connection entries (default: 86400 = 24h)
+connection_ttl_seconds = 86400
+
+# Maximum tokens per WebSocket frame (1-50). Set higher to batch tokens
+# and reduce WebSocket frame overhead at the cost of perceived latency.
+max_chunk_size = 1
+
+# NOTE: The combined prefix (project_name + environment) plus function suffix
+# must not exceed 63 characters to respect AWS naming limits.
+# Example: "my-chatbot" + "dev" + "orchestrator" = "my-chatbot-dev-orchestrator" (28 chars)
