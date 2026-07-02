@@ -37,21 +37,20 @@ bedrock_agent_runtime = boto3.client("bedrock-agent-runtime")
 
 def invoke_agentcore(
     session_id: str,
-    messages: list[dict[str, Any]],
+    message: str,
     *,
-    tools: list[dict[str, Any]] | None = None,
     correlation_id: str = "",
     stream: bool = False,
 ) -> dict[str, Any]:
     """Invoke AgentCore Runtime and return the complete response.
 
-    Uses the session_id to create or resume AgentCore sessions. Extracts
-    token usage and finish reason from trace events.
+    Uses the session_id to create or resume AgentCore sessions. AgentCore
+    manages full conversation history internally via the sessionId.
+    Extracts token usage and finish reason from trace events.
 
     Args:
         session_id: User/session identifier for AgentCore session management.
-        messages: Conversation message history.
-        tools: Optional tool definitions (AgentCore handles tools internally).
+        message: Current user message text (NOT full history).
         correlation_id: Request correlation identifier for logging.
         stream: If True, consumes the stream internally and returns assembled text.
             For progressive streaming, use `invoke_agentcore_streaming` instead.
@@ -69,8 +68,7 @@ def invoke_agentcore(
 
         for chunk_data in invoke_agentcore_streaming(
             session_id=session_id,
-            messages=messages,
-            tools=tools,
+            message=message,
             correlation_id=correlation_id,
             _return_metadata=result_metadata,
         ):
@@ -84,7 +82,6 @@ def invoke_agentcore(
         }
 
     start_time = time.time()
-    input_text = _extract_latest_user_message(messages)
 
     session_state: dict[str, Any] = {
         "systemPrompt": SYSTEM_PROMPT,
@@ -94,7 +91,7 @@ def invoke_agentcore(
         "agentId": AGENT_ID,
         "agentAliasId": AGENT_ALIAS_ID,
         "sessionId": session_id,
-        "inputText": input_text,
+        "inputText": message,
         "sessionState": session_state,
     }
 
@@ -103,7 +100,6 @@ def invoke_agentcore(
         extra={
             "correlationId": correlation_id,
             "sessionId": session_id,
-            "messageCount": len(messages),
         },
     )
 
@@ -150,9 +146,8 @@ def invoke_agentcore(
 
 def invoke_agentcore_streaming(
     session_id: str,
-    messages: list[dict[str, Any]],
+    message: str,
     *,
-    tools: list[dict[str, Any]] | None = None,
     correlation_id: str = "",
     _return_metadata: dict[str, Any] | None = None,
 ) -> Generator[str, None, None]:
@@ -160,12 +155,12 @@ def invoke_agentcore_streaming(
 
     Yields each text chunk from the AgentCore completion stream as it becomes
     available. After the stream completes, logs the AI interaction with total
-    token usage.
+    token usage. AgentCore manages full conversation history internally via
+    the sessionId.
 
     Args:
         session_id: User/session identifier for AgentCore session management.
-        messages: Conversation message history.
-        tools: Optional tool definitions (AgentCore handles tools internally).
+        message: Current user message text (NOT full history).
         correlation_id: Request correlation identifier for logging.
         _return_metadata: Internal dict to pass metadata back to caller (usage, finishReason).
 
@@ -176,7 +171,6 @@ def invoke_agentcore_streaming(
         RuntimeError: If AgentCore Runtime returns an API error.
     """
     start_time = time.time()
-    input_text = _extract_latest_user_message(messages)
 
     session_state: dict[str, Any] = {
         "systemPrompt": SYSTEM_PROMPT,
@@ -186,7 +180,7 @@ def invoke_agentcore_streaming(
         "agentId": AGENT_ID,
         "agentAliasId": AGENT_ALIAS_ID,
         "sessionId": session_id,
-        "inputText": input_text,
+        "inputText": message,
         "sessionState": session_state,
     }
 
@@ -195,7 +189,6 @@ def invoke_agentcore_streaming(
         extra={
             "correlationId": correlation_id,
             "sessionId": session_id,
-            "messageCount": len(messages),
         },
     )
 
@@ -274,21 +267,6 @@ def invoke_agentcore_streaming(
             "totalTokens": total_tokens,
         }
         _return_metadata["finishReason"] = finish_reason
-
-
-def _extract_latest_user_message(messages: list[dict[str, Any]]) -> str:
-    """Extract the most recent user message text from the conversation history.
-
-    Args:
-        messages: Conversation message list with role/content entries.
-
-    Returns:
-        Text content of the latest user message, or empty string if none found.
-    """
-    for msg in reversed(messages):
-        if msg.get("role") == "user":
-            return msg.get("content", "")
-    return ""
 
 
 def _process_completion_stream(response: Any) -> tuple[str, dict[str, Any], str | None]:
