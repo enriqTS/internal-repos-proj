@@ -45,23 +45,6 @@ def _get_table() -> Any:
     return _table
 
 
-def get_conversation_history(
-    user_id: str,
-    *,
-    correlation_id: str = "",
-) -> list[dict[str, Any]]:
-    """Deprecated — use append_messages() for compliance writes instead.
-
-    This function is retained temporarily for backward compatibility with
-    orchestrator handlers that still call it directly. It will be removed
-    once orchestrators are refactored (tasks 5.2/5.3) to rely on AgentCore
-    native session management. New code should NOT call this function.
-
-    Delegates to _get_conversation_history (internal).
-    """
-    return _get_conversation_history(user_id, correlation_id=correlation_id)
-
-
 def _get_conversation_history(
     user_id: str,
     *,
