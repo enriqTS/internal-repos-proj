@@ -34,38 +34,6 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 12
         height = 6
         properties = {
-          title = "AI Model Latency"
-          metrics = [
-            ["ChatbotRAG", "AIModelLatency", "service", "ai-caller", { stat = "p50", label = "p50" }],
-            ["ChatbotRAG", "AIModelLatency", "service", "ai-caller", { stat = "p99", label = "p99" }]
-          ]
-          period = 300
-          region = var.aws_region
-        }
-      },
-      {
-        type   = "metric"
-        x      = 0
-        y      = 6
-        width  = 12
-        height = 6
-        properties = {
-          title = "Tool Execution Latency"
-          metrics = [
-            ["ChatbotRAG", "ToolExecutionLatency", "service", "tool-executor", { stat = "p50", label = "p50" }],
-            ["ChatbotRAG", "ToolExecutionLatency", "service", "tool-executor", { stat = "p99", label = "p99" }]
-          ]
-          period = 300
-          region = var.aws_region
-        }
-      },
-      {
-        type   = "metric"
-        x      = 12
-        y      = 6
-        width  = 12
-        height = 6
-        properties = {
           title = "DLQ Depth"
           metrics = [
             ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", var.dlq_name]
@@ -77,7 +45,7 @@ resource "aws_cloudwatch_dashboard" "main" {
       {
         type   = "metric"
         x      = 0
-        y      = 12
+        y      = 6
         width  = 12
         height = 6
         properties = {
@@ -95,7 +63,7 @@ resource "aws_cloudwatch_dashboard" "main" {
       {
         type   = "metric"
         x      = 12
-        y      = 12
+        y      = 6
         width  = 12
         height = 6
         properties = {
