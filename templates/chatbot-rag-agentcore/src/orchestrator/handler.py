@@ -199,15 +199,26 @@ def _process_message(user_id: str, message: str, correlation_id: str, timestamp:
     response_text = ai_response.get("response", ai_response.get("content", ""))
 
     # Step 2: Save conversation exchange for compliance (non-blocking on failure)
-    updated_messages = append_messages(
-        user_id,
-        message,
-        response_text,
-        correlation_id=correlation_id,
-    )
-
-    # Emit conversation length metric
-    metrics.add_metric(name="ConversationLength", unit=MetricUnit.Count, value=len(updated_messages))
+    try:
+        updated_messages = append_messages(
+            user_id,
+            message,
+            response_text,
+            correlation_id=correlation_id,
+        )
+        # Emit conversation length metric
+        metrics.add_metric(name="ConversationLength", unit=MetricUnit.Count, value=len(updated_messages))
+    except Exception as e:
+        logger.error(
+            "Failed to save conversation exchange",
+            extra={
+                "correlationId": correlation_id,
+                "userId": user_id,
+                "errorType": type(e).__name__,
+                "errorMessage": str(e),
+            },
+        )
+        # Non-blocking — AI response is still returned to user
 
     # Step 3: Return final response text
     return response_text
