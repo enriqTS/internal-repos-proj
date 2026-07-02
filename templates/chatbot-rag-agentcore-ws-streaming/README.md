@@ -5,21 +5,23 @@
 Production-ready chatbot template using **Bedrock AgentCore Runtime** for AI orchestration, **AWS Lambda** for compute, **WebSocket** transport for bidirectional communication, and **streaming** AI responses delivered token-by-token to the client.
 
 Key characteristics:
-- **AI Service**: Bedrock AgentCore Runtime (built-in tool-use orchestration)
+- **AI Service**: Bedrock AgentCore Runtime (built-in tool-use orchestration, native session management via `sessionId`)
 - **Compute**: AWS Lambda (serverless, pay-per-use)
-- **Transport**: API Gateway WebSocket API (persistent connections)
+- **Transport**: API Gateway WebSocket API (persistent connections, direct Lambda integration — no SQS)
 - **Response Mode**: Streaming (tokens delivered progressively as generated)
+- **Context Management**: AgentCore Runtime manages conversation context via `sessionId`; DynamoDB writes retained for compliance/audit
 
 ## Architecture
 
-The architecture follows a serverless event-driven pattern:
+The architecture follows a serverless event-driven pattern with direct API Gateway → Lambda integration (no SQS intermediary):
 
 1. Client connects via WebSocket → Connection Manager stores connection
-2. Client sends message → API Gateway routes to SQS FIFO queue
-3. SQS triggers Orchestrator Lambda
-4. Orchestrator invokes AgentCore Runtime in streaming mode
-5. Each token chunk is forwarded to client via `@connections` POST
-6. After stream completes, `done` message sent and full response saved to history
+2. Client sends message → API Gateway routes directly to Orchestrator Lambda
+3. Orchestrator invokes AgentCore Runtime in streaming mode (passing only the current message + `sessionId`)
+4. Each token chunk is forwarded to client via `@connections` POST
+5. After stream completes, `done` message sent and conversation exchange saved to DynamoDB for compliance/audit
+
+AgentCore Runtime manages conversation context natively via `sessionId` — the Orchestrator does not read history from DynamoDB before invoking the AI.
 
 See `docs/arquitetura/chatbot-agentcore-ws-streaming.drawio` for the full diagram.
 
@@ -61,7 +63,7 @@ See `docs/arquitetura/chatbot-agentcore-ws-streaming.drawio` for the full diagra
 │   └── tool_executor/handler.py        # Tool execution
 └── infra/
     ├── environment/{dev,staging,prod}/
-    └── modules/{websocket_api,sqs,lambda,dynamodb,s3,agentcore}/
+    └── modules/{websocket_api,lambda,dynamodb,s3,agentcore}/
 ```
 
 ## Configuration
@@ -102,6 +104,8 @@ All components produce structured JSON logs via `aws-lambda-powertools`:
 - `correlation_id` propagated across all components
 - AI interaction logs with `logType: "ai-interaction"` including token usage and latency
 - Single AI interaction log entry emitted after stream completes (not per-chunk)
+
+> **Note:** Model latency and tool execution latency metrics are no longer emitted as custom metrics. AgentCore Runtime provides vended CloudWatch logs with built-in model invocation and tool execution latency data, eliminating the need for application-level instrumentation.
 
 ## WebSocket Protocol
 

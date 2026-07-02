@@ -8,15 +8,16 @@ The template provides a fully deployable project scaffold with Python Lambda app
 
 ## Architecture
 
-The application uses an asynchronous request-response architecture with client polling:
+The application uses an asynchronous request-response architecture with client polling. **AgentCore Runtime manages conversation context natively via `sessionId`** — the Orchestrator does not retrieve history from DynamoDB before invoking the AI. Conversation exchanges are still persisted to DynamoDB after each response for compliance and audit purposes.
 
 ```
 Client → API Gateway (REST) → SQS FIFO → Orchestrator Lambda → AI Caller Lambda → AgentCore Runtime
               ↕                                  ↕                                        ↕
-    GET /responses/{messageId}             DynamoDB (context)                    Tool Executor Lambda → Bedrock KB
-              ↕                            DynamoDB (responses)
-    Responses Reader Lambda                      ↕
-                                          Retry (exponential backoff)
+    GET /responses/{messageId}             DynamoDB (context,                   Tool Executor Lambda → Bedrock KB
+              ↕                             write-only for audit)
+    Responses Reader Lambda            DynamoDB (responses)
+                                             ↕
+                                       Retry (exponential backoff)
 
 S3 RAG Bucket → (S3 Events) → KB Sync Lambda → Bedrock Knowledge Base (Titan Embed)
 
@@ -29,10 +30,10 @@ CloudWatch Dashboard + Alarms ← X-Ray + Powertools Metrics ← All Lambdas
 |-----------|---------|
 | **API Gateway (REST)** | Entry point — accepts POST /chat requests from clients |
 | **SQS FIFO Queue** | Asynchronous message processing with ordering guarantees |
-| **Orchestrator Lambda** | Manages conversation flow and context storage |
-| **AI Caller Lambda** | Invokes Bedrock AgentCore Runtime with session management |
+| **Orchestrator Lambda** | Manages conversation flow; saves exchanges to DynamoDB for audit (no pre-invocation history read) |
+| **AI Caller Lambda** | Invokes Bedrock AgentCore Runtime with the current user message and `sessionId` |
 | **Tool Executor Lambda** | Executes tool calls (RAG document retrieval via Bedrock KB) |
-| **DynamoDB (Context)** | Stores per-user conversation history and context |
+| **DynamoDB (Context)** | Stores per-user conversation history for compliance/audit (write-only — AgentCore manages live context) |
 | **DynamoDB (Responses)** | Stores async processing results for client polling (7-day TTL) |
 | **S3 RAG Bucket** | Stores knowledge base documents for retrieval |
 | **Responses Reader Lambda** | GET /responses/{messageId} — returns processing status and AI response |
@@ -44,8 +45,8 @@ CloudWatch Dashboard + Alarms ← X-Ray + Powertools Metrics ← All Lambdas
 
 In this template, the **AgentCore Runtime manages tool calling internally**:
 
-1. Orchestrator invokes AI Caller with conversation messages
-2. AI Caller sends the request to AgentCore Runtime
+1. Orchestrator invokes AI Caller with the current user message and `sessionId`
+2. AI Caller sends the request to AgentCore Runtime (which maintains conversation context via `sessionId`)
 3. AgentCore Runtime decides when to call tools and invokes Tool Executor directly as an action group
 4. Tool Executor returns results to the AgentCore Runtime
 5. AgentCore Runtime produces the final response and returns it to the AI Caller
@@ -337,13 +338,13 @@ X-Ray active tracing is enabled across all Lambdas and API Gateway, providing en
 Business metrics emitted via Powertools Metrics (EMF):
 
 - `MessageProcessingLatency` — total time from SQS receive to response write
-- `AIModelLatency` — time spent waiting for AgentCore Runtime responses
-- `ToolExecutionLatency` — time spent in tool executor calls
 - `ConversationLength` — number of messages in the conversation context
+
+> **Note:** Model latency and tool execution latency metrics are no longer emitted as custom metrics. AgentCore Runtime provides vended CloudWatch logs with built-in model invocation and tool execution latency data, eliminating the need for application-level instrumentation.
 
 ### CloudWatch Dashboard
 
-A pre-configured dashboard (`{prefix}-dashboard`) provides widgets for all custom metrics, Lambda invocations/errors/duration, SQS queue depth, and DLQ depth.
+A pre-configured dashboard (`{prefix}-dashboard`) provides widgets for business metrics, Lambda invocations/errors/duration, SQS queue depth, and DLQ depth.
 
 ### Alarms
 
@@ -402,10 +403,10 @@ Response caching is enabled on **GET /responses/{messageId}** to reduce Lambda i
 ### Modifying Orchestration
 
 The Orchestrator Lambda (`src/orchestrator/handler.py`) controls:
-- Conversation history retrieval and storage
+- Saving conversation exchanges to DynamoDB (for compliance/audit)
 - Error handling and retry logic
 
-Note: Tool-use orchestration is managed by AgentCore Runtime, not the Orchestrator Lambda.
+Note: Conversation context during AI invocations is managed by AgentCore Runtime via `sessionId` — the Orchestrator does not read history before calling the AI. Tool-use orchestration is also managed by AgentCore Runtime, not the Orchestrator Lambda.
 
 ### Extending the API
 

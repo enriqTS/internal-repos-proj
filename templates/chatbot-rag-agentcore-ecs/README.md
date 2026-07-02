@@ -4,7 +4,7 @@ Chatbot RAG template using **Bedrock AgentCore Runtime** on **ECS Fargate** with
 
 ## Overview
 
-This template provides a production-ready chatbot with Retrieval-Augmented Generation (RAG) running on ECS Fargate. It uses the Bedrock AgentCore Runtime for AI orchestration, which handles tool-use loops and session management internally.
+This template provides a production-ready chatbot with Retrieval-Augmented Generation (RAG) running on ECS Fargate. It uses the Bedrock AgentCore Runtime for AI orchestration, which handles tool-use loops and session management internally. **AgentCore Runtime manages conversation context natively via `sessionId`** — the Orchestrator does not retrieve history from DynamoDB before invoking the AI. Conversation exchanges are still persisted to DynamoDB after each response for compliance and audit purposes.
 
 Key characteristics:
 - **AI Service:** Bedrock AgentCore Runtime
@@ -12,18 +12,20 @@ Key characteristics:
 - **Transport:** REST (POST /chat)
 - **Streaming:** Non-streaming (complete response)
 - **Tool-use:** Delegated to AgentCore Runtime (handles tool calling internally)
+- **Context Management:** AgentCore Runtime manages conversation context via `sessionId`; DynamoDB writes retained for compliance/audit
 
 ## Architecture
 
 ```
 Client → ALB → ECS Fargate (FastAPI) → Bedrock AgentCore Runtime
                     ↓                           ↓
-              DynamoDB (context)         Tool Executor → S3 (RAG)
+              DynamoDB (context,         Tool Executor → S3 (RAG)
+               write-only for audit)
 ```
 
 The application runs as a single container with in-process modules:
-- **Orchestrator** — manages conversation flow, delegates to AI caller
-- **AI Caller** — invokes Bedrock AgentCore Runtime (single-call pattern)
+- **Orchestrator** — manages conversation flow, delegates to AI caller (passes only current message + `sessionId`)
+- **AI Caller** — invokes Bedrock AgentCore Runtime (single-call pattern with `sessionId` for context)
 - **Tool Executor** — executes tools (RAG knowledge base search)
 
 ## Prerequisites
@@ -108,6 +110,8 @@ Structured JSON logs via `aws-lambda-powertools` Logger (works in ECS):
 - All logs include `correlation_id` for request tracing
 - AI interactions logged with `logType: "ai-interaction"` including token usage and latency
 - CloudWatch Logs group: `{project}-{env}-chatbot-logs` (30-day retention)
+
+> **Note:** Model latency and tool execution latency metrics are no longer emitted as custom metrics. AgentCore Runtime provides vended CloudWatch logs with built-in model invocation and tool execution latency data, eliminating the need for application-level instrumentation.
 
 ## Container Operations
 

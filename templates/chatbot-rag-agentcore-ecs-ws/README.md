@@ -9,6 +9,7 @@ A chatbot RAG template using Bedrock AgentCore Runtime for AI inference, ECS Far
 - **Compute:** ECS Fargate (persistent container)
 - **Transport:** WebSocket (API Gateway v2 → VPC Link → NLB → ECS)
 - **Streaming:** No (complete response delivered as single message)
+- **Context Management:** AgentCore Runtime manages conversation context via `sessionId`; DynamoDB writes retained for compliance/audit
 
 ## Architecture
 
@@ -23,7 +24,7 @@ Client → API Gateway WebSocket → VPC Link → NLB → ECS Fargate (FastAPI)
 
 The ECS service handles WebSocket lifecycle events ($connect, $disconnect, sendMessage) forwarded from API Gateway as HTTP POST requests via a VPC Link + NLB integration. Responses are sent back to clients via the API Gateway Management API `@connections` endpoint.
 
-AgentCore Runtime handles tool-use orchestration internally — the application delegates tool calling to the runtime, which invokes the tool executor as needed and returns the final response.
+AgentCore Runtime handles tool-use orchestration internally and **manages conversation context natively via `sessionId`** — the application delegates tool calling and context management to the runtime, which invokes the tool executor as needed and returns the final response. Conversation exchanges are still persisted to DynamoDB after each response for compliance and audit purposes.
 
 ## Prerequisites
 
@@ -176,6 +177,8 @@ Structured JSON logging via aws-lambda-powertools Logger. All log entries includ
 - AI interactions: `logType: "ai-interaction"`, `model`, `inputTokens`, `outputTokens`, `latencyMs`
 
 Logs are sent to CloudWatch Logs group: `{project}-{env}-chatbot-logs` (30-day retention).
+
+> **Note:** Model latency and tool execution latency metrics are no longer emitted as custom metrics. AgentCore Runtime provides vended CloudWatch logs with built-in model invocation and tool execution latency data, eliminating the need for application-level instrumentation.
 
 ## Container Operations
 

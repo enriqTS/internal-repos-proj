@@ -4,7 +4,7 @@
 
 This template deploys a serverless chatbot application with Retrieval-Augmented Generation (RAG) capabilities using **AWS Bedrock AgentCore Runtime** and **WebSocket transport**. Unlike the REST variant that uses client polling, this template uses an API Gateway WebSocket API for bidirectional real-time communication — the server pushes the AI response directly to the client as soon as processing completes.
 
-The AgentCore Runtime manages the tool-use loop internally (invoking the Tool Executor Lambda as an action group), while the WebSocket transport eliminates the need for client-side polling. A Connection Table in DynamoDB tracks active WebSocket connections with automatic TTL-based cleanup.
+The AgentCore Runtime manages the tool-use loop internally (invoking the Tool Executor Lambda as an action group) and **manages conversation context natively via `sessionId`** — the Orchestrator does not retrieve history from DynamoDB before invoking the AI. Conversation exchanges are still persisted to DynamoDB after each response for compliance and audit purposes. The WebSocket transport eliminates the need for client-side polling, and direct API Gateway → Lambda integration removes the SQS intermediary. A Connection Table in DynamoDB tracks active WebSocket connections with automatic TTL-based cleanup.
 
 The template provides a fully deployable project scaffold with Python Lambda application code and Terraform infrastructure-as-code. All resource names are configurable via Terraform variables, allowing multiple deployments without naming conflicts.
 
@@ -12,11 +12,12 @@ The template provides a fully deployable project scaffold with Python Lambda app
 
 ```
 Client ←→ API Gateway (WebSocket) → $connect/$disconnect → Connection Manager Lambda → DynamoDB (Connections)
-                                   → sendMessage → SQS FIFO → Orchestrator Lambda → AI Caller Lambda → AgentCore Runtime
-                                                                     ↕                                        ↕
-                                                               DynamoDB (context)                    Tool Executor Lambda → S3 RAG Bucket
-                                                                     ↕
-                                                              @connections POST → Client (response pushed via WebSocket)
+                                   → sendMessage → Orchestrator Lambda → AI Caller Lambda → AgentCore Runtime
+                                                          ↕                                        ↕
+                                                    DynamoDB (context,                   Tool Executor Lambda → S3 RAG Bucket
+                                                     write-only for audit)
+                                                          ↕
+                                                   @connections POST → Client (response pushed via WebSocket)
 ```
 
 ### Components
@@ -25,31 +26,30 @@ Client ←→ API Gateway (WebSocket) → $connect/$disconnect → Connection Ma
 |-----------|---------|
 | **API Gateway (WebSocket)** | Bidirectional communication — `$connect`, `$disconnect`, `sendMessage` routes |
 | **Connection Manager Lambda** | Handles WebSocket lifecycle — stores/removes connection IDs in DynamoDB |
-| **SQS FIFO Queue** | Asynchronous message processing with ordering guarantees |
-| **Orchestrator Lambda** | Manages conversation flow, invokes AI, pushes response via `@connections` |
-| **AI Caller Lambda** | Invokes Bedrock AgentCore Runtime with session management |
+| **Orchestrator Lambda** | Manages conversation flow, invokes AI, pushes response via `@connections` (directly invoked by API GW — no SQS) |
+| **AI Caller Lambda** | Invokes Bedrock AgentCore Runtime with the current user message and `sessionId` |
 | **Tool Executor Lambda** | Executes tool calls (RAG document retrieval) |
 | **DynamoDB (Connections)** | Tracks active WebSocket connections with TTL-based cleanup (24h) |
-| **DynamoDB (Context)** | Stores per-user conversation history |
+| **DynamoDB (Context)** | Stores per-user conversation history for compliance/audit (write-only — AgentCore manages live context) |
 | **S3 RAG Bucket** | Stores knowledge base documents for retrieval |
 
 ### Message Flow
 
 1. Client opens a WebSocket connection (`$connect`) — Connection Manager stores the connection ID
 2. Client sends a message via WebSocket (`sendMessage` action)
-3. API Gateway routes the message body to SQS FIFO
-4. SQS triggers the Orchestrator Lambda
-5. Orchestrator retrieves conversation context, invokes the AI Caller
-6. AgentCore Runtime processes the request (with internal tool-use loop)
-7. Orchestrator pushes the response back to the client via `@connections` POST
+3. API Gateway routes the message directly to the Orchestrator Lambda (direct integration — no SQS queue)
+4. Orchestrator invokes the AI Caller with the current user message and `sessionId`
+5. AgentCore Runtime processes the request (with internal tool-use loop, managing context via `sessionId`)
+6. Orchestrator pushes the response back to the client via `@connections` POST
+7. Orchestrator saves the conversation exchange to DynamoDB for compliance/audit
 8. Client receives the response as a WebSocket frame — no polling needed
 
 ### Tool Calling (AgentCore)
 
 The **AgentCore Runtime manages tool calling internally**:
 
-1. Orchestrator invokes AI Caller with conversation messages
-2. AI Caller sends the request to AgentCore Runtime
+1. Orchestrator invokes AI Caller with the current user message and `sessionId`
+2. AI Caller sends the request to AgentCore Runtime (which maintains conversation context via `sessionId`)
 3. AgentCore Runtime decides when to call tools and invokes Tool Executor directly
 4. Tool Executor returns results to the AgentCore Runtime
 5. AgentCore Runtime produces the final response
@@ -115,7 +115,6 @@ chatbot-rag-agentcore-ws/
     │   └── prod/
     └── modules/
         ├── websocket_api/              # API Gateway v2 WebSocket API
-        ├── sqs/                        # SQS FIFO queue
         ├── lambda/                     # All Lambda functions + shared layer
         ├── dynamodb/                   # User context + Connection table (with TTL)
         ├── s3/                         # RAG bucket
@@ -256,6 +255,8 @@ All Lambda functions use **aws-lambda-powertools** for structured JSON logging w
 }
 ```
 
+> **Note:** Model latency and tool execution latency metrics are no longer emitted as custom metrics. AgentCore Runtime provides vended CloudWatch logs with built-in model invocation and tool execution latency data, eliminating the need for application-level instrumentation.
+
 ### Correlation ID
 
 A correlation ID is propagated from the initial request through the Orchestrator to the AI Caller and Tool Executor, enabling end-to-end request tracing across all functions.
@@ -297,11 +298,11 @@ Configure via the `log_level` Terraform variable (`DEBUG`, `INFO`, `WARNING`, `E
 ### Modifying Orchestration
 
 The Orchestrator Lambda (`src/orchestrator/handler.py`) controls:
-- Conversation history retrieval and storage
+- Saving conversation exchanges to DynamoDB (for compliance/audit)
 - Response delivery via WebSocket `@connections`
 - Error handling and retry logic
 
-Tool-use orchestration is managed by AgentCore Runtime, not the Orchestrator Lambda.
+Conversation context during AI invocations is managed by AgentCore Runtime via `sessionId` — the Orchestrator does not read history before calling the AI. Tool-use orchestration is also managed by AgentCore Runtime, not the Orchestrator Lambda.
 
 ### Development Commands
 
