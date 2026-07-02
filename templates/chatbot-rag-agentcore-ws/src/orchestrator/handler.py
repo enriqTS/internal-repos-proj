@@ -1,8 +1,8 @@
-"""Lambda handler for the Orchestrator — SQS-triggered message processing.
+"""Lambda handler for the Orchestrator — WebSocket API Gateway direct integration.
 
-Receives user messages from the SQS FIFO queue, retrieves conversation history,
+Receives user messages directly from the WebSocket API Gateway sendMessage route,
 invokes the AI Caller (AgentCore), and sends the complete response back to the
-client via the WebSocket Message Sender.
+client via the WebSocket connection.
 
 Non-streaming: waits for complete AI response, sends as single "message" type.
 
@@ -26,8 +26,7 @@ from aws_lambda_powertools import Logger
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
 from shared.ai_caller_agentcore import invoke_agentcore
-from shared.connection_manager import get_connection_for_user
-from shared.conversation_context import append_messages, get_conversation_history
+from shared.conversation_context import append_messages
 from shared.message_protocol import build_error_message, build_message_response
 from shared.message_sender import send_to_connection
 
@@ -36,55 +35,32 @@ logger = Logger(service="orchestrator")
 
 @logger.inject_lambda_context
 def handler(event: dict[str, Any], context: LambdaContext) -> dict[str, Any]:
-    """Process SQS messages containing user chat requests.
+    """WebSocket sendMessage route handler (direct integration).
 
-    Each SQS record contains a JSON body with userId and message fields.
-    For each record:
-    1. Parse and validate the message
-    2. Retrieve conversation history
-    3. Invoke AgentCore AI caller (non-streaming)
-    4. Send the complete response to the client via WebSocket
-    5. Save the conversation exchange to history
+    Event structure from WebSocket API Gateway:
+    {
+        "requestContext": {"connectionId": "abc123", "routeKey": "sendMessage", "requestId": "..."},
+        "body": "{\"message\": \"Hello\", \"userId\": \"user-123\"}"
+    }
+
+    Flow:
+    1. Parse userId, message, and connectionId from the WebSocket event
+    2. Invoke AgentCore AI caller (non-streaming) with the current message only
+    3. Send the complete response to the client via WebSocket
+    4. Save the conversation exchange to history for compliance
 
     Args:
-        event: SQS event with Records list.
+        event: WebSocket API Gateway event with requestContext and body.
         context: Lambda execution context.
 
     Returns:
-        Dict with batchItemFailures for partial batch failure handling.
+        Dict with statusCode 200 for API Gateway integration response.
     """
-    batch_item_failures: list[dict[str, str]] = []
-
-    for record in event.get("Records", []):
-        message_id = record.get("messageId", "")
-        try:
-            _process_record(record)
-        except Exception as e:
-            logger.error(
-                "Failed to process SQS record",
-                extra={
-                    "messageId": message_id,
-                    "error": str(e),
-                },
-            )
-            batch_item_failures.append({"itemIdentifier": message_id})
-
-    return {"batchItemFailures": batch_item_failures}
-
-
-def _process_record(record: dict[str, Any]) -> None:
-    """Process a single SQS record containing a user message.
-
-    Args:
-        record: SQS record with body containing JSON chat message.
-
-    Raises:
-        Exception: Propagated from AI caller or critical failures.
-    """
-    body = json.loads(record.get("body", "{}"))
+    body = json.loads(event.get("body", "{}"))
+    connection_id = event["requestContext"]["connectionId"]
     user_id = body.get("userId", "")
     message_text = body.get("message", "")
-    correlation_id = record.get("messageId", str(uuid.uuid4()))
+    correlation_id = event["requestContext"].get("requestId", str(uuid.uuid4()))
 
     logger.append_keys(correlation_id=correlation_id)
     logger.info(
@@ -94,30 +70,18 @@ def _process_record(record: dict[str, Any]) -> None:
 
     if not user_id or not message_text:
         logger.warning("Invalid message — missing userId or message")
-        return
-
-    # Look up the active WebSocket connection for this user
-    connection_id = get_connection_for_user(user_id)
-    if not connection_id:
-        logger.warning(
-            "No active WebSocket connection for user — cannot deliver response",
-            extra={"userId": user_id},
+        error_msg = build_error_message(
+            "Invalid request — missing userId or message", correlation_id
         )
-        return
-
-    # Retrieve conversation history (returns [] on failure — graceful degradation)
-    history = get_conversation_history(user_id, correlation_id=correlation_id)
-
-    # Build messages list for AI invocation
-    messages = [*history, {"role": "user", "content": message_text}]
+        send_to_connection(connection_id, error_msg)
+        return {"statusCode": 200}
 
     # Invoke AgentCore (non-streaming — waits for complete response)
     try:
         result = invoke_agentcore(
             session_id=user_id,
-            messages=messages,
+            message=message_text,
             correlation_id=correlation_id,
-            stream=False,
         )
         ai_response = result.get("response", "")
     except Exception as e:
@@ -133,7 +97,7 @@ def _process_record(record: dict[str, Any]) -> None:
             "Processing failed — please retry", correlation_id
         )
         send_to_connection(connection_id, error_msg)
-        raise
+        return {"statusCode": 200}
 
     # Send the complete response as a single "message" type (non-streaming)
     response_msg = build_message_response(ai_response, user_id)
@@ -145,13 +109,25 @@ def _process_record(record: dict[str, Any]) -> None:
             extra={"connectionId": connection_id, "userId": user_id},
         )
 
-    # Save conversation exchange to history
-    append_messages(
-        user_id=user_id,
-        user_message=message_text,
-        assistant_response=ai_response,
-        correlation_id=correlation_id,
-    )
+    # Save conversation exchange to history for compliance
+    try:
+        append_messages(
+            user_id=user_id,
+            user_message=message_text,
+            assistant_response=ai_response,
+            correlation_id=correlation_id,
+        )
+    except Exception as e:
+        logger.error(
+            "Failed to save conversation exchange",
+            extra={
+                "correlationId": correlation_id,
+                "userId": user_id,
+                "errorType": type(e).__name__,
+                "errorMessage": str(e),
+            },
+        )
+        # Non-blocking — response already delivered to client
 
     logger.info(
         "Message processing completed",
@@ -161,3 +137,5 @@ def _process_record(record: dict[str, Any]) -> None:
             "delivered": delivered,
         },
     )
+
+    return {"statusCode": 200}
