@@ -54,32 +54,12 @@ resource "aws_apigatewayv2_integration" "disconnect" {
   integration_method = "POST"
 }
 
-# sendMessage → SQS FIFO via AWS service integration
+# sendMessage → Orchestrator Lambda
 resource "aws_apigatewayv2_integration" "send_message" {
-  api_id                        = aws_apigatewayv2_api.websocket.id
-  integration_type              = "AWS"
-  integration_uri               = "arn:aws:apigateway:${var.aws_region}:sqs:action/SendMessage"
-  integration_method            = "POST"
-  credentials_arn               = aws_iam_role.apigw_sqs.arn
-  passthrough_behavior          = "NEVER"
-  template_selection_expression = "\\$default"
-
-  request_templates = {
-    "$default" = "Action=SendMessage&MessageGroupId=$input.path('$.userId')&MessageBody=$util.urlEncode($input.body)&QueueUrl=$util.urlEncode('${var.sqs_queue_url}')"
-  }
-}
-
-# Route response for sendMessage (required for non-proxy integrations)
-resource "aws_apigatewayv2_route_response" "send_message" {
   api_id             = aws_apigatewayv2_api.websocket.id
-  route_id           = aws_apigatewayv2_route.send_message.id
-  route_response_key = "$default"
-}
-
-resource "aws_apigatewayv2_integration_response" "send_message" {
-  api_id                   = aws_apigatewayv2_api.websocket.id
-  integration_id           = aws_apigatewayv2_integration.send_message.id
-  integration_response_key = "$default"
+  integration_type   = "AWS_PROXY"
+  integration_uri    = var.orchestrator_invoke_arn
+  integration_method = "POST"
 }
 
 ################################################################################
@@ -117,39 +97,10 @@ resource "aws_lambda_permission" "apigw_disconnect" {
   source_arn    = "${aws_apigatewayv2_api.websocket.execution_arn}/*/$disconnect"
 }
 
-################################################################################
-# IAM Role — API Gateway → SQS
-################################################################################
-
-data "aws_iam_policy_document" "apigw_assume" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["apigateway.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "apigw_sqs" {
-  name               = "${var.project_name}-${var.environment}-apigw-sqs-role"
-  assume_role_policy = data.aws_iam_policy_document.apigw_assume.json
-}
-
-resource "aws_iam_role_policy" "apigw_sqs" {
-  name   = "${var.project_name}-${var.environment}-apigw-sqs-policy"
-  role   = aws_iam_role.apigw_sqs.id
-  policy = data.aws_iam_policy_document.apigw_sqs_policy.json
-}
-
-data "aws_iam_policy_document" "apigw_sqs_policy" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "sqs:SendMessage",
-    ]
-    resources = [var.sqs_queue_arn]
-  }
+resource "aws_lambda_permission" "apigw_send_message" {
+  statement_id  = "AllowAPIGatewaySendMessage"
+  action        = "lambda:InvokeFunction"
+  function_name = var.orchestrator_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.websocket.execution_arn}/*/sendMessage"
 }

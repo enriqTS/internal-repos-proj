@@ -28,18 +28,8 @@ module "websocket_api" {
   aws_region                       = var.aws_region
   connection_manager_invoke_arn    = module.connection_manager.invoke_arn
   connection_manager_function_name = module.connection_manager.function_name
-  sqs_queue_url                    = module.sqs.queue_url
-  sqs_queue_arn                    = module.sqs.queue_arn
-}
-
-################################################################################
-# SQS
-################################################################################
-
-module "sqs" {
-  source       = "../../modules/sqs"
-  project_name = var.project_name
-  environment  = var.environment
+  orchestrator_invoke_arn          = module.orchestrator.invoke_arn
+  orchestrator_function_name       = module.orchestrator.function_name
 }
 
 ################################################################################
@@ -68,7 +58,6 @@ module "orchestrator" {
   project_name             = var.project_name
   environment              = var.environment
   shared_layer_arn         = module.shared_layer.layer_arn
-  sqs_queue_arn            = module.sqs.queue_arn
   dynamodb_table_name      = module.dynamodb.user_context_table_name
   dynamodb_table_arn       = module.dynamodb.user_context_table_arn
   connections_table_name   = module.dynamodb.connections_table_name
