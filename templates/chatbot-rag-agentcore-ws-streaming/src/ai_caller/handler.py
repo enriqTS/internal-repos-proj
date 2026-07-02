@@ -14,7 +14,6 @@ Environment variables:
 - POWERTOOLS_LOG_LEVEL: Log level (default: INFO)
 """
 
-import uuid
 from typing import Any
 
 from aws_lambda_powertools import Logger
@@ -35,45 +34,41 @@ def handler(event: dict[str, Any], context: LambdaContext) -> dict[str, Any]:
 
     Args:
         event: Dict containing:
+            - message: Current user message text (string, not history array).
             - sessionId: User/session identifier for AgentCore session management.
-            - messages: Conversation message history list.
-            - correlationId: Optional request correlation identifier.
-            - tools: Optional tool definitions (AgentCore handles internally).
+            - correlationId: Request correlation identifier.
         context: Lambda execution context.
 
     Returns:
         Dict with keys: response, usage, finishReason, sessionId.
-        On error: Dict with key: error.
-    """
-    session_id = event.get("sessionId", "")
-    messages = event.get("messages", [])
-    correlation_id = event.get("correlationId", str(uuid.uuid4()))
-    tools = event.get("tools")
 
-    logger.append_keys(correlation_id=correlation_id)
+    Raises:
+        Exception: Re-raises any error from AgentCore invocation after logging.
+    """
+    message = event.get("message", "")
+    session_id = event.get("sessionId", "")
+    correlation_id = event.get("correlationId", "")
+
+    logger.set_correlation_id(correlation_id)
     logger.info(
         "AI Caller invoked (streaming mode)",
-        extra={
-            "sessionId": session_id,
-            "messageCount": len(messages),
-        },
+        extra={"sessionId": session_id},
     )
 
     try:
-        result = invoke_agentcore(
+        response = invoke_agentcore(
             session_id=session_id,
-            messages=messages,
-            tools=tools,
+            message=message,
             correlation_id=correlation_id,
             stream=True,
         )
-        return result
+        return response
     except Exception as e:
         logger.error(
-            "AI invocation failed",
+            "AI Caller failed",
             extra={
-                "sessionId": session_id,
-                "error": str(e),
+                "errorType": type(e).__name__,
+                "errorMessage": str(e),
             },
         )
-        return {"error": f"AI invocation failed: {e}"}
+        raise
