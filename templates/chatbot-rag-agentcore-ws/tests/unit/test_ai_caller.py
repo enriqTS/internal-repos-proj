@@ -1,4 +1,4 @@
-"""Tests for the AI Caller Lambda handler (AgentCore — Bedrock Agent Runtime).
+"""Tests for the AI Caller Lambda handler (AgentCore WS variant).
 
 Validates the simplified interface where invoke_agentcore() accepts
 a message string (not a messages list) and passes inputText directly
@@ -14,15 +14,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 from botocore.exceptions import ClientError
 
-# Ensure the ai_caller module is importable as a distinct module
-_AI_CALLER_SRC = str(Path(__file__).resolve().parent.parent / "src" / "ai_caller")
+# Ensure the ai_caller module is importable
+_AI_CALLER_SRC = str(Path(__file__).resolve().parent.parent.parent / "src" / "ai_caller")
 
 
 @pytest.fixture(autouse=True)
 def _isolate_ai_caller_import() -> None:
-    """Ensure we import ai_caller's handler (not orchestrator's) by path priority."""
+    """Ensure we import ai_caller's handler by path priority."""
     sys.path.insert(0, _AI_CALLER_SRC)
-    # Remove cached handler module so we reimport from ai_caller path
     sys.modules.pop("handler", None)
     yield
     sys.path.remove(_AI_CALLER_SRC)
@@ -33,9 +32,9 @@ def _isolate_ai_caller_import() -> None:
 def sample_event() -> dict:
     """Sample AI Caller event with simplified interface: message (str), sessionId, correlationId."""
     return {
-        "message": "Hello, what can you help me with?",
-        "sessionId": "user-123",
-        "correlationId": "msg-test-001",
+        "message": "What are the available integrations?",
+        "sessionId": "user-ws-001",
+        "correlationId": "corr-ws-001",
     }
 
 
@@ -43,22 +42,17 @@ def sample_event() -> dict:
 def mock_lambda_context() -> MagicMock:
     """Minimal mock Lambda context."""
     ctx = MagicMock()
-    ctx.function_name = "test-ai-caller"
+    ctx.function_name = "test-ai-caller-ws"
     ctx.memory_limit_in_mb = 256
-    ctx.invoked_function_arn = "arn:aws:lambda:us-east-1:123456789012:function:test-ai-caller"
+    ctx.invoked_function_arn = "arn:aws:lambda:us-east-1:123456789012:function:test-ai-caller-ws"
     ctx.aws_request_id = "test-request-id"
     return ctx
 
 
 @pytest.fixture
 def mock_agent_response() -> dict:
-    """Mock Bedrock Agent Runtime invoke_agent response with streaming completion."""
-    chunk_bytes = b"I can help you with searching our knowledge base!"
-
-    chunk_event = {
-        "chunk": {"bytes": chunk_bytes},
-    }
-
+    """Mock Bedrock Agent Runtime invoke_agent response."""
+    chunk_event = {"chunk": {"bytes": b"Here are the available integrations."}}
     trace_event = {
         "trace": {
             "trace": {
@@ -66,23 +60,22 @@ def mock_agent_response() -> dict:
                     "modelInvocationOutput": {
                         "metadata": {
                             "usage": {
-                                "inputTokens": 42,
-                                "outputTokens": 15,
+                                "inputTokens": 30,
+                                "outputTokens": 10,
                             }
                         }
                     },
                     "observation": {
-                        "finalResponse": {"text": "I can help you with searching our knowledge base!"},
+                        "finalResponse": {"text": "Here are the available integrations."},
                     },
                 }
             }
         }
     }
-
     return {
         "completion": [chunk_event, trace_event],
         "contentType": "application/json",
-        "sessionId": "user-123",
+        "sessionId": "user-ws-001",
     }
 
 
@@ -100,11 +93,10 @@ def test_handler_passes_message_as_input_text(
 
     handler.handler(sample_event, mock_lambda_context)
 
-    # Assert: invoke_agent was called with inputText = the message string
     mock_bedrock_client.invoke_agent.assert_called_once()
     call_kwargs = mock_bedrock_client.invoke_agent.call_args.kwargs
-    assert call_kwargs["inputText"] == "Hello, what can you help me with?"
-    assert call_kwargs["sessionId"] == "user-123"
+    assert call_kwargs["inputText"] == "What are the available integrations?"
+    assert call_kwargs["sessionId"] == "user-ws-001"
     assert call_kwargs["agentId"] == "test-agent-id"
     assert call_kwargs["agentAliasId"] == "TSTALIASID"
 
@@ -123,13 +115,12 @@ def test_handler_returns_response_and_usage(
 
     result = handler.handler(sample_event, mock_lambda_context)
 
-    # Assert: response structure
-    assert result["response"] == "I can help you with searching our knowledge base!"
-    assert result["usage"]["inputTokens"] == 42
-    assert result["usage"]["outputTokens"] == 15
-    assert result["usage"]["totalTokens"] == 57
+    assert result["response"] == "Here are the available integrations."
+    assert result["usage"]["inputTokens"] == 30
+    assert result["usage"]["outputTokens"] == 10
+    assert result["usage"]["totalTokens"] == 40
     assert result["finishReason"] == "end_turn"
-    assert result["sessionId"] == "user-123"
+    assert result["sessionId"] == "user-ws-001"
 
 
 @patch("shared.ai_caller_agentcore.bedrock_agent_runtime")
@@ -138,7 +129,7 @@ def test_handler_raises_on_client_error(
     sample_event: dict,
     mock_lambda_context: MagicMock,
 ) -> None:
-    """Handler should raise RuntimeError when Bedrock Agent Runtime returns a ClientError."""
+    """Handler should raise RuntimeError on ClientError from AgentCore Runtime."""
     error_response = {
         "Error": {
             "Code": "ThrottlingException",
@@ -171,10 +162,8 @@ def test_handler_does_not_construct_messages_array(
     handler.handler(sample_event, mock_lambda_context)
 
     call_kwargs = mock_bedrock_client.invoke_agent.call_args.kwargs
-    # inputText should be a plain string, not JSON-encoded array
     assert isinstance(call_kwargs["inputText"], str)
     assert call_kwargs["inputText"] == sample_event["message"]
-    # No 'messages' key should be passed to invoke_agent
     assert "messages" not in call_kwargs
 
 
@@ -189,7 +178,6 @@ def test_handler_extracts_token_usage_from_trace(
         "sessionId": "user-456",
         "correlationId": "corr-789",
     }
-
     trace_event = {
         "trace": {
             "trace": {
@@ -209,7 +197,6 @@ def test_handler_extracts_token_usage_from_trace(
             }
         }
     }
-
     mock_bedrock_client.invoke_agent.return_value = {
         "completion": [
             {"chunk": {"bytes": b"Done"}},
