@@ -22,3 +22,13 @@ variable "connection_manager_function_name" {
   description = "Name of the Connection Manager Lambda function"
   type        = string
 }
+
+variable "orchestrator_invoke_arn" {
+  description = "Invoke ARN of the Orchestrator Lambda function"
+  type        = string
+}
+
+variable "orchestrator_function_name" {
+  description = "Name of the Orchestrator Lambda function"
+  type        = string
+}

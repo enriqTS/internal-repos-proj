@@ -28,8 +28,11 @@ resource "aws_apigatewayv2_route" "disconnect" {
   target    = "integrations/${aws_apigatewayv2_integration.disconnect.id}"
 }
 
-# NOTE: sendMessage route integration will be added in task 6.2
-# (direct Lambda proxy to Orchestrator, replacing former SQS integration)
+resource "aws_apigatewayv2_route" "send_message" {
+  api_id    = aws_apigatewayv2_api.websocket.id
+  route_key = "sendMessage"
+  target    = "integrations/${aws_apigatewayv2_integration.send_message.id}"
+}
 
 ################################################################################
 # Integrations
@@ -48,6 +51,14 @@ resource "aws_apigatewayv2_integration" "disconnect" {
   api_id             = aws_apigatewayv2_api.websocket.id
   integration_type   = "AWS_PROXY"
   integration_uri    = var.connection_manager_invoke_arn
+  integration_method = "POST"
+}
+
+# sendMessage → Orchestrator Lambda
+resource "aws_apigatewayv2_integration" "send_message" {
+  api_id             = aws_apigatewayv2_api.websocket.id
+  integration_type   = "AWS_PROXY"
+  integration_uri    = var.orchestrator_invoke_arn
   integration_method = "POST"
 }
 
@@ -84,4 +95,12 @@ resource "aws_lambda_permission" "apigw_disconnect" {
   function_name = var.connection_manager_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.websocket.execution_arn}/*/$disconnect"
+}
+
+resource "aws_lambda_permission" "apigw_send_message" {
+  statement_id  = "AllowAPIGatewaySendMessage"
+  action        = "lambda:InvokeFunction"
+  function_name = var.orchestrator_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.websocket.execution_arn}/*/sendMessage"
 }

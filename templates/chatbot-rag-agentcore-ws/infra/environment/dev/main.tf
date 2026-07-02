@@ -28,6 +28,8 @@ module "websocket_api" {
   aws_region                       = var.aws_region
   connection_manager_invoke_arn    = module.connection_manager.invoke_arn
   connection_manager_function_name = module.connection_manager.function_name
+  orchestrator_invoke_arn          = module.orchestrator.invoke_arn
+  orchestrator_function_name       = module.orchestrator.function_name
 }
 
 ################################################################################
