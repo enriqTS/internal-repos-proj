@@ -49,11 +49,32 @@ def get_conversation_history(
     *,
     correlation_id: str = "",
 ) -> list[dict[str, Any]]:
+    """Deprecated — use append_messages() for compliance writes instead.
+
+    This function is retained temporarily for backward compatibility with
+    orchestrator handlers that still call it directly. It will be removed
+    once orchestrators are refactored (tasks 2.5-2.7) to rely on AgentCore
+    native session management. New code should NOT call this function.
+
+    Delegates to _get_conversation_history (internal).
+    """
+    return _get_conversation_history(user_id, correlation_id=correlation_id)
+
+
+def _get_conversation_history(
+    user_id: str,
+    *,
+    correlation_id: str = "",
+) -> list[dict[str, Any]]:
     """Retrieve conversation history from DynamoDB, trimmed to max length.
 
+    Internal helper — used by append_messages() for the read-append-write
+    pattern. Not part of the public API; the Orchestrator no longer calls
+    this directly for pre-invocation retrieval (AgentCore Runtime manages
+    conversation context via sessionId).
+
     Returns an empty list on read failure (graceful degradation), logging
-    the error at ERROR level. The caller should proceed without history
-    rather than failing the request.
+    the error at ERROR level.
 
     Args:
         user_id: User identifier (DynamoDB partition key).
@@ -210,7 +231,7 @@ def append_messages(
     now = datetime.now(timezone.utc).isoformat()
 
     # Retrieve existing history (returns [] on failure)
-    messages = get_conversation_history(user_id, correlation_id=correlation_id)
+    messages = _get_conversation_history(user_id, correlation_id=correlation_id)
 
     # Append user message
     messages.append(
