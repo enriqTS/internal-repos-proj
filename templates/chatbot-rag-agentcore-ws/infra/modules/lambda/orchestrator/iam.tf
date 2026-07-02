@@ -27,17 +27,6 @@ resource "aws_iam_role_policy" "orchestrator_permissions" {
 }
 
 data "aws_iam_policy_document" "orchestrator_permissions" {
-  # SQS — receive and delete messages
-  statement {
-    effect = "Allow"
-    actions = [
-      "sqs:ReceiveMessage",
-      "sqs:DeleteMessage",
-      "sqs:GetQueueAttributes",
-    ]
-    resources = [var.sqs_queue_arn]
-  }
-
   # DynamoDB — User Context table read/write
   statement {
     effect = "Allow"

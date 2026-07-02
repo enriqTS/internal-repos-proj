@@ -8,11 +8,6 @@ output "websocket_api_id" {
   value       = module.websocket_api.api_id
 }
 
-output "sqs_queue_url" {
-  description = "URL of the SQS FIFO message queue"
-  value       = module.sqs.queue_url
-}
-
 output "user_context_table_name" {
   description = "Name of the DynamoDB user context table"
   value       = module.dynamodb.user_context_table_name

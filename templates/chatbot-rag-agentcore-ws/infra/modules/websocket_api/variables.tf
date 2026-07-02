@@ -22,13 +22,3 @@ variable "connection_manager_function_name" {
   description = "Name of the Connection Manager Lambda function"
   type        = string
 }
-
-variable "sqs_queue_url" {
-  description = "URL of the SQS FIFO queue for sendMessage integration"
-  type        = string
-}
-
-variable "sqs_queue_arn" {
-  description = "ARN of the SQS FIFO queue for IAM permissions"
-  type        = string
-}
