@@ -163,13 +163,24 @@ def process_message_streaming(
     }
     send_to_connection(connection_id, done_message)
 
-    # Save conversation exchange to history
-    ctx.append_messages(
-        user_id=user_id,
-        user_message=message_text,
-        assistant_response=full_response,
-        correlation_id=correlation_id,
-    )
+    # Save conversation exchange to history (non-blocking — Requirement 2.4)
+    try:
+        ctx.append_messages(
+            user_id=user_id,
+            user_message=message_text,
+            assistant_response=full_response,
+            correlation_id=correlation_id,
+        )
+    except Exception as e:
+        logger.error(
+            "Failed to save conversation exchange — response still returned",
+            extra={
+                "userId": user_id,
+                "correlationId": correlation_id,
+                "errorType": type(e).__name__,
+                "errorMessage": str(e),
+            },
+        )
 
     logger.info(
         "Streaming message processing completed",
