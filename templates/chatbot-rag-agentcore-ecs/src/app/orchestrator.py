@@ -1,8 +1,8 @@
 """Orchestrator module for ECS chatbot service.
 
-Manages the conversation flow: retrieves history, invokes the AI caller
-via direct in-process function call, and returns the response. Reuses
-the shared conversation context module pattern adapted for ECS.
+Manages the conversation flow: invokes the AI caller via direct in-process
+function call, saves the exchange for compliance, and returns the response.
+AgentCore Runtime manages conversation context natively via sessionId.
 
 This module contains the same orchestration logic as the Lambda variant.
 The key differences are:
@@ -48,11 +48,9 @@ def process_message(
 
     Orchestration flow:
     1. Generate correlation ID if not provided
-    2. Retrieve conversation history from DynamoDB (graceful degradation)
-    3. Build messages list for AI invocation
-    4. Invoke AgentCore (non-streaming — complete response)
-    5. Save conversation exchange to history
-    6. Return the response
+    2. Invoke AgentCore with current message (AgentCore manages history via sessionId)
+    3. Save conversation exchange to history for compliance
+    4. Return the response
 
     Args:
         user_id: User identifier for conversation tracking.
@@ -76,16 +74,11 @@ def process_message(
 
     ctx = _get_conversation_context()
 
-    # Retrieve conversation history (returns [] on failure — graceful degradation)
-    history = ctx.get_conversation_history(user_id, correlation_id=correlation_id)
-
-    # Build messages list for AI invocation
-    messages = [*history, {"role": "user", "content": message_text}]
-
     # Invoke AgentCore (non-streaming — waits for complete response)
+    # AgentCore manages full conversation history via sessionId natively.
     result = invoke_agentcore(
         session_id=user_id,
-        messages=messages,
+        message=message_text,
         correlation_id=correlation_id,
         stream=False,
     )
