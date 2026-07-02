@@ -50,24 +50,19 @@ def sqs_event() -> dict[str, Any]:
 # --- Tests ---
 
 
-@patch("handler.save_conversation_history")
+@patch("handler.append_messages")
 @patch("handler.invoke_ai_caller")
-@patch("handler.table")
 @patch("handler.responses_table")
 @patch("handler.lambda_client")
 def test_handler_returns_200_and_stores_response(
     mock_lambda_client: MagicMock,
     mock_responses_table: MagicMock,
-    mock_table: MagicMock,
     mock_invoke_ai: MagicMock,
-    mock_save_history: MagicMock,
+    mock_append_messages: MagicMock,
     sqs_event: dict[str, Any],
     lambda_context: MagicMock,
 ) -> None:
     """Handler returns 200 and writes completed response when AI returns text-only reply."""
-    # Arrange: DynamoDB get_item returns empty history
-    mock_table.get_item.return_value = {"Item": {}}
-
     # Arrange: invoke_ai_caller returns a text-only response (no tool calls)
     mock_invoke_ai.return_value = {
         "response": "I can help you with many things!",
@@ -75,6 +70,12 @@ def test_handler_returns_200_and_stores_response(
         "finishReason": "end_turn",
         "sessionId": "user-001",
     }
+
+    # Arrange: append_messages returns updated history
+    mock_append_messages.return_value = [
+        {"role": "user", "content": "Hello, how can you help me?", "timestamp": "2024-01-15T10:30:00Z"},
+        {"role": "assistant", "content": "I can help you with many things!", "timestamp": "2024-01-15T10:30:01Z"},
+    ]
 
     # Act
     from handler import handler
@@ -84,14 +85,12 @@ def test_handler_returns_200_and_stores_response(
     # Assert: handler always returns 200 so SQS deletes the message
     assert result == {"statusCode": 200}
 
-    # Assert: DynamoDB was queried for conversation history
-    mock_table.get_item.assert_called_once_with(Key={"userId": "user-001"})
-
-    # Assert: AI Caller was invoked with messages containing the user message
-    mock_invoke_ai.assert_called_once()
-    call_kwargs = mock_invoke_ai.call_args[1]
-    messages_sent = call_kwargs["messages"]
-    assert any(m["role"] == "user" and "Hello" in m["content"] for m in messages_sent)
+    # Assert: AI Caller was invoked with simplified payload (message string, not array)
+    mock_invoke_ai.assert_called_once_with(
+        message="Hello, how can you help me?",
+        session_id="user-001",
+        correlation_id="corr-xyz-789",
+    )
 
     # Assert: completed response was written to responses table
     put_calls = mock_responses_table.put_item.call_args_list
@@ -105,9 +104,10 @@ def test_handler_returns_200_and_stores_response(
     assert last_put["response"] == "I can help you with many things!"
     assert last_put["userId"] == "user-001"
 
-    # Assert: conversation history was saved with user + assistant messages
-    mock_save_history.assert_called_once()
-    saved_messages = mock_save_history.call_args[0][1]
-    assert len(saved_messages) == 2  # user message + assistant response
-    assert saved_messages[0]["role"] == "user"
-    assert saved_messages[1]["role"] == "assistant"
+    # Assert: conversation exchange was saved via append_messages
+    mock_append_messages.assert_called_once_with(
+        "user-001",
+        "Hello, how can you help me?",
+        "I can help you with many things!",
+        correlation_id="corr-xyz-789",
+    )

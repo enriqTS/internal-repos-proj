@@ -1,8 +1,9 @@
 """Orchestrator Lambda — manages conversation flow and coordinates AI calls.
 
-AgentCore variant: The AgentCore Runtime manages tool calling internally.
-This orchestrator simply invokes the AI Caller and receives the final response
-back — no tool-use iteration loop is needed.
+AgentCore variant: The AgentCore Runtime manages conversation context
+natively via sessionId. This orchestrator simply invokes the AI Caller
+with the current user message and saves the exchange for compliance.
+No conversation history retrieval is needed before AI invocation.
 """
 
 import json
@@ -13,22 +14,20 @@ from typing import Any
 import boto3
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
+from shared.conversation_context import append_messages
 from shared.logging_config import get_logger
 
 logger = get_logger("orchestrator")
 metrics = Metrics(namespace="ChatbotRAG", service="orchestrator")
 
 # Configuration from environment variables
-MAX_CONVERSATION_HISTORY = int(os.environ.get("MAX_CONVERSATION_HISTORY", "50"))
 MAX_RETRY_ATTEMPTS = int(os.environ.get("MAX_RETRY_ATTEMPTS", "3"))
 AI_CALLER_FUNCTION_NAME = os.environ.get("AI_CALLER_FUNCTION_NAME", "")
-DYNAMODB_TABLE_NAME = os.environ.get("DYNAMODB_TABLE_NAME", "")
 RESPONSES_TABLE_NAME = os.environ.get("RESPONSES_TABLE_NAME", "")
 
 # AWS clients
 lambda_client = boto3.client("lambda")
 dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table(DYNAMODB_TABLE_NAME) if DYNAMODB_TABLE_NAME else None
 responses_table = dynamodb.Table(RESPONSES_TABLE_NAME) if RESPONSES_TABLE_NAME else None
 
 
@@ -37,7 +36,7 @@ responses_table = dynamodb.Table(RESPONSES_TABLE_NAME) if RESPONSES_TABLE_NAME e
 BACKOFF_BASE = 2  # seconds
 
 
-def _retry_with_backoff(func: Any, *args: Any, correlation_id: str = "", **kwargs: Any) -> tuple[bool, Any]:
+def _retry_with_backoff(func: Any, *args: Any, _correlation_id: str = "", **kwargs: Any) -> tuple[bool, Any]:
     """Retry a callable with exponential backoff. Returns (success, result_or_error)."""
     last_error: Exception | None = None
     for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
@@ -50,7 +49,7 @@ def _retry_with_backoff(func: Any, *args: Any, correlation_id: str = "", **kwarg
             logger.warning(
                 "Retry attempt",
                 extra={
-                    "correlationId": correlation_id,
+                    "correlationId": _correlation_id,
                     "attempt": attempt,
                     "maxAttempts": MAX_RETRY_ATTEMPTS,
                     "errorType": type(e).__name__,
@@ -169,142 +168,61 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, int]:  # context: 
 
 
 def _process_message(user_id: str, message: str, correlation_id: str, timestamp: str) -> str:
-    """Core processing logic: retrieve history, invoke AI Caller, save response.
+    """Core processing logic: invoke AI Caller, save exchange for compliance.
 
-    Unlike the Mantle variant, no tool-use loop is needed here. The AgentCore
-    Runtime handles tool calling internally — it invokes the Tool Executor Lambda
-    directly as an action group. The AI Caller returns only the final response.
+    AgentCore Runtime manages conversation context natively via sessionId.
+    No history retrieval is needed — the AI Caller receives only the current
+    user message. After a successful response, the exchange is persisted to
+    DynamoDB for compliance/audit via append_messages().
     """
-    # Step 1: Retrieve conversation history
-    conversation_history = retrieve_conversation_history(user_id, correlation_id)
-
-    # Step 2: Append new user message
-    user_message = {
-        "role": "user",
-        "content": message,
-        "timestamp": timestamp,
-    }
-    conversation_history.append(user_message)
-
-    # Step 3: Invoke AI Caller with retry (AgentCore Runtime handles tool calls internally)
+    # Step 1: Invoke AI Caller with simplified payload (retry with backoff)
     logger.info(
         "Invoking AI Caller",
         extra={
             "correlationId": correlation_id,
             "userId": user_id,
-            "messageCount": len(conversation_history),
         },
     )
 
     success, result = _retry_with_backoff(
         invoke_ai_caller,
-        messages=conversation_history,
+        message=message,
+        session_id=user_id,
         correlation_id=correlation_id,
+        _correlation_id=correlation_id,
     )
 
     if not success:
         raise RuntimeError(f"AI Caller invocation failed after {MAX_RETRY_ATTEMPTS} attempts: {result}")
 
     ai_response = result
+    response_text = ai_response.get("response", ai_response.get("content", ""))
 
-    # Step 4: Append assistant response to history
-    assistant_response_message = {
-        "role": "assistant",
-        "content": ai_response.get("response", ai_response.get("content", "")),
-        "timestamp": ai_response.get("timestamp", ""),
-    }
-    conversation_history.append(assistant_response_message)
-
-    # Step 5: Save updated conversation history
-    save_conversation_history(user_id, conversation_history, correlation_id)
+    # Step 2: Save conversation exchange for compliance (non-blocking on failure)
+    updated_messages = append_messages(
+        user_id,
+        message,
+        response_text,
+        correlation_id=correlation_id,
+    )
 
     # Emit conversation length metric
-    metrics.add_metric(name="ConversationLength", unit=MetricUnit.Count, value=len(conversation_history))
+    metrics.add_metric(name="ConversationLength", unit=MetricUnit.Count, value=len(updated_messages))
 
-    # Step 6: Return final response text
-    return ai_response.get("response", ai_response.get("content", ""))
-
-
-def retrieve_conversation_history(user_id: str, correlation_id: str) -> list[dict[str, Any]]:
-    """
-    Retrieve conversation history from DynamoDB, trimmed to max length.
-
-    On failure, proceeds with empty history and logs ERROR.
-    """
-    try:
-        response = table.get_item(Key={"userId": user_id})
-        item = response.get("Item", {})
-        messages = item.get("messages", [])
-
-        # Trim to MAX_CONVERSATION_HISTORY (oldest first, keep most recent)
-        if len(messages) > MAX_CONVERSATION_HISTORY:
-            messages = messages[-MAX_CONVERSATION_HISTORY:]
-
-        logger.info(
-            "Retrieved conversation history",
-            extra={
-                "correlationId": correlation_id,
-                "userId": user_id,
-                "messageCount": len(messages),
-            },
-        )
-        return messages
-
-    except Exception as e:
-        logger.error(
-            "Failed to retrieve conversation history",
-            extra={
-                "correlationId": correlation_id,
-                "userId": user_id,
-                "errorType": type(e).__name__,
-                "errorMessage": str(e),
-            },
-        )
-        # Proceed with empty history on DynamoDB read failure
-        return []
+    # Step 3: Return final response text
+    return response_text
 
 
-def save_conversation_history(user_id: str, messages: list[dict[str, Any]], correlation_id: str) -> None:
-    """
-    Save updated conversation history to DynamoDB.
-
-    On failure, logs ERROR but does not raise — the response is still returned.
-    """
-    try:
-        table.put_item(
-            Item={
-                "userId": user_id,
-                "messages": messages,
-            }
-        )
-        logger.info(
-            "Saved conversation history",
-            extra={
-                "correlationId": correlation_id,
-                "userId": user_id,
-                "messageCount": len(messages),
-            },
-        )
-    except Exception as e:
-        logger.error(
-            "Failed to save conversation history",
-            extra={
-                "correlationId": correlation_id,
-                "userId": user_id,
-                "errorType": type(e).__name__,
-                "errorMessage": str(e),
-            },
-        )
-
-
-def invoke_ai_caller(messages: list[dict[str, Any]], correlation_id: str) -> dict[str, Any]:
-    """Synchronously invoke the AI Caller Lambda.
+def invoke_ai_caller(message: str, session_id: str, correlation_id: str) -> dict[str, Any]:
+    """Synchronously invoke the AI Caller Lambda with simplified payload.
 
     The AI Caller invokes Bedrock AgentCore Runtime, which manages tool calls
-    internally. The response returned here is always the final AI response.
+    and conversation context internally via sessionId. Only the current user
+    message is sent — no conversation history array.
     """
     payload = {
-        "messages": messages,
+        "message": message,
+        "sessionId": session_id,
         "correlationId": correlation_id,
     }
 
