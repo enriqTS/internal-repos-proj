@@ -1,8 +1,8 @@
 """Orchestrator module for ECS chatbot service — streaming variant.
 
-Manages the conversation flow with streaming AI responses: retrieves history,
-invokes the AI caller in streaming mode, and forwards each chunk progressively
-to the client via the message sender.
+Manages the conversation flow with streaming AI responses: invokes the AI caller
+in streaming mode and forwards each chunk progressively to the client via the
+message sender. AgentCore Runtime manages conversation context natively via sessionId.
 
 Key differences from non-streaming ECS WebSocket variant:
 - AI Caller is invoked in streaming mode (yields text chunks)
@@ -51,12 +51,10 @@ def process_message_streaming(
 
     Orchestration flow:
     1. Generate correlation ID if not provided
-    2. Retrieve conversation history from DynamoDB (graceful degradation)
-    3. Build messages list for AI invocation
-    4. Invoke AgentCore in streaming mode
-    5. Forward each chunk to client via message_sender as {"type": "chunk", "content": "..."}
-    6. On client disconnect (send returns False), abort stream within 5s
-    7. After stream completes, send {"type": "done"} and save assembled response
+    2. Invoke AgentCore in streaming mode (AgentCore manages history via sessionId)
+    3. Forward each chunk to client via message_sender as {"type": "chunk", "content": "..."}
+    4. On client disconnect (send returns False), abort stream
+    5. After stream completes, send {"type": "done"} and save assembled response
 
     Args:
         user_id: User identifier for conversation tracking.
@@ -81,20 +79,15 @@ def process_message_streaming(
 
     ctx = _get_conversation_context()
 
-    # Retrieve conversation history (returns [] on failure — graceful degradation)
-    history = ctx.get_conversation_history(user_id, correlation_id=correlation_id)
-
-    # Build messages list for AI invocation
-    messages = [*history, {"role": "user", "content": message_text}]
-
     # Invoke AgentCore in streaming mode — yields text chunks
+    # AgentCore manages full conversation history via sessionId natively.
     chunks: list[str] = []
     client_disconnected = False
 
     try:
         for chunk_text in invoke_agentcore_streaming(
             session_id=user_id,
-            messages=messages,
+            message=message_text,
             correlation_id=correlation_id,
         ):
             # Forward chunk to client via WebSocket
