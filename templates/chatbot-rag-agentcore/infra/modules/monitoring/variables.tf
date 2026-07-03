@@ -23,11 +23,6 @@ variable "ai_caller_function_name" {
   type        = string
 }
 
-variable "tool_executor_function_name" {
-  description = "Name of the Tool Executor Lambda function"
-  type        = string
-}
-
 variable "kb_sync_function_name" {
   description = "Name of the KB Sync Lambda function"
   type        = string

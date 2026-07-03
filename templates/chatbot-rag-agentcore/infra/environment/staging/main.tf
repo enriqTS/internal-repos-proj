@@ -6,7 +6,6 @@ module "agentcore" {
   source            = "../../modules/agentcore"
   project_name      = var.project_name
   environment       = var.environment
-  tool_executor_arn = module.tool_executor.function_arn
   model_id          = var.model_id
   agent_instruction = "You are a helpful assistant."
 }
@@ -62,16 +61,6 @@ module "ai_caller" {
   log_level        = var.log_level
 }
 
-module "tool_executor" {
-  source           = "../../modules/lambda/tool_executor"
-  project_name     = var.project_name
-  environment      = var.environment
-  rag_bucket_name  = module.s3.bucket_name
-  rag_bucket_arn   = module.s3.bucket_arn
-  shared_layer_arn = module.shared_layer.layer_arn
-  log_level        = var.log_level
-}
-
 module "shared_layer" {
   source       = "../../modules/lambda/shared_layer"
   project_name = var.project_name
@@ -109,9 +98,9 @@ module "s3" {
 }
 
 module "bedrock_kb" {
-  source       = "../../modules/bedrock_kb"
-  project_name = var.project_name
-  environment  = var.environment
+  source         = "../../modules/bedrock_kb"
+  project_name   = var.project_name
+  environment    = var.environment
   rag_bucket_arn = module.s3.bucket_arn
 }
 
@@ -126,13 +115,12 @@ module "kb_sync" {
 }
 
 module "monitoring" {
-  source                      = "../../modules/monitoring"
-  project_name                = var.project_name
-  environment                 = var.environment
-  aws_region                  = var.aws_region
-  orchestrator_function_name  = module.orchestrator.function_name
-  ai_caller_function_name     = module.ai_caller.function_name
-  tool_executor_function_name = module.tool_executor.function_name
-  kb_sync_function_name       = module.kb_sync.function_name
-  dlq_name                    = module.sqs.dlq_name
+  source                     = "../../modules/monitoring"
+  project_name               = var.project_name
+  environment                = var.environment
+  aws_region                 = var.aws_region
+  orchestrator_function_name = module.orchestrator.function_name
+  ai_caller_function_name    = module.ai_caller.function_name
+  kb_sync_function_name      = module.kb_sync.function_name
+  dlq_name                   = module.sqs.dlq_name
 }

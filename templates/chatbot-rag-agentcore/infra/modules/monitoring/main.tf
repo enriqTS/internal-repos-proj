@@ -53,7 +53,6 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             ["AWS/Lambda", "Errors", "FunctionName", var.orchestrator_function_name],
             ["AWS/Lambda", "Errors", "FunctionName", var.ai_caller_function_name],
-            ["AWS/Lambda", "Errors", "FunctionName", var.tool_executor_function_name],
             ["AWS/Lambda", "Errors", "FunctionName", var.kb_sync_function_name]
           ]
           period = 300

@@ -8,11 +8,6 @@ variable "environment" {
   type        = string
 }
 
-variable "tool_executor_arn" {
-  description = "ARN of the Tool Executor Lambda function to register as an action group"
-  type        = string
-}
-
 variable "model_id" {
   description = "Foundation model ID for the Bedrock agent (e.g., anthropic.claude-3-sonnet-20240229-v1:0)"
   type        = string
