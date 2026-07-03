@@ -15,11 +15,10 @@ import os
 from typing import Any
 
 import boto3
+from aws_lambda_powertools import Logger
 from botocore.exceptions import ClientError
 
-from app.logging_config import get_logger
-
-logger = get_logger("tool_executor")
+logger = Logger(service="tool_executor")
 
 RAG_BUCKET_NAME = os.environ.get("RAG_BUCKET_NAME", "")
 
@@ -36,6 +35,7 @@ def _get_s3_client():
     if _s3_client is None:
         _s3_client = boto3.client("s3")
     return _s3_client
+
 
 # Registry of available tools. Add new tool implementations here.
 _TOOL_REGISTRY: dict[str, Any] = {}

@@ -28,15 +28,15 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
+from aws_lambda_powertools import Logger
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from app.connection_manager import remove_connection, store_connection
-from app.logging_config import get_logger
 from app.message_sender import send_to_connection
 from app.orchestrator import process_message
 
-logger = get_logger("main")
+logger = Logger(service="main")
 
 # Graceful shutdown state
 _shutting_down = False

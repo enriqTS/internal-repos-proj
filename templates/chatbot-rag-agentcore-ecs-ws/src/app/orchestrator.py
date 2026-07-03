@@ -14,11 +14,12 @@ The key differences are:
 import uuid
 from typing import Any
 
+from aws_lambda_powertools import Logger
+
 from app.ai_caller import invoke_agentcore
-from app.logging_config import get_logger
 from app.tool_executor import execute_tool  # noqa: F401 — available for tool-use if needed
 
-logger = get_logger("orchestrator")
+logger = Logger(service="orchestrator")
 
 # DynamoDB conversation context — imported lazily to keep module imports clean
 _conversation_context = None

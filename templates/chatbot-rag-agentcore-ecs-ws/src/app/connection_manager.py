@@ -17,10 +17,9 @@ import time
 from typing import Any
 
 import boto3
+from aws_lambda_powertools import Logger
 
-from app.logging_config import get_logger
-
-logger = get_logger("connection_manager")
+logger = Logger(service="connection_manager")
 
 # Configuration from environment variables
 CONNECTION_TABLE_NAME: str = os.environ.get("CONNECTION_TABLE_NAME", "")

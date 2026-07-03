@@ -17,11 +17,10 @@ import os
 import time
 from typing import Any
 
+from aws_lambda_powertools import Logger
 from openai import OpenAI, OpenAIError
 
-from app.logging_config import get_logger, log_ai_interaction
-
-logger = get_logger("ai_caller")
+logger = Logger(service="ai_caller")
 
 # PLACEHOLDER: Replace this system prompt with your own instructions.
 SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own instructions."
@@ -47,6 +46,35 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         },
     }
 ]
+
+
+def _log_ai_interaction(
+    *,
+    correlation_id: str,
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
+    total_tokens: int,
+    latency_ms: float,
+    finish_reason: str,
+) -> None:
+    """Log an AI interaction with structured fields.
+
+    Emits a single structured INFO log entry after an AI service call completes.
+    """
+    logger.info(
+        "AI interaction completed",
+        extra={
+            "logType": "ai-interaction",
+            "correlation_id": correlation_id,
+            "model": model,
+            "inputTokens": input_tokens,
+            "outputTokens": output_tokens,
+            "totalTokens": total_tokens,
+            "latencyMs": latency_ms,
+            "finishReason": finish_reason,
+        },
+    )
 
 
 def invoke_mantle(
@@ -126,8 +154,7 @@ def invoke_mantle(
     total_tokens = response.usage.total_tokens if response.usage else 0
 
     # Log AI interaction (single entry after response completes — Req 15.3)
-    log_ai_interaction(
-        logger,
+    _log_ai_interaction(
         correlation_id=correlation_id,
         model=MODEL_ID,
         input_tokens=input_tokens,
@@ -143,11 +170,13 @@ def invoke_mantle(
 
     for item in response.output:
         if item.type == "function_call":
-            function_calls.append({
-                "name": item.name,
-                "arguments": item.arguments,
-                "call_id": item.call_id,
-            })
+            function_calls.append(
+                {
+                    "name": item.name,
+                    "arguments": item.arguments,
+                    "call_id": item.call_id,
+                }
+            )
         elif item.type == "message":
             for content_block in item.content:
                 if hasattr(content_block, "text") and content_block.text:
@@ -193,9 +222,7 @@ def _serialize_output_item(item: Any) -> dict[str, Any]:
 
     if item.type == "message":
         serialized["content"] = [
-            {"type": c.type, "text": c.text}
-            for c in item.content
-            if hasattr(c, "text")
+            {"type": c.type, "text": c.text} for c in item.content if hasattr(c, "text")
         ]
     elif item.type == "function_call":
         serialized["name"] = item.name

@@ -15,12 +15,12 @@ import os
 import time
 
 import boto3
+from aws_lambda_powertools import Logger
 from botocore.exceptions import ClientError
 
 from app.connection_manager import get_connection_item, remove_connection
-from app.logging_config import get_logger
 
-logger = get_logger("message_sender")
+logger = Logger(service="message_sender")
 
 WEBSOCKET_API_ENDPOINT: str = os.environ.get("WEBSOCKET_API_ENDPOINT", "")
 

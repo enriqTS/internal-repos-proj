@@ -15,13 +15,14 @@ import os
 import uuid
 from typing import Any
 
+from aws_lambda_powertools import Logger
+
 from app.ai_caller import invoke_mantle
-from app.logging_config import get_logger
 from app.message_protocol import build_error_message, build_message_response, build_status_message
 from app.message_sender import send_to_connection
 from app.tool_executor import execute_tool
 
-logger = get_logger("orchestrator")
+logger = Logger(service="orchestrator")
 
 # Maximum tool-use loop iterations before aborting
 MAX_TOOL_ITERATIONS = int(os.environ.get("MAX_TOOL_ITERATIONS", "10"))
@@ -143,12 +144,14 @@ def process_message(
 
         # Append the assistant's output (with tool calls) to messages
         for fc in function_calls:
-            messages.append({
-                "type": "function_call",
-                "name": fc["name"],
-                "arguments": fc["arguments"],
-                "call_id": fc["call_id"],
-            })
+            messages.append(
+                {
+                    "type": "function_call",
+                    "name": fc["name"],
+                    "arguments": fc["arguments"],
+                    "call_id": fc["call_id"],
+                }
+            )
             tool_call_history.append(fc)
 
         # Execute each tool and append results
@@ -169,11 +172,13 @@ def process_message(
             )
 
             # Append tool result as function_call_output for next Mantle request
-            messages.append({
-                "type": "function_call_output",
-                "call_id": fc["call_id"],
-                "output": json.dumps(tool_result.get("result", tool_result)),
-            })
+            messages.append(
+                {
+                    "type": "function_call_output",
+                    "call_id": fc["call_id"],
+                    "output": json.dumps(tool_result.get("result", tool_result)),
+                }
+            )
     else:
         # Max iterations reached without a text-only response
         logger.error(

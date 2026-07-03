@@ -20,11 +20,10 @@ from collections.abc import Generator
 from typing import Any
 
 import boto3
+from aws_lambda_powertools import Logger
 from botocore.exceptions import ClientError
 
-from app.logging_config import get_logger, log_ai_interaction
-
-logger = get_logger("ai_caller")
+logger = Logger(service="ai_caller")
 
 # PLACEHOLDER: Replace this system prompt with your own instructions.
 SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own instructions."
@@ -34,6 +33,35 @@ AGENT_ALIAS_ID = os.environ.get("AGENT_ALIAS_ID", "TSTALIASID")
 AGENT_ID = os.environ.get("AGENT_ID", "")
 
 bedrock_agent_runtime = boto3.client("bedrock-agent-runtime")
+
+
+def _log_ai_interaction(
+    *,
+    correlation_id: str,
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
+    total_tokens: int,
+    latency_ms: float,
+    finish_reason: str,
+) -> None:
+    """Log an AI interaction with structured fields.
+
+    Emits a single structured INFO log entry after an AI service call completes.
+    """
+    logger.info(
+        "AI interaction completed",
+        extra={
+            "logType": "ai-interaction",
+            "correlation_id": correlation_id,
+            "model": model,
+            "inputTokens": input_tokens,
+            "outputTokens": output_tokens,
+            "totalTokens": total_tokens,
+            "latencyMs": latency_ms,
+            "finishReason": finish_reason,
+        },
+    )
 
 
 def invoke_agentcore(
@@ -126,8 +154,7 @@ def invoke_agentcore(
 
     latency_ms = int((time.time() - start_time) * 1000)
 
-    log_ai_interaction(
-        logger,
+    _log_ai_interaction(
         correlation_id=correlation_id,
         model="agentcore",
         input_tokens=usage.get("inputTokens", 0),
@@ -249,8 +276,7 @@ def invoke_agentcore_streaming(
     latency_ms = int((time.time() - start_time) * 1000)
 
     # Log AI interaction once after stream completes (Requirement 15.3)
-    log_ai_interaction(
-        logger,
+    _log_ai_interaction(
         correlation_id=correlation_id,
         model="agentcore",
         input_tokens=input_tokens,
