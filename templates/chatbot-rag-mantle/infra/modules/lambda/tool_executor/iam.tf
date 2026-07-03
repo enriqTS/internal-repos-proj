@@ -38,4 +38,13 @@ data "aws_iam_policy_document" "tool_executor_permissions" {
       "${var.rag_bucket_arn}/*",
     ]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryData",
+    ]
+    resources = ["*"]
+  }
 }

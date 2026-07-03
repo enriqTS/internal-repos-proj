@@ -32,4 +32,13 @@ data "aws_iam_policy_document" "kb_sync_permissions" {
     actions   = ["bedrock:StartIngestionJob"]
     resources = ["*"]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryData",
+    ]
+    resources = ["*"]
+  }
 }

@@ -62,4 +62,13 @@ data "aws_iam_policy_document" "orchestrator_permissions" {
     ]
     resources = [var.responses_table_arn]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryData",
+    ]
+    resources = ["*"]
+  }
 }

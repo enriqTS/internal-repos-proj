@@ -47,8 +47,8 @@ data "aws_iam_policy_document" "orchestrator_permissions" {
   }
 
   statement {
-    effect    = "Allow"
-    actions   = ["lambda:InvokeFunction"]
+    effect  = "Allow"
+    actions = ["lambda:InvokeFunction"]
     resources = [
       var.ai_caller_arn,
     ]
@@ -60,5 +60,14 @@ data "aws_iam_policy_document" "orchestrator_permissions" {
       "dynamodb:PutItem",
     ]
     resources = [var.responses_table_arn]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryData",
+    ]
+    resources = ["*"]
   }
 }

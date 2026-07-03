@@ -34,4 +34,13 @@ data "aws_iam_policy_document" "ai_caller_permissions" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryData",
+    ]
+    resources = ["*"]
+  }
 }
