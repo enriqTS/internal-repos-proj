@@ -28,6 +28,12 @@ SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own 
 MANTLE_BASE_URL = os.environ.get("MANTLE_BASE_URL", "https://bedrock-mantle.us-east-1.api.aws/v1")
 MODEL_ID = os.environ.get("MODEL_ID", "your-model-id")
 
+# Module-level client — reused across all requests in the ECS container
+_client = OpenAI(
+    base_url=MANTLE_BASE_URL,
+    api_key="bedrock",  # AWS auth handled by SDK credentials
+)
+
 # Tool definitions for the Mantle API (RAG knowledge base search)
 TOOL_DEFINITIONS: list[dict[str, Any]] = [
     {
@@ -120,13 +126,8 @@ def invoke_mantle(
         },
     )
 
-    client = OpenAI(
-        base_url=MANTLE_BASE_URL,
-        api_key="bedrock",  # AWS auth handled by SDK credentials
-    )
-
     try:
-        response = client.responses.create(
+        response = _client.responses.create(
             model=MODEL_ID,
             instructions=SYSTEM_PROMPT,
             input=messages,
