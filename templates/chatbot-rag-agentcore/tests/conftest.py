@@ -19,7 +19,6 @@ def _lambda_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DYNAMODB_TABLE_NAME", "test-context-table")
     monkeypatch.setenv("RESPONSES_TABLE_NAME", "test-responses-table")
     monkeypatch.setenv("AI_CALLER_FUNCTION_NAME", "test-ai-caller")
-    monkeypatch.setenv("TOOL_EXECUTOR_FUNCTION_NAME", "test-tool-executor")
     monkeypatch.setenv("RAG_BUCKET_NAME", "test-rag-bucket")
     monkeypatch.setenv("MAX_CONVERSATION_HISTORY", "50")
     monkeypatch.setenv("MAX_RETRY_ATTEMPTS", "3")
