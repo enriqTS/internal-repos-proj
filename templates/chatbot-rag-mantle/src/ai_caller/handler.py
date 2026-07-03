@@ -18,6 +18,12 @@ SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own 
 MANTLE_BASE_URL = os.environ.get("MANTLE_BASE_URL", "https://bedrock-mantle.us-east-1.api.aws/v1")
 MODEL_ID = os.environ.get("MODEL_ID", "your-model-id")
 
+# Module-level OpenAI client — reused across warm Lambda invocations
+client = OpenAI(
+    base_url=MANTLE_BASE_URL,
+    api_key="bedrock",  # AWS auth handled by SDK credentials
+)
+
 
 @tracer.capture_lambda_handler
 @metrics.log_metrics(capture_cold_start_metric=True)
@@ -77,11 +83,6 @@ def invoke_mantle(messages: list[dict[str, Any]], tools: list[dict[str, Any]], c
             "inputTokenEstimate": input_token_estimate,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         },
-    )
-
-    client = OpenAI(
-        base_url=MANTLE_BASE_URL,
-        api_key="bedrock",  # AWS auth handled by SDK credentials
     )
 
     try:
