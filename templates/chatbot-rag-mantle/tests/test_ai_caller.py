@@ -83,29 +83,21 @@ def mock_openai_response() -> MagicMock:
     return response
 
 
-@patch("handler.OpenAI")
 def test_handler_returns_output_and_usage(
-    mock_openai_cls: MagicMock,
     sample_event: dict,
     mock_lambda_context: MagicMock,
     mock_openai_response: MagicMock,
 ) -> None:
     """Handler should call Mantle via OpenAI SDK and return output items with usage data."""
-    # Arrange: wire the mock client
-    mock_client = MagicMock()
-    mock_client.responses.create.return_value = mock_openai_response
-    mock_openai_cls.return_value = mock_client
-
-    # Act
     import handler
 
-    result = handler.handler(sample_event, mock_lambda_context)
+    # Arrange: patch the module-level client (already instantiated at import time)
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_openai_response
 
-    # Assert: OpenAI client created with correct base_url
-    mock_openai_cls.assert_called_once_with(
-        base_url="https://bedrock-mantle.us-east-1.api.aws/v1",
-        api_key="bedrock",
-    )
+    with patch.object(handler, "client", mock_client):
+        # Act
+        result = handler.handler(sample_event, mock_lambda_context)
 
     # Assert: responses.create called with event data
     mock_client.responses.create.assert_called_once()
@@ -129,22 +121,19 @@ def test_handler_returns_output_and_usage(
     assert result["status"] == "completed"
 
 
-@patch("handler.OpenAI")
 def test_handler_raises_on_api_error(
-    mock_openai_cls: MagicMock,
     sample_event: dict,
     mock_lambda_context: MagicMock,
 ) -> None:
     """Handler should raise RuntimeError when the Mantle API returns an error."""
+    import handler
     from openai import OpenAIError
 
-    # Arrange: make the client raise an OpenAIError
+    # Arrange: make the module-level client raise an OpenAIError
     mock_client = MagicMock()
     mock_client.responses.create.side_effect = OpenAIError("Service unavailable")
-    mock_openai_cls.return_value = mock_client
 
     # Act & Assert
-    import handler
-
-    with pytest.raises(RuntimeError, match="Mantle API error"):
-        handler.handler(sample_event, mock_lambda_context)
+    with patch.object(handler, "client", mock_client):
+        with pytest.raises(RuntimeError, match="Mantle API error"):
+            handler.handler(sample_event, mock_lambda_context)

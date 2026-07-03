@@ -149,11 +149,10 @@ def test_no_conversation_history_retrieval_before_ai_invocation(
     }
     mock_append_messages.return_value = []
 
-    from handler import handler
-
     # Verify the handler code never directly imports or calls get_conversation_history.
     # The handler module should not have any reference to get_conversation_history.
     import handler as handler_module
+    from handler import handler
 
     assert not hasattr(handler_module, "get_conversation_history"), (
         "Handler should not import get_conversation_history — "
