@@ -16,4 +16,8 @@ resource "aws_dynamodb_table" "responses" {
     attribute_name = "expiresAt"
     enabled        = true
   }
+
+  server_side_encryption {
+    enabled = true
+  }
 }

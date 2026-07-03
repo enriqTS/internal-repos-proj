@@ -17,6 +17,10 @@ resource "aws_dynamodb_table" "responses" {
     enabled        = true
   }
 
+  server_side_encryption {
+    enabled = true
+  }
+
   tags = {
     Name = "${local.name_prefix}-responses"
   }

@@ -22,6 +22,16 @@ resource "aws_s3_bucket_versioning" "rag_documents" {
   }
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "rag_documents" {
+  bucket = aws_s3_bucket.rag_documents.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "rag_documents" {
   bucket = aws_s3_bucket.rag_documents.id
 

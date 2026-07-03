@@ -11,4 +11,8 @@ resource "aws_dynamodb_table" "user_context" {
     name = "userId"
     type = "S"
   }
+
+  server_side_encryption {
+    enabled = true
+  }
 }

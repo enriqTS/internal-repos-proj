@@ -10,6 +10,7 @@ resource "aws_sqs_queue" "message_queue_dlq" {
   name                        = "${local.name_prefix}-message-queue-dlq.fifo"
   fifo_queue                  = true
   content_based_deduplication = true
+  sqs_managed_sse_enabled     = true
 }
 
 resource "aws_sqs_queue" "message_queue" {
@@ -17,6 +18,7 @@ resource "aws_sqs_queue" "message_queue" {
   fifo_queue                  = true
   content_based_deduplication = true
   visibility_timeout_seconds  = 900
+  sqs_managed_sse_enabled     = true
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.message_queue_dlq.arn
