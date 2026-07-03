@@ -2,7 +2,7 @@
 
 Manages per-user conversation history in DynamoDB with graceful degradation.
 Contains the same core logic as the shared module — the only difference is
-the import path for logging_config.
+direct Powertools Logger usage at module level.
 
 Configuration via environment variables:
 - DYNAMODB_TABLE_NAME: Name of the DynamoDB table storing user context
