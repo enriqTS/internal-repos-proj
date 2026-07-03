@@ -26,10 +26,15 @@ resource "aws_iam_role_policy" "kb_sync_permissions" {
   policy = data.aws_iam_policy_document.kb_sync_permissions.json
 }
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 data "aws_iam_policy_document" "kb_sync_permissions" {
   statement {
-    effect    = "Allow"
-    actions   = ["bedrock:StartIngestionJob"]
-    resources = ["*"]
+    effect  = "Allow"
+    actions = ["bedrock:StartIngestionJob"]
+    resources = [
+      "arn:aws:bedrock:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:knowledge-base/${var.knowledge_base_id}"
+    ]
   }
 }
