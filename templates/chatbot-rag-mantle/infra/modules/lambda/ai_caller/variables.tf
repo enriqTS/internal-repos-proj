@@ -29,3 +29,9 @@ variable "log_level" {
   type        = string
   default     = "INFO"
 }
+
+variable "memory_size" {
+  description = "Amount of memory in MB allocated to the Lambda function"
+  type        = number
+  default     = 256
+}

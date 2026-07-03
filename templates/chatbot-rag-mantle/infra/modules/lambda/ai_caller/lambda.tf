@@ -16,6 +16,7 @@ resource "aws_lambda_function" "ai_caller" {
   source_code_hash = data.archive_file.ai_caller.output_base64sha256
   role             = aws_iam_role.ai_caller.arn
   timeout          = 90
+  memory_size      = var.memory_size
 
   layers = [var.shared_layer_arn]
 

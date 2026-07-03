@@ -16,6 +16,7 @@ resource "aws_lambda_function" "responses_reader" {
   source_code_hash = data.archive_file.responses_reader.output_base64sha256
   role             = aws_iam_role.responses_reader.arn
   timeout          = 10
+  memory_size      = var.memory_size
 
   tracing_config {
     mode = "Active"

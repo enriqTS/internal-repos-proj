@@ -81,3 +81,9 @@ variable "responses_table_name" {
   description = "Name of the responses DynamoDB table"
   type        = string
 }
+
+variable "memory_size" {
+  description = "Amount of memory in MB allocated to the Lambda function"
+  type        = number
+  default     = 256
+}

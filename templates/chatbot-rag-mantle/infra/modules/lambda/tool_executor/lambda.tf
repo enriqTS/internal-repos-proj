@@ -16,6 +16,7 @@ resource "aws_lambda_function" "tool_executor" {
   source_code_hash = data.archive_file.tool_executor.output_base64sha256
   role             = aws_iam_role.tool_executor.arn
   timeout          = 30
+  memory_size      = var.memory_size
 
   tracing_config {
     mode = "Active"

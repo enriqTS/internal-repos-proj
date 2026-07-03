@@ -50,6 +50,7 @@ module "orchestrator" {
   max_conversation_history = var.max_conversation_history
   max_retry_attempts       = var.max_retry_attempts
   log_level                = var.log_level
+  memory_size              = 512
 }
 
 module "ai_caller" {
@@ -60,6 +61,7 @@ module "ai_caller" {
   agent_id         = module.agentcore.agent_id
   agent_alias_id   = module.agentcore.agent_alias_id
   log_level        = var.log_level
+  memory_size      = 512
 }
 
 module "shared_layer" {
@@ -88,6 +90,7 @@ module "responses_reader" {
   responses_table_arn  = module.dynamodb_responses.table_arn
   responses_table_name = module.dynamodb_responses.table_name
   log_level            = var.log_level
+  memory_size          = 256
 }
 
 module "s3" {
@@ -113,6 +116,7 @@ module "kb_sync" {
   knowledge_base_id = module.bedrock_kb.knowledge_base_id
   data_source_id    = module.bedrock_kb.data_source_id
   log_level         = var.log_level
+  memory_size       = 256
 }
 
 module "monitoring" {

@@ -43,6 +43,7 @@ module "orchestrator" {
   max_conversation_history    = var.max_conversation_history
   max_retry_attempts          = var.max_retry_attempts
   log_level                   = var.log_level
+  memory_size                 = 512
 }
 
 module "ai_caller" {
@@ -53,6 +54,7 @@ module "ai_caller" {
   mantle_base_url  = var.mantle_base_url
   model_id         = var.model_id
   log_level        = var.log_level
+  memory_size      = 512
 }
 
 module "tool_executor" {
@@ -63,6 +65,7 @@ module "tool_executor" {
   rag_bucket_arn   = module.s3.bucket_arn
   shared_layer_arn = module.shared_layer.layer_arn
   log_level        = var.log_level
+  memory_size      = 256
 }
 
 module "shared_layer" {
@@ -91,6 +94,7 @@ module "responses_reader" {
   responses_table_arn  = module.dynamodb_responses.table_arn
   responses_table_name = module.dynamodb_responses.table_name
   log_level            = var.log_level
+  memory_size          = 256
 }
 
 module "s3" {
@@ -102,9 +106,9 @@ module "s3" {
 }
 
 module "bedrock_kb" {
-  source       = "../../modules/bedrock_kb"
-  project_name = var.project_name
-  environment  = var.environment
+  source         = "../../modules/bedrock_kb"
+  project_name   = var.project_name
+  environment    = var.environment
   rag_bucket_arn = module.s3.bucket_arn
 }
 
@@ -116,6 +120,7 @@ module "kb_sync" {
   knowledge_base_id = module.bedrock_kb.knowledge_base_id
   data_source_id    = module.bedrock_kb.data_source_id
   log_level         = var.log_level
+  memory_size       = 256
 }
 
 module "monitoring" {

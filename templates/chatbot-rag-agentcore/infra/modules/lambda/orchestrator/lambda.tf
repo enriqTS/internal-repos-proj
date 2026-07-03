@@ -16,6 +16,7 @@ resource "aws_lambda_function" "orchestrator" {
   source_code_hash = data.archive_file.orchestrator.output_base64sha256
   role             = aws_iam_role.orchestrator.arn
   timeout          = 150
+  memory_size      = var.memory_size
 
   tracing_config {
     mode = "Active"
