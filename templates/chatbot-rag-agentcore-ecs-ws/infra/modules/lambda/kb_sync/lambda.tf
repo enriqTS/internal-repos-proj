@@ -16,6 +16,7 @@ resource "aws_lambda_function" "kb_sync" {
   source_code_hash = data.archive_file.kb_sync.output_base64sha256
   role             = aws_iam_role.kb_sync.arn
   timeout          = 30
+  memory_size      = var.memory_size
 
   tracing_config {
     mode = "Active"

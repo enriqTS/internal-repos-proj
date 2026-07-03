@@ -167,4 +167,5 @@ module "kb_sync" {
   knowledge_base_id = var.knowledge_base_id
   data_source_id    = var.data_source_id
   log_level         = var.log_level
+  memory_size       = 256
 }
