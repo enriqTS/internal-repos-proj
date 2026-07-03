@@ -8,6 +8,10 @@ resource "aws_dynamodb_table" "user_context" {
     type = "S"
   }
 
+  server_side_encryption {
+    enabled = true
+  }
+
   tags = {
     Name = "${var.project_name}-${var.environment}-user-context"
   }
