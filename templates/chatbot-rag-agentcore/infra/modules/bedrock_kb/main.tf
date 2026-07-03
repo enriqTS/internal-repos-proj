@@ -79,7 +79,10 @@ resource "aws_iam_role_policy" "bedrock_kb_s3vectors_access" {
           "s3vectors:DeleteVectors",
           "s3vectors:QueryVectors"
         ]
-        Resource = ["*"]
+        Resource = [
+          "arn:aws:s3vectors:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vector-bucket/${local.name_prefix}-vectors",
+          "arn:aws:s3vectors:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vector-bucket/${local.name_prefix}-vectors/*"
+        ]
       }
     ]
   })
