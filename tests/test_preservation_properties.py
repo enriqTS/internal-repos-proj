@@ -509,29 +509,42 @@ class TestStructuredLogFields:
     """
 
     @pytest.mark.parametrize("template_root", TEMPLATE_ROOTS, ids=TEMPLATE_IDS)
-    def test_logging_config_uses_powertools_logger(self, template_root: Path) -> None:
-        """Logging configuration must use aws_lambda_powertools Logger."""
-        logging_config = (
-            template_root / "src" / "layers" / "shared" / "python" / "shared" / "logging_config.py"
-        )
-        assert logging_config.exists(), f"logging_config.py not found at {logging_config}"
+    def test_handlers_use_powertools_logger_directly(self, template_root: Path) -> None:
+        """Handlers must import and use aws_lambda_powertools Logger directly (no wrapper)."""
+        orchestrator_handler = template_root / "src" / "orchestrator" / "handler.py"
+        content = orchestrator_handler.read_text()
 
-        content = logging_config.read_text()
         assert "from aws_lambda_powertools import Logger" in content, (
-            f"{template_root.name}: logging_config must import Powertools Logger"
+            f"{template_root.name}: orchestrator handler must import Powertools Logger directly"
+        )
+        assert "logger = Logger(" in content, (
+            f"{template_root.name}: orchestrator handler must instantiate Logger at module level"
         )
 
     @pytest.mark.parametrize("template_root", TEMPLATE_ROOTS, ids=TEMPLATE_IDS)
-    def test_log_ai_interaction_includes_logtype(self, template_root: Path) -> None:
-        """log_ai_interaction function must include logType='ai-interaction'."""
-        logging_config = (
-            template_root / "src" / "layers" / "shared" / "python" / "shared" / "logging_config.py"
-        )
-        content = logging_config.read_text()
+    def test_ai_interaction_log_includes_logtype(self, template_root: Path) -> None:
+        """AI interaction logging must include logType='ai-interaction' in handler code."""
+        # After logging_config.py removal, ai-interaction logging is done directly in handlers.
+        # For Mantle: directly in src/ai_caller/handler.py
+        # For AgentCore: in shared/ai_caller_agentcore.py (the handler delegates to it)
+        ai_caller_handler = template_root / "src" / "ai_caller" / "handler.py"
+        assert ai_caller_handler.exists(), f"AI caller handler not found for {template_root.name}"
+        content = ai_caller_handler.read_text()
 
-        assert "ai-interaction" in content, (
-            f"{template_root.name}: log_ai_interaction must emit logType='ai-interaction'"
-        )
+        # Check directly in handler first, then in the shared module it delegates to
+        if "ai-interaction" not in content:
+            # AgentCore delegates to shared ai_caller_agentcore.py
+            shared_ai_caller = (
+                template_root / "src" / "layers" / "shared" / "python" / "shared" / "ai_caller_agentcore.py"
+            )
+            assert shared_ai_caller.exists(), (
+                f"{template_root.name}: Neither ai_caller/handler.py nor shared/ai_caller_agentcore.py "
+                "contains logType='ai-interaction'"
+            )
+            shared_content = shared_ai_caller.read_text()
+            assert "ai-interaction" in shared_content, (
+                f"{template_root.name}: AI caller must emit logType='ai-interaction' for AI interaction logs"
+            )
 
     @pytest.mark.parametrize("template_root", TEMPLATE_ROOTS, ids=TEMPLATE_IDS)
     def test_handlers_set_correlation_id(self, template_root: Path) -> None:
