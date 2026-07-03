@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 # ECS Task Execution Role — for pulling images from ECR and writing to CloudWatch Logs
 resource "aws_iam_role" "execution" {
   name = "${var.project_name}-${var.environment}-ecs-execution-role"
@@ -102,7 +104,10 @@ resource "aws_iam_role_policy" "task_bedrock" {
         "bedrock:InvokeModel",
         "bedrock:InvokeModelWithResponseStream",
       ]
-      Resource = "*"
+      Resource = [
+        "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:agent/${var.agent_id}",
+        "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:agent-alias/${var.agent_id}/${var.agent_alias_id}",
+      ]
     }]
   })
 }

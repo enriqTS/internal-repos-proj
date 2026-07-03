@@ -95,7 +95,9 @@ resource "aws_iam_role_policy" "task_bedrock" {
         "bedrock:InvokeModel",
         "bedrock:InvokeModelWithResponseStream",
       ]
-      Resource = "*"
+      Resource = [
+        "arn:aws:bedrock:${var.aws_region}::foundation-model/${var.model_id}",
+      ]
     }]
   })
 }
