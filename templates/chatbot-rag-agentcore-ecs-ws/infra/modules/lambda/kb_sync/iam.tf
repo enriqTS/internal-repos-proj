@@ -38,3 +38,17 @@ data "aws_iam_policy_document" "kb_sync_permissions" {
     ]
   }
 }
+
+data "aws_iam_policy_document" "kb_sync_xray" {
+  statement {
+    effect    = "Allow"
+    actions   = ["xray:PutTraceSegments", "xray:PutTelemetryData"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "kb_sync_xray" {
+  name   = "${var.project_name}-${var.environment}-kb-sync-xray"
+  role   = aws_iam_role.kb_sync.id
+  policy = data.aws_iam_policy_document.kb_sync_xray.json
+}
