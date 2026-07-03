@@ -4,10 +4,10 @@ import os
 from typing import Any
 
 import boto3
+from aws_lambda_powertools import Logger
 from botocore.exceptions import ClientError
-from shared.logging_config import get_logger
 
-logger = get_logger("kb_sync")
+logger = Logger()
 
 KNOWLEDGE_BASE_ID = os.environ.get("KNOWLEDGE_BASE_ID", "")
 DATA_SOURCE_ID = os.environ.get("DATA_SOURCE_ID", "")
@@ -16,7 +16,10 @@ bedrock_client = boto3.client("bedrock-agent")
 
 
 @logger.inject_lambda_context
-def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext (no typed stub)
+def handler(
+    event: dict[str, Any],
+    context: Any,
+) -> dict[str, Any]:  # context: LambdaContext (no typed stub)
     """S3 event trigger handler — starts KB ingestion job."""
     records = event.get("Records", [])
     logger.info(
