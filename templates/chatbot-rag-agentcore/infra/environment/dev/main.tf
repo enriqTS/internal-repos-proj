@@ -8,6 +8,7 @@ module "agentcore" {
   environment       = var.environment
   model_id          = var.model_id
   agent_instruction = "You are a helpful assistant."
+  knowledge_base_id = module.bedrock_kb.knowledge_base_id
 }
 
 module "api_gateway" {

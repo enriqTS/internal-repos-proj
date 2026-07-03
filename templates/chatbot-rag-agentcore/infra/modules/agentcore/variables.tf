@@ -18,3 +18,8 @@ variable "agent_instruction" {
   type        = string
   default     = "You are a helpful assistant. Replace this prompt with your own instructions."
 }
+
+variable "knowledge_base_id" {
+  description = "ID of the Bedrock Knowledge Base to associate with the agent for native RAG retrieval"
+  type        = string
+}

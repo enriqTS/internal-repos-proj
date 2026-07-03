@@ -65,4 +65,30 @@ resource "aws_bedrockagent_agent_alias" "chatbot" {
   description      = "Production alias for ${local.name_prefix} agent"
 }
 
+# ------------------------------------------------------------------------------
+# Knowledge Base Association — native RAG retrieval without Lambda hop
+# ------------------------------------------------------------------------------
 
+resource "aws_bedrockagent_agent_knowledge_base_association" "kb" {
+  agent_id             = aws_bedrockagent_agent.chatbot.agent_id
+  description          = "RAG Knowledge Base for ${local.name_prefix} agent"
+  knowledge_base_id    = var.knowledge_base_id
+  knowledge_base_state = "ENABLED"
+}
+
+# IAM — allow agent to retrieve from the Knowledge Base
+resource "aws_iam_role_policy" "agent_kb_retrieval" {
+  name   = "${local.name_prefix}-agent-kb-retrieval"
+  role   = aws_iam_role.agent.id
+  policy = data.aws_iam_policy_document.agent_kb_retrieval.json
+}
+
+data "aws_iam_policy_document" "agent_kb_retrieval" {
+  statement {
+    effect  = "Allow"
+    actions = ["bedrock:Retrieve"]
+    resources = [
+      "arn:aws:bedrock:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:knowledge-base/${var.knowledge_base_id}"
+    ]
+  }
+}
