@@ -115,6 +115,19 @@ module "s3" {
 }
 
 ################################################################################
+# WAF — API key authentication on ALB
+################################################################################
+
+module "waf" {
+  source        = "../../modules/waf"
+  project_name  = var.project_name
+  environment   = var.environment
+  alb_arn       = module.alb.alb_arn
+  api_key_value = var.api_key_value
+  waf_enabled   = var.waf_enabled
+}
+
+################################################################################
 # KB Sync Lambda (S3 event → Bedrock Knowledge Base ingestion)
 ################################################################################
 

@@ -149,3 +149,20 @@ variable "data_source_id" {
   type        = string
 }
 
+
+################################################################################
+# WAF — API key authentication (disabled by default for WebSocket templates)
+################################################################################
+
+variable "api_key_value" {
+  description = "API key value for WAF authentication (stored in SSM/Secrets Manager)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "waf_enabled" {
+  description = "Toggle to enable/disable WAF WebACL (disabled for WebSocket — WAFv2 does not support API Gateway v2 WebSocket)"
+  type        = bool
+  default     = false
+}

@@ -146,3 +146,19 @@ variable "data_source_id" {
   type        = string
 }
 
+
+################################################################################
+# WAF — API key authentication on ALB
+################################################################################
+
+variable "api_key_value" {
+  description = "API key value for WAF authentication (stored in SSM/Secrets Manager)"
+  type        = string
+  sensitive   = true
+}
+
+variable "waf_enabled" {
+  description = "Toggle to enable/disable WAF WebACL on ALB"
+  type        = bool
+  default     = true
+}

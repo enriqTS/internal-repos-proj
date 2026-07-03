@@ -79,3 +79,12 @@ knowledge_base_id = "YOUR_KNOWLEDGE_BASE_ID"
 # Bedrock Knowledge Base Data Source ID
 data_source_id = "YOUR_DATA_SOURCE_ID"
 
+
+################################################################################
+# WAF — API key authentication on ALB
+################################################################################
+
+# API key for WAF authentication — DO NOT commit the real value.
+# Store the actual key in SSM Parameter Store or Secrets Manager and
+# pass via TF_VAR_api_key_value environment variable.
+api_key_value = "REPLACE_WITH_SECURE_API_KEY"

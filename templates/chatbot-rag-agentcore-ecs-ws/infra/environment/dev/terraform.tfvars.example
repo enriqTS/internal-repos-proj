@@ -73,3 +73,13 @@ knowledge_base_id = "YOUR_KNOWLEDGE_BASE_ID"
 # Bedrock Knowledge Base Data Source ID
 data_source_id = "YOUR_DATA_SOURCE_ID"
 
+
+################################################################################
+# WAF — API key authentication (disabled by default for WebSocket)
+################################################################################
+
+# API key for WAF authentication — only needed if waf_enabled = true.
+# WAFv2 does not support API Gateway v2 WebSocket APIs, so this is
+# disabled by default for WS templates.
+# api_key_value = "REPLACE_WITH_SECURE_API_KEY"
+# waf_enabled   = false
