@@ -4,12 +4,12 @@ import os
 import time
 from typing import Any
 
-from aws_lambda_powertools import Metrics
+from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from openai import OpenAI, OpenAIError
-from shared.logging_config import get_logger, log_ai_interaction
 
-logger = get_logger("ai_caller")
+logger = Logger(service="ai_caller")
+tracer = Tracer(service="ai_caller")
 metrics = Metrics(namespace="ChatbotRAG", service="ai-caller")
 
 # PLACEHOLDER: Replace this system prompt with your own instructions.
@@ -19,6 +19,7 @@ MANTLE_BASE_URL = os.environ.get("MANTLE_BASE_URL", "https://bedrock-mantle.us-e
 MODEL_ID = os.environ.get("MODEL_ID", "your-model-id")
 
 
+@tracer.capture_lambda_handler
 @metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # noqa: ANN401
@@ -65,14 +66,17 @@ def invoke_mantle(messages: list[dict[str, Any]], tools: list[dict[str, Any]], c
 
     # Log AI interaction BEFORE request
     input_token_estimate = sum(len(str(m)) // 4 for m in messages)
-    log_ai_interaction(
-        logger,
-        correlationId=correlation_id,
-        model=MODEL_ID,
-        phase="request",
-        inputMessageCount=len(messages),
-        inputTokenEstimate=input_token_estimate,
-        timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    logger.info(
+        "AI interaction",
+        extra={
+            "logType": "ai-interaction",
+            "correlationId": correlation_id,
+            "model": MODEL_ID,
+            "phase": "request",
+            "inputMessageCount": len(messages),
+            "inputTokenEstimate": input_token_estimate,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        },
     )
 
     client = OpenAI(
@@ -105,16 +109,19 @@ def invoke_mantle(messages: list[dict[str, Any]], tools: list[dict[str, Any]], c
     metrics.add_metric(name="AIModelLatency", unit=MetricUnit.Milliseconds, value=latency_ms)
 
     # Log AI interaction AFTER response
-    log_ai_interaction(
-        logger,
-        correlationId=correlation_id,
-        model=MODEL_ID,
-        phase="response",
-        inputTokens=response.usage.input_tokens if response.usage else None,
-        outputTokens=response.usage.output_tokens if response.usage else None,
-        totalTokens=response.usage.total_tokens if response.usage else None,
-        latencyMs=latency_ms,
-        finishReason=response.status if hasattr(response, "status") else None,
+    logger.info(
+        "AI interaction",
+        extra={
+            "logType": "ai-interaction",
+            "correlationId": correlation_id,
+            "model": MODEL_ID,
+            "phase": "response",
+            "inputTokens": response.usage.input_tokens if response.usage else None,
+            "outputTokens": response.usage.output_tokens if response.usage else None,
+            "totalTokens": response.usage.total_tokens if response.usage else None,
+            "latencyMs": latency_ms,
+            "finishReason": response.status if hasattr(response, "status") else None,
+        },
     )
 
     # Check for tool calls in output and log at INFO level

@@ -6,11 +6,11 @@ import traceback
 from typing import Any
 
 import boto3
-from aws_lambda_powertools import Metrics
+from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
-from shared.logging_config import get_logger
 
-logger = get_logger("tool_executor")
+logger = Logger(service="tool_executor")
+tracer = Tracer(service="tool_executor")
 metrics = Metrics(namespace="ChatbotRAG", service="tool-executor")
 
 RAG_BUCKET = os.environ["RAG_BUCKET_NAME"]
@@ -18,6 +18,7 @@ RAG_BUCKET = os.environ["RAG_BUCKET_NAME"]
 s3_client = boto3.client("s3")
 
 
+@tracer.capture_lambda_handler
 @metrics.log_metrics(capture_cold_start_metric=True)
 @logger.inject_lambda_context
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # context: LambdaContext

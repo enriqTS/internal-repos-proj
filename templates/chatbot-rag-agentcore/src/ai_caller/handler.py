@@ -15,14 +15,15 @@ Environment variables:
 
 from typing import Any
 
-from aws_lambda_powertools import Logger
+from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.typing import LambdaContext
-
 from shared.ai_caller_agentcore import invoke_agentcore
 
 logger = Logger(service="ai_caller")
+tracer = Tracer(service="ai_caller")
 
 
+@tracer.capture_lambda_handler
 @logger.inject_lambda_context
 def handler(event: dict[str, Any], context: LambdaContext) -> dict[str, Any]:
     """Invoke AgentCore Runtime and return the AI response.

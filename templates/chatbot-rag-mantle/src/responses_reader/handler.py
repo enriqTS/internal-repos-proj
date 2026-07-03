@@ -5,9 +5,10 @@ import os
 from typing import Any
 
 import boto3
-from shared.logging_config import get_logger
+from aws_lambda_powertools import Logger, Tracer
 
-logger = get_logger("responses_reader")
+logger = Logger(service="responses_reader")
+tracer = Tracer(service="responses_reader")
 
 RESPONSES_TABLE_NAME = os.environ.get("RESPONSES_TABLE_NAME", "")
 
@@ -21,6 +22,7 @@ CORS_HEADERS = {
 }
 
 
+@tracer.capture_lambda_handler
 @logger.inject_lambda_context
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # noqa: ANN401
     """API Gateway proxy handler for GET /responses/{messageId}."""

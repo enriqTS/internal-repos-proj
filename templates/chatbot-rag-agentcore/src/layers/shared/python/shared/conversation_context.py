@@ -12,14 +12,13 @@ Configuration via environment variables:
 
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
+from aws_lambda_powertools import Logger
 
-from shared.logging_config import get_logger
-
-logger = get_logger("conversation_context")
+logger = Logger(service="conversation_context")
 
 # Configuration from environment variables
 DYNAMODB_TABLE_NAME = os.environ.get("DYNAMODB_TABLE_NAME", "")
@@ -212,7 +211,7 @@ def append_messages(
     Returns:
         Updated conversation history list with the new messages appended.
     """
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Retrieve existing history (returns [] on failure)
     messages = _get_conversation_history(user_id, correlation_id=correlation_id)

@@ -19,11 +19,11 @@ from collections.abc import Generator
 from typing import Any
 
 import boto3
+from aws_lambda_powertools import Logger, Tracer
 from botocore.exceptions import ClientError
 
-from shared.logging_config import get_logger, log_ai_interaction
-
-logger = get_logger("ai_caller")
+logger = Logger(service="ai_caller")
+tracer = Tracer(service="ai_caller")
 
 # PLACEHOLDER: Replace this system prompt with your own instructions.
 SYSTEM_PROMPT = "You are a helpful assistant. Replace this prompt with your own instructions."
@@ -125,15 +125,18 @@ def invoke_agentcore(
 
     latency_ms = int((time.time() - start_time) * 1000)
 
-    log_ai_interaction(
-        logger,
-        correlation_id=correlation_id,
-        model="agentcore",
-        input_tokens=usage.get("inputTokens", 0),
-        output_tokens=usage.get("outputTokens", 0),
-        total_tokens=usage.get("totalTokens", 0),
-        latency_ms=latency_ms,
-        finish_reason=finish_reason or "end_turn",
+    logger.info(
+        "AI interaction",
+        extra={
+            "logType": "ai-interaction",
+            "correlation_id": correlation_id,
+            "model": "agentcore",
+            "input_tokens": usage.get("inputTokens", 0),
+            "output_tokens": usage.get("outputTokens", 0),
+            "total_tokens": usage.get("totalTokens", 0),
+            "latency_ms": latency_ms,
+            "finish_reason": finish_reason or "end_turn",
+        },
     )
 
     return {
@@ -248,15 +251,18 @@ def invoke_agentcore_streaming(
     latency_ms = int((time.time() - start_time) * 1000)
 
     # Log AI interaction once after stream completes (Requirement 15.3)
-    log_ai_interaction(
-        logger,
-        correlation_id=correlation_id,
-        model="agentcore",
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
-        total_tokens=total_tokens,
-        latency_ms=latency_ms,
-        finish_reason=finish_reason,
+    logger.info(
+        "AI interaction",
+        extra={
+            "logType": "ai-interaction",
+            "correlation_id": correlation_id,
+            "model": "agentcore",
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": total_tokens,
+            "latency_ms": latency_ms,
+            "finish_reason": finish_reason,
+        },
     )
 
     # Pass metadata back to caller if requested

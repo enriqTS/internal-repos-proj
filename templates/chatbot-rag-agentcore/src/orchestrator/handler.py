@@ -12,12 +12,12 @@ import time
 from typing import Any
 
 import boto3
-from aws_lambda_powertools import Metrics
+from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from shared.conversation_context import append_messages
-from shared.logging_config import get_logger
 
-logger = get_logger("orchestrator")
+logger = Logger(service="orchestrator")
+tracer = Tracer(service="orchestrator")
 metrics = Metrics(namespace="ChatbotRAG", service="orchestrator")
 
 # Configuration from environment variables
@@ -98,6 +98,7 @@ def _write_response(message_id: str, status: str, response: str = "", error: str
         )
 
 
+@tracer.capture_lambda_handler
 @logger.inject_lambda_context
 @metrics.log_metrics(capture_cold_start_metric=True)
 def handler(event: dict[str, Any], context: Any) -> dict[str, int]:  # context: LambdaContext (no typed stub)
