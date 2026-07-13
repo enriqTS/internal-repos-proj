@@ -1,0 +1,377 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration test": {
+      "status": "passed",
+      "failingExample": "All 51 tests FAILED as expected, confirming all 9 violations exist across all 6 ECS templates:\n\nVIOLATION 1 (ALB Auth) - 6 failures:\n- chatbot-rag-agentcore-ecs: Load balancer forwards traffic without any authentication mechanism.\n- chatbot-rag-agentcore-ecs-ws: Load balancer forwards traffic without any authentication mechanism.\n- chatbot-rag-agentcore-ecs-ws-streaming: Load balancer forwards traffic without any authentication mechanism.\n- chatbot-rag-mantle-ecs: Load balancer forwards traffic without any authentication mechanism.\n- chatbot-rag-mantle-ecs-ws: Load balancer forwards traffic without any authentication mechanism.\n- chatbot-rag-mantle-ecs-ws-streaming: Load balancer forwards traffic without any authentication mechanism.\n\nVIOLATION 2 (ECS app logging wrapper) - 6 failures:\n- agentcore-ecs: 5 modules use app.logging_config (ai_caller, tool_executor, orchestrator, conversation_context, main)\n- agentcore-ecs-ws: 7 modules use app.logging_config (+ connection_manager, message_sender)\n- agentcore-ecs-ws-streaming: 7 modules use app.logging_config (+ connection_manager, message_sender)\n- mantle-ecs: 5 modules use app.logging_config\n- mantle-ecs-ws: 7 modules use app.logging_config\n- mantle-ecs-ws-streaming: 7 modules use app.logging_config\n\nVIOLATION 3 (kb_sync shared wrapper) - 6 failures:\n- All 6 templates: src/kb_sync/handler.py imports from shared.logging_config wrapper.\n\nVIOLATION 4 (OpenAI client in function) - 3 failures:\n- mantle-ecs: OpenAI() client instantiated inside function 'invoke_mantle'\n- mantle-ecs-ws: OpenAI() client instantiated inside function 'invoke_mantle'\n- mantle-ecs-ws-streaming: OpenAI() client instantiated inside function 'invoke_mantle'\n\nVIOLATION 5 (no memory_size) - 6 failures:\n- All 6 templates: lambda.tf does not declare memory_size attribute.\n\nVIOLATION 6 (no DynamoDB encryption) - 6 failures:\n- All 6 templates: dynamodb/main.tf does not declare server_side_encryption block.\n\nVIOLATION 7 (ECS Bedrock wildcard) - 6 failures:\n- All 6 templates: ecs/iam.tf task_bedrock policy uses Resource = \"*\".\n\nVIOLATION 8 (kb_sync Bedrock wildcard) - 6 failures:\n- All 6 templates: kb_sync/iam.tf bedrock:StartIngestionJob scoped to resources = [\"*\"].\n\nVIOLATION 9 (no X-Ray IAM) - 6 failures:\n- All 6 templates: kb_sync/iam.tf lacks xray:PutTraceSegments permission.",
+      "lastRunTimestamp": 1783096124009
+    },
+    "2. Write preservation property tests (BEFORE implementing fix)": {
+      "status": "passed",
+      "lastRunTimestamp": 1783096878352
+    },
+    "12.1 Verify bug condition exploration test now passes": {
+      "status": "passed",
+      "lastRunTimestamp": 1783098819954
+    },
+    "12.2 Verify preservation tests still pass": {
+      "status": "passed",
+      "lastRunTimestamp": 1783098862708
+    }
+  },
+  "executionHistory": {
+    "1. Write bug condition exploration test": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876635
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095885034
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783096145956
+      }
+    ],
+    "2. Write preservation property tests (BEFORE implementing fix)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876680
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783096150762
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783096908172
+      }
+    ],
+    "3.1 Create WAF WebACL module with API key header rule": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876711
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783096917006
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097038200
+      }
+    ],
+    "3.2 Wire WAF module into all 6 ECS template root Terraform": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876743
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097042332
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097369106
+      }
+    ],
+    "4.1 Replace logging wrapper imports with direct Powertools Logger in all ECS app modules": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876774
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097379470
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097834976
+      }
+    ],
+    "4.2 Remove `src/app/logging_config.py` from all 6 ECS templates": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876807
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097839526
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097913401
+      }
+    ],
+    "5.1 Replace shared logging wrapper with direct Powertools import in kb_sync handler": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876846
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097924415
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098092321
+      }
+    ],
+    "6.1 Move OpenAI client instantiation to module level in Mantle AI Caller": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876875
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098096812
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098211902
+      }
+    ],
+    "7.1 Add memory_size variable and attribute to kb_sync Lambda module": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876907
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098216575
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098348882
+      }
+    ],
+    "8.1 Add server_side_encryption block to DynamoDB table resource": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876948
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098353340
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098417098
+      }
+    ],
+    "9.1 Scope Bedrock IAM policy in ECS task role to specific resource ARNs": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095876987
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098421431
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098547969
+      }
+    ],
+    "10.1 Scope kb_sync Lambda IAM to specific Knowledge Base ARN": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095877022
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098552242
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098630869
+      }
+    ],
+    "11.1 Add X-Ray permissions to kb_sync Lambda execution role": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095877053
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098635239
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098697652
+      }
+    ],
+    "12.1 Verify bug condition exploration test now passes": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095877083
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098702711
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098830769
+      }
+    ],
+    "12.2 Verify preservation tests still pass": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095877117
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098835095
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098876770
+      }
+    ],
+    "12.3 Run full test suite on all 6 ECS templates": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095877150
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098881175
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783099518740
+      }
+    ],
+    "13. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783095877183
+      },
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783099522863
+      }
+    ],
+    "3. Fix 1: ALB Authentication Enforcement via WAF WebACL (all 6 templates)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097369149
+      }
+    ],
+    "4. Fix 2: ECS App Logging — Remove Wrapper (all 6 templates)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783097913438
+      }
+    ],
+    "5. Fix 3: kb_sync Lambda Logging — Remove Shared Wrapper (all 6 templates)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098092365
+      }
+    ],
+    "6. Fix 4: Module-Level OpenAI Client (3 Mantle ECS variants)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098211958
+      }
+    ],
+    "7. Fix 5: Explicit memory_size for kb_sync Lambda (all 6 templates)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098348960
+      }
+    ],
+    "8. Fix 6: Explicit DynamoDB Encryption (all 6 templates)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098417150
+      }
+    ],
+    "9. Fix 7: Scoped ECS Task Role Bedrock IAM (all 6 templates)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098548022
+      }
+    ],
+    "10. Fix 8: Scoped kb_sync Lambda Bedrock IAM (all 6 templates)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098630912
+      }
+    ],
+    "11. Fix 9: X-Ray IAM Permissions for kb_sync Lambda (all 6 templates)": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783098697705
+      }
+    ],
+    "12. Verify fixes and run full validation": [
+      {
+        "executionId": "1c517073-e76c-4e9b-953e-3fe850ba1fc0",
+        "chatSessionId": "sess_c5ddc0be-23bc-49c8-aa21-8dfc78e76e22",
+        "timestamp": 1783099518777
+      }
+    ]
+  }
+}

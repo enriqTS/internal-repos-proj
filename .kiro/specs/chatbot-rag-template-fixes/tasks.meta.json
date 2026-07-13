@@ -1,0 +1,365 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration test": {
+      "status": "passed",
+      "failingExample": "All 22 tests failed as expected, confirming all 9 violations exist:\n\n1.1 API Key Auth: POST /chat has no 'security' scheme (both templates) — Falsifying: template_idx=0\n1.2 Tool Executor: AgentCore still has src/tool_executor/ directory\n1.3 Logging Wrapper: agentcore violations=['src/orchestrator/handler.py', 'src/tool_executor/handler.py', 'src/responses_reader/handler.py', 'src/kb_sync/handler.py'], mantle violations=['src/orchestrator/handler.py', 'src/ai_caller/handler.py', 'src/tool_executor/handler.py', 'src/responses_reader/handler.py', 'src/kb_sync/handler.py'] — Falsifying: template_idx=0\n1.4 OpenAI Client: Mantle ai_caller/handler.py creates OpenAI client inside invoke_mantle() function body\n1.5 Memory Size: No memory_size variable declared in any Lambda module (both templates)\n1.6 Encryption: S3 lacks aws_s3_bucket_server_side_encryption_configuration, DynamoDB lacks server_side_encryption, SQS lacks sqs_managed_sse_enabled (both templates)\n1.7 IAM Wildcard: bedrock_kb module uses Resource = [\"*\"] on s3vectors statements\n1.8 X-Ray: No xray:PutTraceSegments or xray:PutTelemetryData in any Lambda role (both templates)\n1.9 Stale Tests: AgentCore still has tests/test_tool_executor.py",
+      "lastRunTimestamp": 1783089771551
+    },
+    "2. Write preservation property tests (BEFORE implementing fix)": {
+      "status": "passed",
+      "lastRunTimestamp": 1783090112575
+    },
+    "12.1 Verify bug condition exploration test now passes": {
+      "status": "passed",
+      "lastRunTimestamp": 1783093127956
+    },
+    "12.2 Verify preservation tests still pass": {
+      "status": "passed",
+      "lastRunTimestamp": 1783093271529
+    }
+  },
+  "executionHistory": {
+    "1. Write bug condition exploration test": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093281
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088102912
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783089793197
+      }
+    ],
+    "2. Write preservation property tests (BEFORE implementing fix)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093324
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783089798201
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783090137447
+      }
+    ],
+    "3.1 Add API key authentication to OpenAPI specs and Terraform": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093360
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783090146117
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783090293063
+      }
+    ],
+    "4.1 Remove Tool Executor Lambda from AgentCore template": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093398
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783090301795
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783091566463
+      }
+    ],
+    "4.2 Configure Bedrock KB as native action group in AgentCore": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093437
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783091574189
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783091812272
+      }
+    ],
+    "5.1 Replace shared logging wrapper with direct Powertools imports": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093473
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783091821258
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092155189
+      }
+    ],
+    "6.1 Move OpenAI client instantiation to module level": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093508
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092162363
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092254483
+      }
+    ],
+    "7.1 Add memory_size variable to Lambda Terraform module": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093540
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092258858
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092645908
+      }
+    ],
+    "8.1 Add explicit encryption configuration to storage resources": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093575
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092650298
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092769888
+      }
+    ],
+    "9.1 Scope s3vectors IAM policy to specific bucket ARN": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093607
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092776019
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092888360
+      }
+    ],
+    "10.1 Add X-Ray permissions to Lambda execution roles": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093636
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092892620
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093020149
+      }
+    ],
+    "11.1 Remove stale test files referencing Tool Executor": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093686
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093025042
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093091537
+      }
+    ],
+    "12.1 Verify bug condition exploration test now passes": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093719
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093100682
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093141755
+      }
+    ],
+    "12.2 Verify preservation tests still pass": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093754
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093145963
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093292490
+      }
+    ],
+    "12.3 Run full test suite on both templates": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093785
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093296597
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783095162954
+      }
+    ],
+    "13. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783088093822
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783095166980
+      },
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783095171148
+      }
+    ],
+    "3. Fix 1: API Key Enforcement (both templates)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783090293115
+      }
+    ],
+    "4. Fix 2: Tool Executor Removal + Native KB (AgentCore only)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783091812337
+      }
+    ],
+    "5. Fix 3: Logging Unification (both templates)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092155234
+      }
+    ],
+    "6. Fix 4: Module-Level OpenAI Client (Mantle AI Caller)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092254514
+      }
+    ],
+    "7. Fix 5: Explicit memory_size Variable (both templates)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092645945
+      }
+    ],
+    "8. Fix 6: Explicit Encryption (both templates)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092769941
+      }
+    ],
+    "9. Fix 7: IAM Scoping for s3vectors (AgentCore template)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783092888397
+      }
+    ],
+    "10. Fix 8: Explicit X-Ray IAM Permissions (both templates)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093020191
+      }
+    ],
+    "11. Fix 9: Test Cleanup (AgentCore template)": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783093091593
+      }
+    ],
+    "12. Verify fixes and run full validation": [
+      {
+        "executionId": "87b86a46-1022-47f8-a948-341e0c397072",
+        "chatSessionId": "sess_8885f6cf-697e-4f16-93d9-baf09b98514b",
+        "timestamp": 1783095163000
+      }
+    ]
+  }
+}

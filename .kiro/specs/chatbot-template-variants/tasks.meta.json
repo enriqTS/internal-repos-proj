@@ -1,0 +1,704 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create shared message protocol module (`shared/message_protocol.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034359
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912046906
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912821747
+      }
+    ],
+    "1.2 Create shared logging configuration module (`shared/logging_config.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034392
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912048875
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912822520
+      }
+    ],
+    "1.3 Create shared data models module (`shared/models.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034427
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912049285
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912823388
+      }
+    ],
+    "1.4 Create shared connection manager module (`shared/connection_manager.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034467
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913196969
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913634524
+      }
+    ],
+    "1.5 Create shared message sender module (`shared/message_sender.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034499
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913197803
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913635339
+      }
+    ],
+    "1.6 Create shared AI caller core logic — AgentCore variant (`shared/ai_caller_agentcore.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034528
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912049389
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912824309
+      }
+    ],
+    "1.7 Create shared AI caller core logic — Mantle variant (`shared/ai_caller_mantle.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034558
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912050267
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912825212
+      }
+    ],
+    "1.8 Create shared tool executor module (`shared/tool_executor.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034590
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912837363
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913189416
+      }
+    ],
+    "1.9 Create shared conversation context module (`shared/conversation_context.py`)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034617
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912838105
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913190183
+      }
+    ],
+    "2. Checkpoint — Ensure all shared module tests pass": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034655
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913660933
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913665899
+      }
+    ],
+    "3.1 Scaffold `chatbot-rag-agentcore-ws` template directory structure": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034689
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913681813
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782914361612
+      }
+    ],
+    "3.2 Create Terraform modules for `chatbot-rag-agentcore-ws`": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034720
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913682854
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782914362486
+      }
+    ],
+    "3.3 Scaffold `chatbot-rag-mantle-ws` template from AgentCore variant": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034767
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782914368355
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782914846407
+      }
+    ],
+    "4.1 Create `chatbot-rag-agentcore-ws-streaming` template": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034794
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782914853094
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782915477553
+      }
+    ],
+    "4.2 Create `chatbot-rag-mantle-ws-streaming` template": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034823
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782914853930
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782915478283
+      }
+    ],
+    "5. Checkpoint — Ensure all Lambda variant tests pass": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034853
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782915486351
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782915491662
+      }
+    ],
+    "6.1 Scaffold `chatbot-rag-agentcore-ecs` template directory structure": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034883
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782915519518
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782916313500
+      }
+    ],
+    "6.2 Create Terraform modules for `chatbot-rag-agentcore-ecs`": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034915
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782915520424
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782916314305
+      }
+    ],
+    "6.3 Create `chatbot-rag-mantle-ecs` template from AgentCore ECS variant": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034952
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782916322848
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782916822555
+      }
+    ],
+    "7.1 Create `chatbot-rag-agentcore-ecs-ws` template": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912034986
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782916829844
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782917611939
+      }
+    ],
+    "7.2 Create `chatbot-rag-mantle-ecs-ws` template": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035017
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782916830638
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782917612682
+      }
+    ],
+    "8.1 Create `chatbot-rag-agentcore-ecs-ws-streaming` template": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035049
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782917618756
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918213270
+      }
+    ],
+    "8.2 Create `chatbot-rag-mantle-ecs-ws-streaming` template": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035086
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782917619627
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918214042
+      }
+    ],
+    "9. Checkpoint — Ensure all variant tests pass": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035133
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918223835
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918229227
+      }
+    ],
+    "10.1 Implement and verify correlation ID propagation across all variants": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035164
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918230163
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920563603
+      }
+    ],
+    "11.1 Generate architecture diagrams for Lambda WebSocket variants (4 diagrams)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035197
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918231342
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920564480
+      }
+    ],
+    "11.2 Generate architecture diagrams for ECS REST variants (2 diagrams)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035227
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918232323
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920565335
+      }
+    ],
+    "11.3 Generate architecture diagrams for ECS WebSocket variants (4 diagrams)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035278
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918233253
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920566208
+      }
+    ],
+    "12.1 Create metadata.json for all 10 template variants": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035309
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918234202
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920567121
+      }
+    ],
+    "12.2 Create README.md for Lambda WebSocket non-streaming variants": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035339
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920573273
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920973196
+      }
+    ],
+    "12.3 Create README.md for Lambda WebSocket streaming variants": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035369
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920574117
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920974022
+      }
+    ],
+    "12.4 Create README.md for ECS REST variants": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035400
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920575072
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920974808
+      }
+    ],
+    "12.5 Create README.md for ECS WebSocket variants (non-streaming and streaming)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035433
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920576049
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920975838
+      }
+    ],
+    "13.1 Verify shared core logic identity across all 10 variants": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035468
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920577133
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920976597
+      }
+    ],
+    "13.2 Validate template artifact structure completeness": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035507
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920982754
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782921712930
+      }
+    ],
+    "13.3 Validate Terraform configurations across all variants": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035538
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920983646
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782921713819
+      }
+    ],
+    "14. Final checkpoint — Ensure all tests pass": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782912035567
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782921719978
+      },
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782921725449
+      }
+    ],
+    "1. Shared modules and core logic": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782913635384
+      }
+    ],
+    "3. Lambda WebSocket non-streaming variants (AgentCore + Mantle)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782914846457
+      }
+    ],
+    "4. Lambda WebSocket streaming variants (AgentCore + Mantle)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782915478316
+      }
+    ],
+    "6. ECS REST non-streaming variants (AgentCore + Mantle)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782916822594
+      }
+    ],
+    "7. ECS WebSocket non-streaming variants (AgentCore + Mantle)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782917612712
+      }
+    ],
+    "8. ECS WebSocket streaming variants (AgentCore + Mantle)": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782918214078
+      }
+    ],
+    "10. Correlation ID and observability verification": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920563667
+      }
+    ],
+    "11. Architecture diagrams via Draw.io MCP": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920566250
+      }
+    ],
+    "12. Documentation and metadata": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782920975872
+      }
+    ],
+    "13. Shared logic verification and final validation": [
+      {
+        "executionId": "e58801b5-d4c6-473f-b5a9-95a4300f039d",
+        "chatSessionId": "sess_1315c47e-c4e8-4e63-ba87-1647ac0f9739",
+        "timestamp": 1782921713872
+      }
+    ]
+  }
+}

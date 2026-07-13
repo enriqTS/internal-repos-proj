@@ -1,0 +1,675 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Simplify `ai_caller_agentcore.py` interface in `chatbot-rag-agentcore-ws`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019192
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014030671
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014167091
+      }
+    ],
+    "1.2 Simplify `ai_caller_agentcore.py` interface in `chatbot-rag-agentcore-ws-streaming`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019229
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014177364
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014282970
+      }
+    ],
+    "1.3 Simplify `ai_caller_agentcore.py` interface in `chatbot-rag-agentcore` (REST variant)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019268
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014287864
+      }
+    ],
+    "1.4 Update `conversation_context.py` in all 3 Lambda variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019324
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014438382
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014730393
+      }
+    ],
+    "2.1 Simplify `ai_caller.py` in `chatbot-rag-agentcore-ecs`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019361
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014740366
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014839476
+      }
+    ],
+    "2.2 Simplify `ai_caller.py` in `chatbot-rag-agentcore-ecs-ws`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019405
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014843911
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014919168
+      }
+    ],
+    "2.3 Simplify `ai_caller.py` in `chatbot-rag-agentcore-ecs-ws-streaming`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019437
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014923700
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014997254
+      }
+    ],
+    "2.4 Update `conversation_context.py` in all 3 ECS variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019469
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015002043
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015112438
+      }
+    ],
+    "2.5 Update `orchestrator.py` in `chatbot-rag-agentcore-ecs`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019499
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015122669
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015210337
+      }
+    ],
+    "2.6 Update `orchestrator.py` in `chatbot-rag-agentcore-ecs-ws`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019535
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015215221
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015285211
+      }
+    ],
+    "2.7 Update `orchestrator.py` in `chatbot-rag-agentcore-ecs-ws-streaming`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019569
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015290028
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015359724
+      }
+    ],
+    "3. Checkpoint — Verify ECS and shared layer changes": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019609
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015364791
+      }
+    ],
+    "4.1 Refactor AI Caller handler in `chatbot-rag-agentcore-ws`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019645
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015477589
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015571986
+      }
+    ],
+    "4.2 Refactor AI Caller handler in `chatbot-rag-agentcore-ws-streaming`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019696
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015576623
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015660730
+      }
+    ],
+    "4.3 Refactor AI Caller handler in `chatbot-rag-agentcore` (REST variant)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019727
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015665366
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015737018
+      }
+    ],
+    "5.1 Refactor Orchestrator handler in `chatbot-rag-agentcore` (REST — keeps SQS trigger)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019760
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015743099
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015961871
+      }
+    ],
+    "5.2 Refactor Orchestrator handler in `chatbot-rag-agentcore-ws` (direct WS integration — no SQS)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019804
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015966545
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783016089544
+      }
+    ],
+    "5.3 Refactor Orchestrator handler in `chatbot-rag-agentcore-ws-streaming` (direct WS integration — no SQS)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019843
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783016094713
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783016212506
+      }
+    ],
+    "6.1 Remove SQS module from `chatbot-rag-agentcore-ws` infra": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019875
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783016223627
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017007723
+      }
+    ],
+    "6.2 Update WebSocket API route integration in `chatbot-rag-agentcore-ws`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019906
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017013063
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017104524
+      }
+    ],
+    "6.3 Remove SQS module from `chatbot-rag-agentcore-ws-streaming` infra": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019938
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017110528
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017383519
+      }
+    ],
+    "6.4 Update WebSocket API route integration in `chatbot-rag-agentcore-ws-streaming`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014019968
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017388335
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017454085
+      }
+    ],
+    "7.1 Update monitoring Terraform module in `chatbot-rag-agentcore` (REST variant)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020018
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017461502
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017538146
+      }
+    ],
+    "7.2 Update monitoring configuration in Lambda WS variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020074
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017543393
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017628942
+      }
+    ],
+    "7.3 Update monitoring configuration in ECS variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020112
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017633578
+      }
+    ],
+    "7.4 Remove custom metric emission from AI Caller code (all variants)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020149
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017711150
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017846086
+      }
+    ],
+    "8. Checkpoint — Verify infrastructure and monitoring changes": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020183
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017851352
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783018006322
+      }
+    ],
+    "9.1 Update unit tests for shared layer AI Caller in Lambda variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020224
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783018017161
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783018277243
+      }
+    ],
+    "9.2 Update unit tests for Orchestrator in Lambda variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020257
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783018282008
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783018697858
+      }
+    ],
+    "9.3 Update unit tests for ECS app modules": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020293
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783018703002
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019071073
+      }
+    ],
+    "10.1 Update README for `chatbot-rag-agentcore` (REST)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020331
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019109370
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019410299
+      }
+    ],
+    "10.2 Update README for `chatbot-rag-agentcore-ws`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020372
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019411143
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019417240
+      }
+    ],
+    "10.3 Update README for `chatbot-rag-agentcore-ws-streaming`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020415
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019418139
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019423469
+      }
+    ],
+    "10.4 Update README for `chatbot-rag-agentcore-ecs`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020447
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019424347
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019429304
+      }
+    ],
+    "10.5 Update README for `chatbot-rag-agentcore-ecs-ws`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020481
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019430171
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019435207
+      }
+    ],
+    "10.6 Update README for `chatbot-rag-agentcore-ecs-ws-streaming`": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020520
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019436096
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019441885
+      }
+    ],
+    "11. Final checkpoint — Full validation": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014020552
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019448944
+      },
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019599305
+      }
+    ],
+    "1. Update shared layer modules (Lambda variants)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783014730458
+      }
+    ],
+    "2. Update ECS app modules (3 ECS variants)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015359761
+      }
+    ],
+    "4. Update Lambda AI Caller handlers (3 Lambda variants)": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783015737079
+      }
+    ],
+    "5. Update Lambda Orchestrator handlers": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783016212556
+      }
+    ],
+    "6. Remove SQS infrastructure from Lambda WS variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017454121
+      }
+    ],
+    "7. Simplify monitoring module": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783017846129
+      }
+    ],
+    "9. Update tests across all variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019071140
+      }
+    ],
+    "10. Update README documentation for all variants": [
+      {
+        "executionId": "949b2704-14e7-490b-bb4d-0d0519039bdd",
+        "chatSessionId": "sess_48f19797-b976-4c9e-8d96-2d41057f2280",
+        "timestamp": 1783019441954
+      }
+    ]
+  }
+}
