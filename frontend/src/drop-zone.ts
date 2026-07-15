@@ -44,16 +44,16 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
 
   // --- Build DOM structure ---
   const zone = document.createElement('div');
-  zone.className = 'drop-zone';
+  zone.className = 'border-2 border-dashed border-border rounded-md p-8 text-center cursor-pointer transition-all duration-180 hover:border-accent hover:bg-accent-subtle';
 
   const content = document.createElement('div');
-  content.className = 'drop-zone__content';
+  content.className = 'flex flex-col items-center gap-2';
 
   const text = document.createElement('p');
-  text.className = 'drop-zone__text';
+  text.className = 'font-mono text-sm text-text-muted';
 
   const summary = document.createElement('p');
-  summary.className = 'drop-zone__summary';
+  summary.className = 'font-mono text-xs text-success mt-2';
   summary.hidden = true;
 
   const fileInput = document.createElement('input');
@@ -113,13 +113,13 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
       clearTimeout(hoverTimeout);
       hoverTimeout = null;
     }
-    zone.classList.add('drop-zone--drag-over');
+    zone.classList.add('border-accent', 'bg-accent-subtle');
   }
 
   function handleDragOver(e: DragEvent): void {
     e.preventDefault();
     e.stopPropagation();
-    zone.classList.add('drop-zone--drag-over');
+    zone.classList.add('border-accent', 'bg-accent-subtle');
   }
 
   function handleDragLeave(e: DragEvent): void {
@@ -127,7 +127,7 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
     e.stopPropagation();
     // Revert hover state within 150ms
     hoverTimeout = setTimeout(() => {
-      zone.classList.remove('drop-zone--drag-over');
+      zone.classList.remove('border-accent', 'bg-accent-subtle');
     }, 150);
   }
 
@@ -137,7 +137,7 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
 
     // Revert hover state within 150ms
     hoverTimeout = setTimeout(() => {
-      zone.classList.remove('drop-zone--drag-over');
+      zone.classList.remove('border-accent', 'bg-accent-subtle');
     }, 150);
 
     const dt = e.dataTransfer;
@@ -165,7 +165,7 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
     text.hidden = false;
     summary.hidden = true;
     summary.textContent = '';
-    zone.classList.remove('drop-zone--drag-over');
+    zone.classList.remove('border-accent', 'bg-accent-subtle');
     if (hoverTimeout !== null) {
       clearTimeout(hoverTimeout);
       hoverTimeout = null;
