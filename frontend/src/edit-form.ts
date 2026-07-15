@@ -19,6 +19,7 @@ import { createTagSelector, type TagSelectorAPI } from './tag-selector';
 import { filterFileList } from './upload-form';
 import { invalidateSearchIndex } from './search-state';
 import { t } from './i18n';
+import { button, input, textarea, heading } from './ui';
 import JSZip from 'jszip';
 
 /**
@@ -86,15 +87,14 @@ export async function renderEditForm(
   container.innerHTML = '';
 
   const wrapper = document.createElement('div');
-  wrapper.className = 'upload-form-wrapper';
+  wrapper.className = 'max-w-2xl mx-auto px-4 py-8';
 
-  const heading = document.createElement('h2');
-  heading.textContent = `${t('edit.heading')}: ${projectName}`;
-  wrapper.appendChild(heading);
+  const headingEl = heading(`${t('edit.heading')}: ${projectName}`, 2);
+  wrapper.appendChild(headingEl);
 
   // Status message area
   const statusEl = document.createElement('div');
-  statusEl.className = 'upload-status';
+  statusEl.className = 'text-sm mt-2 text-text-muted';
   statusEl.setAttribute('role', 'alert');
   statusEl.setAttribute('aria-live', 'polite');
   wrapper.appendChild(statusEl);
@@ -103,7 +103,7 @@ export async function renderEditForm(
 
   // Fetch current metadata and readme
   statusEl.textContent = t('edit.loading');
-  statusEl.className = 'upload-status upload-status--loading';
+  statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
 
   const projectPath = `projects/${projectName}/`;
   const [metadataResult, readmeResult] = await Promise.all([
@@ -113,7 +113,7 @@ export async function renderEditForm(
 
   if (!metadataResult.ok) {
     statusEl.textContent = `${t('edit.loadError')}: ${metadataResult.error}`;
-    statusEl.className = 'upload-status upload-status--error';
+    statusEl.className = 'text-sm mt-2 text-error';
     return;
   }
 
@@ -122,47 +122,47 @@ export async function renderEditForm(
 
   // Clear loading status
   statusEl.textContent = '';
-  statusEl.className = 'upload-status';
+  statusEl.className = 'text-sm mt-2 text-text-muted';
 
   // Build the form
   const form = document.createElement('form');
-  form.className = 'upload-form';
+  form.className = 'flex flex-col gap-6';
   form.noValidate = true;
 
   // Project name (display only — not editable in edit form per design)
   const nameGroup = document.createElement('div');
-  nameGroup.className = 'form-group';
+  nameGroup.className = 'flex flex-col gap-2';
   const nameLabel = document.createElement('label');
   nameLabel.textContent = t('edit.nameLabel');
   nameGroup.appendChild(nameLabel);
-  const nameDisplay = document.createElement('input');
-  nameDisplay.type = 'text';
+  const nameDisplay = input({ type: 'text' });
   nameDisplay.value = metadata.name;
   nameDisplay.disabled = true;
-  nameDisplay.className = 'edit-name-display';
+  nameDisplay.className += ' opacity-60 cursor-not-allowed';
   nameGroup.appendChild(nameDisplay);
   form.appendChild(nameGroup);
 
   // Repository URL field
   const repoGroup = document.createElement('div');
-  repoGroup.className = 'form-group';
+  repoGroup.className = 'flex flex-col gap-2';
 
   const repoLabel = document.createElement('label');
   repoLabel.htmlFor = 'edit-repository-url';
   repoLabel.textContent = t('edit.repoLabel');
   repoGroup.appendChild(repoLabel);
 
-  const repoInput = document.createElement('input');
-  repoInput.type = 'url';
-  repoInput.id = 'edit-repository-url';
+  const repoInput = input({
+    type: 'url',
+    id: 'edit-repository-url',
+    placeholder: t('upload.repoPlaceholder'),
+    maxLength: 2048,
+  });
   repoInput.name = 'edit-repository-url';
-  repoInput.placeholder = t('upload.repoPlaceholder');
   repoInput.value = metadata.repositoryUrl ?? '';
-  repoInput.maxLength = 2048;
   repoGroup.appendChild(repoInput);
 
   const repoErrorEl = document.createElement('span');
-  repoErrorEl.className = 'field-error';
+  repoErrorEl.className = 'field-error text-xs text-error mt-1';
   repoErrorEl.setAttribute('aria-live', 'polite');
   repoGroup.appendChild(repoErrorEl);
 
@@ -170,18 +170,18 @@ export async function renderEditForm(
 
   // Tags field — Tag Selector component
   const tagsGroupWrapper = document.createElement('div');
-  tagsGroupWrapper.className = 'form-group';
+  tagsGroupWrapper.className = 'flex flex-col gap-2';
 
   const tagsLabel = document.createElement('label');
   tagsLabel.textContent = t('upload.tagsLabel');
   tagsGroupWrapper.appendChild(tagsLabel);
 
   const tagSelectorContainer = document.createElement('div');
-  tagSelectorContainer.className = 'tag-selector-container';
+  tagSelectorContainer.className = 'mt-1';
   tagsGroupWrapper.appendChild(tagSelectorContainer);
 
   const tagWarningEl = document.createElement('span');
-  tagWarningEl.className = 'field-warning';
+  tagWarningEl.className = 'field-warning text-xs text-text-muted mt-1';
   tagWarningEl.setAttribute('aria-live', 'polite');
   tagsGroupWrapper.appendChild(tagWarningEl);
 
@@ -212,24 +212,25 @@ export async function renderEditForm(
 
   // Readme field (textarea)
   const readmeGroup = document.createElement('div');
-  readmeGroup.className = 'form-group';
+  readmeGroup.className = 'flex flex-col gap-2';
 
   const readmeLabel = document.createElement('label');
   readmeLabel.htmlFor = 'edit-readme';
   readmeLabel.textContent = t('edit.readmeLabel');
   readmeGroup.appendChild(readmeLabel);
 
-  const readmeTextarea = document.createElement('textarea');
-  readmeTextarea.id = 'edit-readme';
+  const readmeTextarea = textarea({
+    id: 'edit-readme',
+    rows: 12,
+    maxLength: MAX_README_LENGTH,
+    placeholder: t('upload.readmePlaceholder'),
+  });
   readmeTextarea.name = 'edit-readme';
-  readmeTextarea.maxLength = MAX_README_LENGTH;
-  readmeTextarea.placeholder = t('upload.readmePlaceholder');
-  readmeTextarea.rows = 12;
   readmeTextarea.value = currentReadme;
   readmeGroup.appendChild(readmeTextarea);
 
   const readmeErrorEl = document.createElement('span');
-  readmeErrorEl.className = 'field-error';
+  readmeErrorEl.className = 'field-error text-xs text-error mt-1';
   readmeErrorEl.setAttribute('aria-live', 'polite');
   readmeGroup.appendChild(readmeErrorEl);
 
@@ -237,7 +238,7 @@ export async function renderEditForm(
 
   // Optional folder picker for artifact replacement
   const filesGroup = document.createElement('div');
-  filesGroup.className = 'form-group';
+  filesGroup.className = 'flex flex-col gap-2';
 
   const filesLabel = document.createElement('label');
   filesLabel.htmlFor = 'edit-files';
@@ -254,26 +255,20 @@ export async function renderEditForm(
   filesGroup.appendChild(filesInput);
 
   const filesErrorEl = document.createElement('span');
-  filesErrorEl.className = 'field-error';
+  filesErrorEl.className = 'field-error text-xs text-error mt-1';
   filesErrorEl.setAttribute('aria-live', 'polite');
   filesGroup.appendChild(filesErrorEl);
 
   form.appendChild(filesGroup);
 
   // Submit button
-  const submitBtn = document.createElement('button');
+  const submitBtn = button(t('edit.submit'), 'primary');
   submitBtn.type = 'submit';
-  submitBtn.className = 'upload-submit';
-  submitBtn.textContent = t('edit.submit');
   form.appendChild(submitBtn);
 
   // Cancel button
-  const cancelBtn = document.createElement('button');
+  const cancelBtn = button(t('edit.cancel'), 'secondary');
   cancelBtn.type = 'button';
-  cancelBtn.className = 'upload-submit';
-  cancelBtn.style.marginLeft = '8px';
-  cancelBtn.style.backgroundColor = '#6c757d';
-  cancelBtn.textContent = t('edit.cancel');
   cancelBtn.addEventListener('click', () => {
     window.location.hash = `#/project/${encodeURIComponent(projectName)}`;
   });
@@ -284,7 +279,7 @@ export async function renderEditForm(
 
     // Clear previous errors
     statusEl.textContent = '';
-    statusEl.className = 'upload-status';
+    statusEl.className = 'text-sm mt-2 text-text-muted';
     readmeErrorEl.textContent = '';
     filesErrorEl.textContent = '';
     repoErrorEl.textContent = '';
@@ -315,7 +310,7 @@ export async function renderEditForm(
         const filteredFiles = filterFileList(files!);
         if (filteredFiles.length === 0) {
           statusEl.textContent = t('upload.noFilesAfterFilter');
-          statusEl.className = 'upload-status upload-status--error';
+          statusEl.className = 'text-sm mt-2 text-error';
           submitBtn.disabled = false;
           submitBtn.textContent = t('edit.submit');
           return;
@@ -323,7 +318,7 @@ export async function renderEditForm(
 
         // Create zip client-side
         statusEl.textContent = t('upload.zipping');
-        statusEl.className = 'upload-status upload-status--loading';
+        statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
         const zip = new JSZip();
         for (const file of filteredFiles) {
           const relativePath = file.webkitRelativePath || file.name;
@@ -336,7 +331,7 @@ export async function renderEditForm(
         // Check size
         if (blob.size > MAX_CLIENT_ZIP_SIZE) {
           statusEl.textContent = t('upload.tooLarge');
-          statusEl.className = 'upload-status upload-status--error';
+          statusEl.className = 'text-sm mt-2 text-error';
           submitBtn.disabled = false;
           submitBtn.textContent = t('edit.submit');
           return;
@@ -353,7 +348,7 @@ export async function renderEditForm(
 
         if (!initiateResult.ok) {
           statusEl.textContent = initiateResult.error;
-          statusEl.className = 'upload-status upload-status--error';
+          statusEl.className = 'text-sm mt-2 text-error';
           submitBtn.disabled = false;
           submitBtn.textContent = t('edit.submit');
           return;
@@ -367,7 +362,7 @@ export async function renderEditForm(
           });
         } catch (err) {
           statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
-          statusEl.className = 'upload-status upload-status--error';
+          statusEl.className = 'text-sm mt-2 text-error';
           submitBtn.disabled = false;
           submitBtn.textContent = t('edit.submit');
           return;
@@ -378,7 +373,7 @@ export async function renderEditForm(
         const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
         if (!finalizeResult.ok) {
           statusEl.textContent = finalizeResult.error;
-          statusEl.className = 'upload-status upload-status--error';
+          statusEl.className = 'text-sm mt-2 text-error';
           submitBtn.disabled = false;
           submitBtn.textContent = t('edit.submit');
           return;
@@ -393,11 +388,11 @@ export async function renderEditForm(
 
       if (patchBody) {
         statusEl.textContent = t('edit.updatingMetadata');
-        statusEl.className = 'upload-status upload-status--loading';
+        statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
         const updateResult = await updateProject(projectName, patchBody);
         if (!updateResult.ok) {
           statusEl.textContent = updateResult.error;
-          statusEl.className = 'upload-status upload-status--error';
+          statusEl.className = 'text-sm mt-2 text-error';
           submitBtn.disabled = false;
           submitBtn.textContent = t('edit.submit');
           return;
@@ -408,7 +403,7 @@ export async function renderEditForm(
       statusEl.textContent = hasFiles
         ? t('edit.successWithArtifact')
         : t('edit.success');
-      statusEl.className = 'upload-status upload-status--success';
+      statusEl.className = 'text-sm mt-2 text-success';
 
       invalidateSearchIndex();
 
@@ -417,7 +412,7 @@ export async function renderEditForm(
       }, 2000);
     } catch (err) {
       statusEl.textContent = err instanceof Error ? err.message : 'An unexpected error occurred';
-      statusEl.className = 'upload-status upload-status--error';
+      statusEl.className = 'text-sm mt-2 text-error';
       submitBtn.disabled = false;
       submitBtn.textContent = t('edit.submit');
     }
