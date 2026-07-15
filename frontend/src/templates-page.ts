@@ -10,6 +10,7 @@ import { renderCardGrid, type CardItem } from './card-grid';
 import { createTagFilter, type TagFilterAPI } from './tag-filter';
 import { createPaginator, type PaginatorAPI } from './paginator';
 import { t } from './i18n';
+import { container, heading, button, input as createInput } from './ui';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -25,106 +26,113 @@ const fuseOptions: IFuseOptions<TemplateIndexEntry> = {
  */
 export async function renderTemplatesPage(
   _params: Record<string, string>,
-  container: HTMLElement,
+  rootContainer: HTMLElement,
 ): Promise<void> {
-  container.innerHTML = '';
+  rootContainer.innerHTML = '';
 
   // Show loading state
   const loadingEl = document.createElement('p');
-  loadingEl.className = 'loading';
+  loadingEl.className = 'text-center text-text-muted py-12 text-sm';
   loadingEl.textContent = t('templates.loading');
-  container.appendChild(loadingEl);
+  rootContainer.appendChild(loadingEl);
 
   const result = await fetchTemplateIndex();
 
   // Clear loading
-  container.innerHTML = '';
+  rootContainer.innerHTML = '';
 
   if (!result.ok) {
-    renderError(container, result.error);
+    renderError(rootContainer, result.error);
     return;
   }
 
   const index = result.data;
 
   if (index.length === 0) {
-    renderEmpty(container);
+    renderEmpty(rootContainer);
     return;
   }
 
-  renderFullPage(container, index);
+  renderFullPage(rootContainer, index);
 }
 
 /**
  * Render the error state with a retry button.
  */
-function renderError(container: HTMLElement, errorMessage: string): void {
+function renderError(rootContainer: HTMLElement, errorMessage: string): void {
   const errorEl = document.createElement('div');
-  errorEl.className = 'error';
+  errorEl.className = 'text-center text-error py-8';
 
   const msgEl = document.createElement('p');
   msgEl.textContent = errorMessage;
 
-  const retryBtn = document.createElement('button');
-  retryBtn.className = 'retry-btn';
-  retryBtn.textContent = 'Retry';
+  const retryBtn = button('Retry', 'secondary');
+  retryBtn.className += ' mt-4';
   retryBtn.addEventListener('click', () => {
-    renderTemplatesPage({}, container);
+    renderTemplatesPage({}, rootContainer);
   });
 
   errorEl.appendChild(msgEl);
   errorEl.appendChild(retryBtn);
-  container.appendChild(errorEl);
+  rootContainer.appendChild(errorEl);
 }
 
 /**
  * Render the empty state when no templates exist.
  */
-function renderEmpty(container: HTMLElement): void {
-  const heading = document.createElement('h2');
-  heading.textContent = t('templates.heading');
-  container.appendChild(heading);
+function renderEmpty(rootContainer: HTMLElement): void {
+  const pageWrapper = container('py-8');
+
+  const headingEl = heading(t('templates.heading'), 2);
+  pageWrapper.appendChild(headingEl);
 
   const emptyMsg = document.createElement('p');
-  emptyMsg.className = 'no-results';
+  emptyMsg.className = 'text-center text-text-muted py-12 text-sm';
   emptyMsg.textContent = t('templates.empty');
-  container.appendChild(emptyMsg);
+  pageWrapper.appendChild(emptyMsg);
+
+  rootContainer.appendChild(pageWrapper);
 }
 
 /**
  * Render the full templates page with search, tag filter, card grid, and paginator.
  */
-function renderFullPage(container: HTMLElement, index: TemplateIndex): void {
+function renderFullPage(rootContainer: HTMLElement, index: TemplateIndex): void {
   // Initialize Fuse.js
   const fuseInstance = new Fuse(index, fuseOptions);
 
+  // Page wrapper
+  const pageWrapper = container('py-8');
+
   // Heading
-  const heading = document.createElement('h2');
-  heading.textContent = t('templates.heading');
-  container.appendChild(heading);
+  const headingEl = heading(t('templates.heading'), 2);
+  pageWrapper.appendChild(headingEl);
 
   // Search input
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = t('templates.placeholder');
-  input.className = 'search-input';
-  input.setAttribute('aria-label', 'Search templates');
-  container.appendChild(input);
+  const inputEl = createInput({
+    type: 'text',
+    placeholder: t('templates.placeholder'),
+  });
+  inputEl.setAttribute('aria-label', 'Search templates');
+  inputEl.className += ' mt-4';
+  pageWrapper.appendChild(inputEl);
 
   // Tag filter container
   const filterContainer = document.createElement('div');
-  filterContainer.className = 'tag-filter-container';
-  container.appendChild(filterContainer);
+  filterContainer.className = 'mt-4';
+  pageWrapper.appendChild(filterContainer);
 
   // Card grid container
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'results-container';
-  container.appendChild(gridContainer);
+  gridContainer.className = 'mt-6';
+  pageWrapper.appendChild(gridContainer);
 
   // Paginator container
   const paginatorContainer = document.createElement('div');
-  paginatorContainer.className = 'paginator-container';
-  container.appendChild(paginatorContainer);
+  paginatorContainer.className = 'mt-6';
+  pageWrapper.appendChild(paginatorContainer);
+
+  rootContainer.appendChild(pageWrapper);
 
   // State
   let activeFilterTags: string[] = [];
@@ -153,7 +161,7 @@ function renderFullPage(container: HTMLElement, index: TemplateIndex): void {
 
   // Search logic
   function performSearch(): void {
-    const query = input.value.trim();
+    const query = inputEl.value.trim();
 
     let results: TemplateIndexEntry[];
 
@@ -203,7 +211,7 @@ function renderFullPage(container: HTMLElement, index: TemplateIndex): void {
 
   // Debounced search (200ms)
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  input.addEventListener('input', () => {
+  inputEl.addEventListener('input', () => {
     if (debounceTimer !== null) {
       clearTimeout(debounceTimer);
     }
