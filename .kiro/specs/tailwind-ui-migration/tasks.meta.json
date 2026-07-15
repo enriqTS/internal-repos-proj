@@ -1,0 +1,494 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Install Tailwind CSS 4 and the Vite plugin": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885537
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150894740
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151048892
+      }
+    ],
+    "1.2 Create `frontend/src/styles.css` with Tailwind directives and theme tokens": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885573
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151054593
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151112214
+      }
+    ],
+    "1.3 Update `frontend/vite.config.ts` to register the Tailwind plugin": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885600
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151055309
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151112995
+      }
+    ],
+    "1.4 Import `styles.css` from the TypeScript entry point": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885648
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151117422
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151159540
+      }
+    ],
+    "2. Checkpoint - Verify infrastructure": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885685
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151169067
+      }
+    ],
+    "3.1 Create `frontend/src/ui.ts` with all factory functions": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885715
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151173430
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151256060
+      }
+    ],
+    "4. Checkpoint - Verify helpers module": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885738
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151268883
+      }
+    ],
+    "5.1 Migrate `card-grid.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885762
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151281546
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784155973100
+      }
+    ],
+    "5.2 Migrate `search.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885785
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151282267
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784155973709
+      }
+    ],
+    "5.3 Migrate `main.ts` (layout and header styling)": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885832
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151283057
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784155974777
+      }
+    ],
+    "5.4 Migrate `upload-form.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885858
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151283888
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784155975582
+      }
+    ],
+    "5.5 Migrate `project-detail.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885885
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784155979916
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156219543
+      }
+    ],
+    "5.6 Migrate `template-detail.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885914
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784155980777
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156220135
+      }
+    ],
+    "5.7 Migrate `edit-form.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885946
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784155981650
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156220916
+      }
+    ],
+    "5.8 Migrate `delete-dialog.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885970
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784155982503
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156221701
+      }
+    ],
+    "5.9 Migrate `paginator.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150885994
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156226177
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156352483
+      }
+    ],
+    "5.10 Migrate `tag-filter.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886018
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156226902
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156353319
+      }
+    ],
+    "5.11 Migrate `tag-selector.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886050
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156227652
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156354051
+      }
+    ],
+    "5.12 Migrate `drop-zone.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886083
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156228509
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156354836
+      }
+    ],
+    "5.13 Migrate `readme-preview.ts` and `shared-markdown.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886108
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156360024
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156514707
+      }
+    ],
+    "5.14 Migrate `landing-page.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886136
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156360691
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156513077
+      }
+    ],
+    "5.15 Migrate `templates-page.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886179
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156361533
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156513894
+      }
+    ],
+    "5.16 Migrate `theme-manager.ts`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886207
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156362423
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156512479
+      }
+    ],
+    "6. Checkpoint - Verify component migrations": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886235
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156520864
+      }
+    ],
+    "7.1 Remove the `<style>` block from `frontend/index.html`": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886264
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156525889
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156848427
+      }
+    ],
+    "7.2 Confirm `card-grid.ts` has no `injectStyles` remnants": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886291
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156527216
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156849715
+      }
+    ],
+    "7.3 Final verification — sole source of styling": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886321
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156854999
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156911637
+      }
+    ],
+    "8. Final checkpoint - Full regression check": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784150886348
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156917146
+      },
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156983864
+      }
+    ],
+    "1. Phase 1: Infrastructure Setup": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151159584
+      }
+    ],
+    "3. Phase 2: UI Helpers Module": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784151256091
+      }
+    ],
+    "5. Phase 3: Component Migration": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156514749
+      }
+    ],
+    "7. Phase 4: Legacy Style Cleanup": [
+      {
+        "executionId": "7735d179-d945-448e-bd31-82f5d1108b23",
+        "chatSessionId": "sess_8dbd5051-482b-4fc8-92b5-14c0ec94be00",
+        "timestamp": 1784156911676
+      }
+    ]
+  }
+}
