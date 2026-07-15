@@ -3,6 +3,7 @@ import { fetchTemplateMetadata, fetchTemplateReadme } from './api';
 import { t } from './i18n';
 import { formatRelativeDate } from './relative-date';
 import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
+import { container, heading, badge, button } from './ui';
 
 /**
  * Get the base URL for constructing CDN asset URLs.
@@ -82,7 +83,7 @@ function isImageContentType(res: Response): boolean {
 export function renderDownloadButton(name: string): HTMLElement {
   const baseUrl = getBaseUrl();
   const link = document.createElement('a');
-  link.className = 'download-link';
+  link.className = 'download-link px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] inline-block no-underline text-center';
   link.href = `${baseUrl}/templates/${name}/artifact.zip`;
   link.setAttribute('download', `${name}.zip`);
   link.setAttribute('aria-label', `Download ${name} template zip archive`);
@@ -93,30 +94,28 @@ export function renderDownloadButton(name: string): HTMLElement {
 /**
  * Show an image in a lightbox modal overlay.
  *
- * Creates an overlay with role="dialog", aria-modal="true", reusing existing
- * `.delete-dialog-overlay` class. Supports close via:
+ * Creates an overlay with role="dialog", aria-modal="true".
+ * Supports close via:
  * - Close button (×)
  * - Click outside the image (on overlay background)
  * - Escape key
  */
 export function showImageLightbox(imageUrl: string, altText: string): void {
   const overlay = document.createElement('div');
-  overlay.className = 'delete-dialog-overlay';
+  overlay.className = 'fixed inset-0 bg-overlay flex items-center justify-center z-[1000] animate-[fadeIn_150ms_ease]';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
-  closeBtn.className = 'lightbox-close';
+  closeBtn.className = 'absolute top-4 right-4 inline-flex items-center justify-center w-9 h-9 p-0 bg-transparent border-none rounded-sm text-on-accent cursor-pointer transition-all duration-180 hover:opacity-80 text-2xl';
   closeBtn.setAttribute('aria-label', 'Close');
   closeBtn.textContent = '×';
 
   const img = document.createElement('img');
   img.src = imageUrl;
   img.alt = altText;
-  img.style.maxWidth = '90vw';
-  img.style.maxHeight = '90vh';
-  img.style.objectFit = 'contain';
+  img.className = 'max-w-[90vw] max-h-[90vh] object-contain';
 
   overlay.appendChild(closeBtn);
   overlay.appendChild(img);
@@ -149,18 +148,17 @@ export function showImageLightbox(imageUrl: string, altText: string): void {
  *
  * - Wraps an <img> in a clickable element that opens a lightbox
  * - img alt: "Architecture diagram for {name}"
- * - img style: max-width:100%
  * - trigger aria-label: "View full-size architecture diagram for {name}"
  * - onerror on <img>: removes entire architecture section from the DOM
  * - section class: template-architecture
  */
 export function renderArchitectureSection(imageUrl: string, name: string): HTMLElement {
   const section = document.createElement('section');
-  section.className = 'template-architecture';
+  section.className = 'template-architecture mt-6';
 
   const trigger = document.createElement('button');
   trigger.type = 'button';
-  trigger.className = 'architecture-lightbox-trigger';
+  trigger.className = 'block w-full border-none bg-transparent p-0 cursor-pointer rounded-md overflow-hidden hover:shadow-md transition-all duration-180';
   trigger.setAttribute('aria-label', `View full-size architecture diagram for ${name}`);
   trigger.addEventListener('click', () => {
     showImageLightbox(imageUrl, `Architecture diagram for ${name}`);
@@ -169,7 +167,7 @@ export function renderArchitectureSection(imageUrl: string, name: string): HTMLE
   const img = document.createElement('img');
   img.src = imageUrl;
   img.alt = `Architecture diagram for ${name}`;
-  img.style.maxWidth = '100%';
+  img.className = 'w-full rounded-md';
   img.onerror = () => {
     section.remove();
   };
@@ -195,36 +193,40 @@ export function renderArchitectureSection(imageUrl: string, name: string): HTMLE
  */
 export async function renderTemplateDetail(
   params: Record<string, string>,
-  container: HTMLElement,
+  containerEl: HTMLElement,
 ): Promise<void> {
-  container.innerHTML = '';
+  containerEl.innerHTML = '';
 
   const name = params.name ? decodeURIComponent(params.name) : '';
 
   // If name param is empty/missing, show error
   if (!name) {
     const errorEl = document.createElement('p');
-    errorEl.className = 'error-message';
+    errorEl.className = 'error-message text-error text-center py-8';
     errorEl.textContent = t('templateDetail.noTemplate');
-    container.appendChild(errorEl);
+    containerEl.appendChild(errorEl);
     return;
   }
+
+  // Page wrapper using container helper
+  const wrapper = container('py-8');
 
   // Back navigation link — rendered before fetch so it's always visible
   const backLink = document.createElement('a');
   backLink.href = '#/templates';
-  backLink.className = 'back-link';
+  backLink.className = 'inline-flex items-center gap-1 text-accent font-mono text-sm no-underline hover:underline mb-6';
   backLink.textContent = t('templateDetail.back');
-  container.appendChild(backLink);
+  wrapper.appendChild(backLink);
 
   // Fetch template metadata
   const metadataResult = await fetchTemplateMetadata(name);
 
   if (!metadataResult.ok) {
     const errorEl = document.createElement('p');
-    errorEl.className = 'error-message';
+    errorEl.className = 'error-message text-error text-center py-4';
     errorEl.textContent = t('templateDetail.unavailable');
-    container.appendChild(errorEl);
+    wrapper.appendChild(errorEl);
+    containerEl.appendChild(wrapper);
     return;
   }
 
@@ -232,34 +234,32 @@ export async function renderTemplateDetail(
 
   // Build the detail page structure
   const detailWrapper = document.createElement('div');
-  detailWrapper.className = 'template-detail';
+  detailWrapper.className = 'template-detail flex flex-col gap-6';
 
   // 1. Render metadata section
   const section = document.createElement('section');
-  section.className = 'template-metadata';
+  section.className = 'flex flex-col gap-3';
 
-  const nameEl = document.createElement('h1');
-  nameEl.className = 'template-name';
-  nameEl.textContent = metadata.name;
+  const nameEl = heading(metadata.name, 1);
+  nameEl.classList.add('template-name');
   section.appendChild(nameEl);
 
   const descEl = document.createElement('p');
-  descEl.className = 'template-description';
+  descEl.className = 'template-description text-text-muted text-base leading-relaxed';
   descEl.textContent = metadata.description;
   section.appendChild(descEl);
 
   const tagsEl = document.createElement('div');
-  tagsEl.className = 'template-tags';
+  tagsEl.className = 'flex flex-wrap gap-2';
   for (const tag of metadata.tags) {
-    const tagSpan = document.createElement('span');
-    tagSpan.className = 'tag';
-    tagSpan.textContent = tag;
-    tagsEl.appendChild(tagSpan);
+    const tagEl = badge(tag);
+    tagEl.classList.add('tag');
+    tagsEl.appendChild(tagEl);
   }
   section.appendChild(tagsEl);
 
   const dateEl = document.createElement('time');
-  dateEl.className = 'template-date';
+  dateEl.className = 'text-sm text-text-muted font-mono';
   dateEl.textContent = formatRelativeDate(metadata.date);
   dateEl.setAttribute('datetime', metadata.date);
   section.appendChild(dateEl);
@@ -267,7 +267,7 @@ export async function renderTemplateDetail(
   // Display language if present
   if (metadata.language) {
     const langEl = document.createElement('p');
-    langEl.className = 'template-language';
+    langEl.className = 'text-sm text-text-muted';
     langEl.textContent = `${t('templateDetail.language')}: ${metadata.language}`;
     section.appendChild(langEl);
   }
@@ -303,5 +303,6 @@ export async function renderTemplateDetail(
     detailWrapper.appendChild(readmeWrapper);
   }
 
-  container.appendChild(detailWrapper);
+  wrapper.appendChild(detailWrapper);
+  containerEl.appendChild(wrapper);
 }
