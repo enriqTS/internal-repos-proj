@@ -4,6 +4,7 @@
  * directing users to Projects and Templates sections.
  */
 import { t } from './i18n';
+import { container, heading, card } from './ui';
 
 /**
  * Render the landing page into the given container.
@@ -11,28 +12,31 @@ import { t } from './i18n';
  */
 export function renderLandingPage(
   _params: Record<string, string>,
-  container: HTMLElement,
+  appContainer: HTMLElement,
 ): void {
-  container.innerHTML = '';
+  appContainer.innerHTML = '';
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'landing-page';
+  const wrapper = container('py-8');
+
+  // Hero section
+  const hero = document.createElement('div');
+  hero.className = 'text-center flex flex-col items-center gap-4';
 
   // Heading
-  const heading = document.createElement('h1');
-  heading.className = 'landing-heading';
-  heading.textContent = t('landing.heading');
-  wrapper.appendChild(heading);
+  const h1 = heading(t('landing.heading'), 1);
+  hero.appendChild(h1);
 
   // Introductory description
   const description = document.createElement('p');
-  description.className = 'landing-description';
+  description.className = 'text-lg text-text-muted max-w-xl';
   description.textContent = t('landing.description');
-  wrapper.appendChild(description);
+  hero.appendChild(description);
 
-  // Navigation cards grid
+  wrapper.appendChild(hero);
+
+  // Navigation cards grid — responsive: single column on mobile, multi-column on larger
   const grid = document.createElement('div');
-  grid.className = 'landing-cards-grid';
+  grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8';
 
   // Projects card
   grid.appendChild(
@@ -53,7 +57,7 @@ export function renderLandingPage(
   );
 
   wrapper.appendChild(grid);
-  container.appendChild(wrapper);
+  appContainer.appendChild(wrapper);
 }
 
 /**
@@ -65,17 +69,22 @@ function createNavCard(options: {
   title: string;
   description: string;
 }): HTMLAnchorElement {
-  const card = document.createElement('a');
-  card.href = options.href;
-  card.className = 'landing-card';
+  const anchor = document.createElement('a');
+  anchor.href = options.href;
+  anchor.className = 'no-underline';
+
+  const cardEl = card({ hoverable: true });
 
   const title = document.createElement('h2');
+  title.className = 'font-mono text-sm font-semibold text-text';
   title.textContent = options.title;
-  card.appendChild(title);
+  cardEl.appendChild(title);
 
   const desc = document.createElement('p');
+  desc.className = 'text-sm text-text-muted';
   desc.textContent = options.description;
-  card.appendChild(desc);
+  cardEl.appendChild(desc);
 
-  return card;
+  anchor.appendChild(cardEl);
+  return anchor;
 }
