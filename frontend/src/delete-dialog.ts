@@ -42,7 +42,7 @@ export function showDeleteDialog(projectName: string): void {
   // Confirmation input
   const input = document.createElement('input');
   input.type = 'text';
-  input.className = 'w-full px-3 py-2.5 font-mono text-sm border border-border rounded-sm bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm';
+  input.className = 'delete-dialog-input w-full px-3 py-2.5 font-mono text-sm border border-border rounded-sm bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm';
   input.placeholder = t('delete.inputPlaceholder');
   input.setAttribute('aria-label', t('delete.inputPlaceholder'));
   dialog.appendChild(input);
@@ -61,6 +61,7 @@ export function showDeleteDialog(projectName: string): void {
 
   const confirmBtn = button(t('delete.confirm'), 'danger');
   confirmBtn.type = 'button';
+  confirmBtn.classList.add('delete-dialog-confirm');
   confirmBtn.disabled = true;
 
   buttonRow.appendChild(cancelBtn);
