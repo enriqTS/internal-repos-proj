@@ -1,5 +1,6 @@
 import { marked } from './shared-markdown';
 import { t } from './i18n';
+import { textarea as createTextarea } from './ui';
 
 /**
  * Options for creating a ReadmePreview component.
@@ -58,17 +59,21 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   // --- Build DOM structure ---
 
   const root = document.createElement('div');
-  root.className = 'readme-preview-wrapper';
+  root.className = 'flex flex-col gap-2';
 
   // Toggle control (tablist)
   const toggle = document.createElement('div');
-  toggle.className = 'readme-toggle';
+  toggle.className = 'flex gap-1 mb-1';
   toggle.setAttribute('role', 'tablist');
   toggle.setAttribute('aria-label', 'Readme editor mode');
 
+  const tabBase = 'font-mono text-xs px-3 py-1.5 border-none cursor-pointer transition-all duration-180 rounded-sm';
+  const tabActive = 'bg-accent text-on-accent';
+  const tabInactive = 'bg-transparent text-text-muted hover:text-text';
+
   const editBtn = document.createElement('button');
   editBtn.type = 'button';
-  editBtn.className = 'readme-toggle__btn';
+  editBtn.className = `${tabBase} ${tabInactive}`;
   editBtn.setAttribute('role', 'tab');
   editBtn.setAttribute('aria-selected', 'false');
   editBtn.setAttribute('aria-controls', 'readme-edit-panel');
@@ -76,7 +81,7 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
 
   const previewBtn = document.createElement('button');
   previewBtn.type = 'button';
-  previewBtn.className = 'readme-toggle__btn readme-toggle__btn--active';
+  previewBtn.className = `${tabBase} ${tabActive}`;
   previewBtn.setAttribute('role', 'tab');
   previewBtn.setAttribute('aria-selected', 'true');
   previewBtn.setAttribute('aria-controls', 'readme-preview-panel');
@@ -92,20 +97,12 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   editPanel.setAttribute('role', 'tabpanel');
   editPanel.hidden = true;
 
-  const textarea = document.createElement('textarea');
-  if (textareaId) {
-    textarea.id = textareaId;
-  }
-  if (maxLength !== undefined) {
-    textarea.maxLength = maxLength;
-  }
-  if (placeholder) {
-    textarea.placeholder = placeholder;
-  }
-  if (rows !== undefined) {
-    textarea.rows = rows;
-  }
-  textarea.className = 'readme-textarea';
+  const textarea = createTextarea({
+    id: textareaId,
+    maxLength,
+    placeholder,
+    rows,
+  });
   editPanel.appendChild(textarea);
   root.appendChild(editPanel);
 
@@ -115,13 +112,13 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   previewPanel.setAttribute('role', 'tabpanel');
 
   const previewContent = document.createElement('div');
-  previewContent.className = 'readme-preview-content';
+  previewContent.className = 'readme-preview-content prose-like leading-relaxed text-sm text-text';
   previewPanel.appendChild(previewContent);
   root.appendChild(previewPanel);
 
   // Render initial preview state (shows placeholder since textarea is empty)
   const placeholderEl = document.createElement('p');
-  placeholderEl.className = 'readme-preview-placeholder';
+  placeholderEl.className = 'text-sm text-text-muted italic py-4 text-center';
   placeholderEl.textContent = 'Nothing to preview';
   previewContent.appendChild(placeholderEl);
 
@@ -142,9 +139,9 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   function setEditMode(): void {
     currentMode = 'edit';
 
-    editBtn.classList.add('readme-toggle__btn--active');
+    editBtn.className = `${tabBase} ${tabActive}`;
     editBtn.setAttribute('aria-selected', 'true');
-    previewBtn.classList.remove('readme-toggle__btn--active');
+    previewBtn.className = `${tabBase} ${tabInactive}`;
     previewBtn.setAttribute('aria-selected', 'false');
 
     editPanel.hidden = false;
@@ -154,9 +151,9 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
   async function setPreviewMode(): Promise<void> {
     currentMode = 'preview';
 
-    previewBtn.classList.add('readme-toggle__btn--active');
+    previewBtn.className = `${tabBase} ${tabActive}`;
     previewBtn.setAttribute('aria-selected', 'true');
-    editBtn.classList.remove('readme-toggle__btn--active');
+    editBtn.className = `${tabBase} ${tabInactive}`;
     editBtn.setAttribute('aria-selected', 'false');
 
     editPanel.hidden = true;
@@ -167,7 +164,7 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
     if (!content.trim()) {
       previewContent.innerHTML = '';
       const placeholderEl = document.createElement('p');
-      placeholderEl.className = 'readme-preview-placeholder';
+      placeholderEl.className = 'text-sm text-text-muted italic py-4 text-center';
       placeholderEl.textContent = 'Nothing to preview';
       previewContent.appendChild(placeholderEl);
       return;
@@ -181,7 +178,7 @@ export function createReadmePreview(options: ReadmePreviewOptions): ReadmePrevie
     } catch {
       previewContent.innerHTML = '';
       const errorEl = document.createElement('p');
-      errorEl.className = 'readme-preview-placeholder';
+      errorEl.className = 'text-sm text-text-muted italic py-4 text-center';
       errorEl.textContent = 'Error rendering preview';
       previewContent.appendChild(errorEl);
     }
