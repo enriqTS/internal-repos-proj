@@ -48,11 +48,11 @@ export function createTagFilter(options: TagFilterOptions): TagFilterAPI {
 
     // Root container
     dropdownEl = document.createElement('div');
-    dropdownEl.className = 'tag-filter-dropdown';
+    dropdownEl.className = 'relative inline-block';
 
     // Toggle button
     toggleBtn = document.createElement('button');
-    toggleBtn.className = 'tag-filter-toggle';
+    toggleBtn.className = 'font-mono text-xs font-medium bg-tag-bg text-tag-text px-2 py-0.5 rounded-sm tracking-wide cursor-pointer border-none transition-all duration-180 hover:bg-accent-subtle';
     toggleBtn.setAttribute('aria-expanded', 'false');
     toggleBtn.textContent = getToggleText();
     toggleBtn.addEventListener('click', handleToggleClick);
@@ -60,25 +60,28 @@ export function createTagFilter(options: TagFilterOptions): TagFilterAPI {
 
     // Panel (hidden by default)
     panelEl = document.createElement('div');
-    panelEl.className = 'tag-filter-panel';
+    panelEl.className = 'absolute top-full left-0 mt-1 bg-surface border border-border rounded-md shadow-md z-50 min-w-[200px] max-h-[240px] overflow-y-auto p-2';
     panelEl.setAttribute('hidden', '');
     panelEl.addEventListener('focusout', handlePanelBlur);
 
     // List
     listEl = document.createElement('ul');
-    listEl.className = 'tag-filter-list';
+    listEl.className = 'flex flex-col gap-1 list-none m-0 p-0';
     listEl.setAttribute('role', 'group');
 
     // Render checkboxes
     for (const tag of allTags) {
       const li = document.createElement('li');
       const label = document.createElement('label');
+      label.className = 'flex items-center gap-2 px-2 py-1 rounded-sm cursor-pointer text-sm font-mono text-text hover:bg-accent-subtle transition-all duration-180';
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
+      checkbox.className = 'accent-accent';
       checkbox.checked = activeTags.has(tag);
       checkbox.addEventListener('change', () => handleCheckboxChange(tag, checkbox));
 
       const span = document.createElement('span');
+      span.className = 'font-mono text-xs tracking-wide';
       span.textContent = tag;
 
       label.appendChild(checkbox);
