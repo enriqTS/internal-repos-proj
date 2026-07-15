@@ -2,5 +2,5 @@
   "name": "chatbot-rag-agentcore",
   "description": "Chatbot template with RAG using Bedrock AgentCore Runtime for AI orchestration",
   "tags": ["chatbot", "rag", "python", "terraform", "bedrock-agentcore"],
-  "date": "2025-07-14"
+  "date": "2026-07-14"
 }

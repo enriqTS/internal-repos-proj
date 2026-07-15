@@ -2,5 +2,5 @@
   "name": "chatbot-rag-mantle",
   "description": "Chatbot template with RAG using Bedrock Mantle API (OpenAI-compatible) for AI orchestration",
   "tags": ["chatbot", "rag", "python", "terraform", "bedrock-mantle"],
-  "date": "2025-07-14"
+  "date": "2026-07-14"
 }
