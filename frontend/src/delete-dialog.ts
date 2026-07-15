@@ -1,6 +1,7 @@
 import { deleteProject } from './api';
 import { t } from './i18n';
 import { invalidateSearchIndex } from './search-state';
+import { overlay as createOverlay, button, heading } from './ui';
 
 /**
  * Show a delete confirmation dialog as a modal overlay.
@@ -13,68 +14,61 @@ import { invalidateSearchIndex } from './search-state';
  */
 export function showDeleteDialog(projectName: string): void {
   // Create modal overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'delete-dialog-overlay';
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-labelledby', 'delete-dialog-title');
+  const overlayEl = createOverlay();
+  overlayEl.setAttribute('role', 'dialog');
+  overlayEl.setAttribute('aria-modal', 'true');
+  overlayEl.setAttribute('aria-labelledby', 'delete-dialog-title');
 
   const dialog = document.createElement('div');
-  dialog.className = 'delete-dialog';
+  dialog.className = 'bg-surface border border-border rounded-lg p-6 w-full max-w-md shadow-lg flex flex-col gap-4';
 
   // Title
-  const title = document.createElement('h2');
+  const title = heading(t('delete.title'), 3);
   title.id = 'delete-dialog-title';
-  title.className = 'delete-dialog-title';
-  title.textContent = t('delete.title');
   dialog.appendChild(title);
 
   // Warning text
   const warning = document.createElement('p');
-  warning.className = 'delete-dialog-warning';
+  warning.className = 'text-sm text-text-muted';
   warning.textContent = t('delete.warning');
   dialog.appendChild(warning);
 
   // Project name display
   const nameDisplay = document.createElement('p');
-  nameDisplay.className = 'delete-dialog-name';
+  nameDisplay.className = 'text-sm text-text-muted';
   nameDisplay.innerHTML = t('delete.prompt', { name: escapeHtml(projectName) });
   dialog.appendChild(nameDisplay);
 
   // Confirmation input
   const input = document.createElement('input');
   input.type = 'text';
-  input.className = 'delete-dialog-input';
+  input.className = 'w-full px-3 py-2.5 font-mono text-sm border border-border rounded-sm bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm';
   input.placeholder = t('delete.inputPlaceholder');
   input.setAttribute('aria-label', t('delete.inputPlaceholder'));
   dialog.appendChild(input);
 
   // Status message area
   const statusEl = document.createElement('p');
-  statusEl.className = 'delete-dialog-status';
+  statusEl.className = 'text-sm text-text-muted';
   dialog.appendChild(statusEl);
 
   // Button row
   const buttonRow = document.createElement('div');
-  buttonRow.className = 'delete-dialog-buttons';
+  buttonRow.className = 'flex gap-3 justify-end mt-4';
 
-  const cancelBtn = document.createElement('button');
+  const cancelBtn = button(t('delete.cancel'), 'secondary');
   cancelBtn.type = 'button';
-  cancelBtn.className = 'delete-dialog-cancel';
-  cancelBtn.textContent = t('delete.cancel');
 
-  const confirmBtn = document.createElement('button');
+  const confirmBtn = button(t('delete.confirm'), 'danger');
   confirmBtn.type = 'button';
-  confirmBtn.className = 'delete-dialog-confirm';
-  confirmBtn.textContent = t('delete.confirm');
   confirmBtn.disabled = true;
 
   buttonRow.appendChild(cancelBtn);
   buttonRow.appendChild(confirmBtn);
   dialog.appendChild(buttonRow);
 
-  overlay.appendChild(dialog);
-  document.body.appendChild(overlay);
+  overlayEl.appendChild(dialog);
+  document.body.appendChild(overlayEl);
 
   // Focus the input
   input.focus();
@@ -87,20 +81,20 @@ export function showDeleteDialog(projectName: string): void {
 
   // Cancel: close dialog
   cancelBtn.addEventListener('click', () => {
-    closeDialog(overlay);
+    closeDialog(overlayEl);
   });
 
   // Close on overlay click (outside dialog)
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      closeDialog(overlay);
+  overlayEl.addEventListener('click', (e) => {
+    if (e.target === overlayEl) {
+      closeDialog(overlayEl);
     }
   });
 
   // Close on Escape key
   function onKeyDown(e: KeyboardEvent): void {
     if (e.key === 'Escape') {
-      closeDialog(overlay);
+      closeDialog(overlayEl);
       document.removeEventListener('keydown', onKeyDown);
     }
   }
@@ -113,24 +107,24 @@ export function showDeleteDialog(projectName: string): void {
     cancelBtn.disabled = true;
     input.disabled = true;
     confirmBtn.textContent = t('delete.deleting');
-    statusEl.className = 'delete-dialog-status delete-dialog-status--loading';
+    statusEl.className = 'text-sm text-text-muted';
     statusEl.textContent = t('delete.deleting');
 
     const result = await deleteProject(projectName);
 
     if (result.ok) {
-      statusEl.className = 'delete-dialog-status delete-dialog-status--success';
+      statusEl.className = 'text-sm text-success';
       statusEl.textContent = t('delete.success', { name: projectName });
       invalidateSearchIndex();
       // Navigate to home after a brief delay
       setTimeout(() => {
-        closeDialog(overlay);
+        closeDialog(overlayEl);
         document.removeEventListener('keydown', onKeyDown);
         window.location.hash = '#/projects';
       }, 1200);
     } else {
       // Show error, re-enable confirm button
-      statusEl.className = 'delete-dialog-status delete-dialog-status--error';
+      statusEl.className = 'text-sm text-error';
       statusEl.textContent = result.error;
       confirmBtn.disabled = false;
       cancelBtn.disabled = false;
