@@ -20,6 +20,8 @@ export interface TagSelectorAPI {
   setAvailableTags(tags: string[]): void;
   /** Apply AI-suggested tags (only if user hasn't interacted) */
   applySuggestions(tags: string[]): void;
+  /** Apply AI-suggested new tags that don't exist in availableTags */
+  applyNewSuggestions(tags: string[]): void;
   /** Get currently selected tags */
   getSelectedTags(): string[];
   /** Get newly created tags (not from registry) */
@@ -296,6 +298,33 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
     onChange(getSelectedTags());
   }
 
+  function applyNewSuggestions(tags: string[]): void {
+    if (userInteracted) {
+      return;
+    }
+
+    for (const tag of tags) {
+      // Skip if already in availableTags
+      if (availableTags.includes(tag)) {
+        continue;
+      }
+
+      // Respect maxTags limit
+      if (maxTags > 0 && selectedTags.size >= maxTags) {
+        break;
+      }
+
+      // Add to availableTags, mark as selected, track as new, mark as suggested
+      availableTags.push(tag);
+      selectedTags.add(tag);
+      newTags.add(tag);
+      suggestedTags.add(tag);
+    }
+
+    render();
+    onChange(getSelectedTags());
+  }
+
   function hasUserInteractedFn(): boolean {
     return userInteracted;
   }
@@ -310,6 +339,7 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
   return {
     setAvailableTags,
     applySuggestions,
+    applyNewSuggestions,
     getSelectedTags,
     getNewTags,
     hasUserInteracted: hasUserInteractedFn,
