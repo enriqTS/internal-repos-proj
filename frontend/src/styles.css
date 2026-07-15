@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/* Custom dark variant using data-theme attribute */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  /* Colors referencing CSS custom properties */
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-subtle: var(--color-accent-subtle);
+  --color-tag-bg: var(--color-tag-bg);
+  --color-tag-text: var(--color-tag-text);
+  --color-success: var(--color-success);
+  --color-error: var(--color-error);
+  --color-error-hover: var(--color-error-hover);
+  --color-code-bg: var(--color-code-bg);
+  --color-on-accent: var(--color-on-accent);
+  --color-overlay: var(--color-overlay);
+  --color-header-bg: var(--color-header-bg);
+
+  /* Font families */
+  --font-mono: var(--font-mono);
+  --font-body: var(--font-body);
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(44, 42, 38, 0.06);
+  --shadow-md: 0 4px 12px rgba(44, 42, 38, 0.08);
+  --shadow-lg: 0 8px 24px rgba(44, 42, 38, 0.1);
+
+  /* Transition duration */
+  --transition-duration-180: 180ms;
+}
+
+:root {
+  --color-bg: #f4f2ef;
+  --color-surface: #ffffff;
+  --color-surface-raised: #fafaf8;
+  --color-border: #e2dfd9;
+  --color-border-strong: #c9c4bc;
+  --color-text: #2c2a26;
+  --color-text-muted: #6b6660;
+  --color-accent: #d35c2e;
+  --color-accent-hover: #b84d24;
+  --color-accent-subtle: #fdf0eb;
+  --color-tag-bg: #eae7e2;
+  --color-tag-text: #4a4640;
+  --color-success: #3d8c5c;
+  --color-error: #c43d3d;
+  --color-error-hover: #a83333;
+  --color-code-bg: #2c2a26;
+  --color-on-accent: #ffffff;
+  --color-overlay: rgba(44, 42, 38, 0.5);
+  --color-header-bg: rgba(255, 255, 255, 0.92);
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html[data-theme="dark"] {
+  --color-bg: #1a1a1e;
+  --color-surface: #242428;
+  --color-surface-raised: #2c2c31;
+  --color-border: #3a3a40;
+  --color-border-strong: #4e4e56;
+  --color-text: #e8e6e1;
+  --color-text-muted: #9e9a94;
+  --color-accent: #e8743f;
+  --color-accent-hover: #f08a56;
+  --color-accent-subtle: #2e2018;
+  --color-tag-bg: #2e2e33;
+  --color-tag-text: #c4c0ba;
+  --color-success: #4ea870;
+  --color-error: #e05555;
+  --color-error-hover: #c44444;
+  --color-code-bg: #1e1e22;
+  --color-on-accent: #ffffff;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-header-bg: rgba(36, 36, 40, 0.92);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-text);
+    background: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
