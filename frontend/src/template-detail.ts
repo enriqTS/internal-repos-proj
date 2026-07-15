@@ -91,13 +91,66 @@ export function renderDownloadButton(name: string): HTMLElement {
 }
 
 /**
+ * Show an image in a lightbox modal overlay.
+ *
+ * Creates an overlay with role="dialog", aria-modal="true", reusing existing
+ * `.delete-dialog-overlay` class. Supports close via:
+ * - Close button (×)
+ * - Click outside the image (on overlay background)
+ * - Escape key
+ */
+export function showImageLightbox(imageUrl: string, altText: string): void {
+  const overlay = document.createElement('div');
+  overlay.className = 'delete-dialog-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'lightbox-close';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.textContent = '×';
+
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = altText;
+  img.style.maxWidth = '90vw';
+  img.style.maxHeight = '90vh';
+  img.style.objectFit = 'contain';
+
+  overlay.appendChild(closeBtn);
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+
+  // Close handlers
+  function close(): void {
+    overlay.remove();
+    document.removeEventListener('keydown', onKeyDown);
+  }
+
+  closeBtn.addEventListener('click', close);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      close();
+    }
+  });
+
+  function onKeyDown(e: KeyboardEvent): void {
+    if (e.key === 'Escape') {
+      close();
+    }
+  }
+  document.addEventListener('keydown', onKeyDown);
+}
+
+/**
  * Render the architecture image section.
  *
- * - Wraps an <img> in an <a> that opens the full-size image in a new tab
+ * - Wraps an <img> in a clickable element that opens a lightbox
  * - img alt: "Architecture diagram for {name}"
  * - img style: max-width:100%
- * - a href: imageUrl, target: _blank, rel: noopener noreferrer
- * - a aria-label: "View full-size architecture diagram for {name}"
+ * - trigger aria-label: "View full-size architecture diagram for {name}"
  * - onerror on <img>: removes entire architecture section from the DOM
  * - section class: template-architecture
  */
@@ -105,11 +158,13 @@ export function renderArchitectureSection(imageUrl: string, name: string): HTMLE
   const section = document.createElement('section');
   section.className = 'template-architecture';
 
-  const anchor = document.createElement('a');
-  anchor.href = imageUrl;
-  anchor.target = '_blank';
-  anchor.rel = 'noopener noreferrer';
-  anchor.setAttribute('aria-label', `View full-size architecture diagram for ${name}`);
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'architecture-lightbox-trigger';
+  trigger.setAttribute('aria-label', `View full-size architecture diagram for ${name}`);
+  trigger.addEventListener('click', () => {
+    showImageLightbox(imageUrl, `Architecture diagram for ${name}`);
+  });
 
   const img = document.createElement('img');
   img.src = imageUrl;
@@ -119,8 +174,8 @@ export function renderArchitectureSection(imageUrl: string, name: string): HTMLE
     section.remove();
   };
 
-  anchor.appendChild(img);
-  section.appendChild(anchor);
+  trigger.appendChild(img);
+  section.appendChild(trigger);
   return section;
 }
 
