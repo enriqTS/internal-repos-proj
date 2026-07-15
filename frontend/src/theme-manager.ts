@@ -3,6 +3,7 @@
  * Handles theme resolution, persistence, and DOM application for the dark mode toggle.
  */
 import { t } from './i18n';
+import { iconButton } from './ui';
 
 export type Theme = 'light' | 'dark';
 
@@ -77,8 +78,7 @@ const MOON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
  * to switch between light and dark themes on click.
  */
 export function createThemeToggle(manager: ThemeManager): HTMLButtonElement {
-  const button = document.createElement('button');
-  button.className = 'theme-toggle';
+  const button = iconButton({ ariaLabel: getToggleLabel(manager.getTheme()) });
   button.type = 'button';
 
   function update(): void {
