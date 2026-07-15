@@ -16,6 +16,9 @@ infra/lambda.zip
 *.tfstate.backup
 *.tfplan
 
+# Tag registry (managed in S3 by Lambda)
+tags.json
+
 # Python
 .hypothesis/
 __pycache__/
