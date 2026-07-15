@@ -2,13 +2,16 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getAIClient, MODEL_ID } from './ai-client';
 import { getTagRegistry } from './tag-registry';
 import type { SuggestTagsRequest, SuggestTagsResponse } from 'shared';
-import { MAX_AI_SUGGESTED_TAGS } from 'shared';
+import { MAX_AI_SUGGESTED_TAGS, TAG_PATTERN, MAX_TAG_LENGTH } from 'shared';
 
 /** Maximum characters of README content sent to the model. */
 const MAX_README_INPUT_LENGTH = 10_000;
 
 /** Timeout in milliseconds for the AI model invocation in suggestTagsFromReadme. */
 const SUGGEST_TAGS_TIMEOUT_MS = 10_000;
+
+/** Maximum number of new tag suggestions the AI can propose (not in registry). */
+const MAX_NEW_TAG_SUGGESTIONS = 3;
 
 /** Standard CORS headers included in every response. */
 const CORS_HEADERS = {
@@ -22,7 +25,7 @@ const CORS_HEADERS = {
  * Handles markdown code fences, trailing text, and other common quirks.
  * Uses a non-greedy approach to find the first valid JSON object with a "tags" field.
  */
-function extractJson(content: string): { tags: unknown } | null {
+function extractJson(content: string): { tags: unknown; newTags?: unknown } | null {
   // Strip markdown code fences if present
   const stripped = content.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '');
 
@@ -57,22 +60,22 @@ function extractJson(content: string): { tags: unknown } | null {
  * Suggest tags for a project based on its README content.
  * Designed for direct invocation within the Finalize_Lambda (no HTTP).
  *
- * - Returns [] immediately if readme is empty, undefined, or whitespace-only
+ * - Returns {tags: [], newTags: []} immediately if readme is empty, undefined, or whitespace-only
  * - Truncates README to 10,000 characters
  * - Fetches the current tag registry
- * - Invokes the AI model with the same prompt format as the handler
- * - Parses response and filters to registry-only tags
+ * - Invokes the AI model with a prompt that allows suggesting both registry tags and new tags
+ * - Parses response and filters registry tags; validates new tags against TAG_PATTERN/MAX_TAG_LENGTH
  * - Enforces a 10-second timeout via AbortController
- * - Returns empty array on any error (never throws)
+ * - Returns empty result on any error (never throws)
  *
  * @param readme - The README content to analyze
- * @returns Array of suggested tag strings (0-25 items, all from registry)
+ * @returns Object with `tags` (registry-existing) and `newTags` (new validated suggestions, up to 3)
  */
-export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
+export async function suggestTagsFromReadme(readme: string): Promise<{ tags: string[]; newTags: string[] }> {
   try {
     // Early return if readme is empty, undefined, or whitespace-only
     if (!readme || !readme.trim()) {
-      return [];
+      return { tags: [], newTags: [] };
     }
 
     // Truncate README to 10,000 characters
@@ -85,11 +88,11 @@ export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
 
     if (registryTags.length === 0) {
       console.log('[suggest-tags] suggestTagsFromReadme: Empty registry, returning no suggestions');
-      return [];
+      return { tags: [], newTags: [] };
     }
 
-    // Build prompt (same format as the handler)
-    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing a "tags" field with an array of up to ${MAX_AI_SUGGESTED_TAGS} suggested tags. Only suggest tags from the available tags list.`;
+    // Build prompt that allows both registry tags and new tag suggestions
+    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing:\n- "tags": an array of up to ${MAX_AI_SUGGESTED_TAGS} suggested tags from the available tags list\n- "newTags": an array of up to ${MAX_NEW_TAG_SUGGESTIONS} new tags you think are relevant but are NOT in the available list (lowercase, alphanumeric with hyphens/underscores only, max ${MAX_TAG_LENGTH} chars each)`;
 
     console.log(`[suggest-tags] suggestTagsFromReadme: Invoking model: ${MODEL_ID}`);
 
@@ -114,17 +117,17 @@ export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
       const content = response.choices[0]?.message?.content ?? null;
 
       if (!content) {
-        return [];
+        return { tags: [], newTags: [] };
       }
 
       // Extract JSON from the content (handle markdown code blocks)
       const parsed = extractJson(content);
       if (!parsed) {
-        return [];
+        return { tags: [], newTags: [] };
       }
 
       if (!parsed.tags || !Array.isArray(parsed.tags)) {
-        return [];
+        return { tags: [], newTags: [] };
       }
 
       // Filter to only tags present in registry (case-insensitive), cap at MAX_AI_SUGGESTED_TAGS
@@ -135,22 +138,41 @@ export async function suggestTagsFromReadme(readme: string): Promise<string[]> {
         .filter((tag: string) => registryLower.has(tag))
         .slice(0, MAX_AI_SUGGESTED_TAGS);
 
-      console.log(`[suggest-tags] suggestTagsFromReadme: Suggesting ${suggestedTags.length} tags: ${suggestedTags.join(', ')}`);
+      // Parse and validate new tags (not in registry)
+      const newTags: string[] = [];
+      if (parsed.newTags && Array.isArray(parsed.newTags)) {
+        for (const tag of parsed.newTags) {
+          if (typeof tag !== 'string') continue;
+          const normalized = tag.toLowerCase().trim();
+          if (
+            normalized.length > 0 &&
+            normalized.length <= MAX_TAG_LENGTH &&
+            TAG_PATTERN.test(normalized) &&
+            !registryLower.has(normalized) &&
+            newTags.length < MAX_NEW_TAG_SUGGESTIONS
+          ) {
+            newTags.push(normalized);
+          }
+        }
+      }
 
-      return suggestedTags;
+      console.log(`[suggest-tags] suggestTagsFromReadme: Suggesting ${suggestedTags.length} tags: ${suggestedTags.join(', ')}`);
+      console.log(`[suggest-tags] suggestTagsFromReadme: Suggesting ${newTags.length} new tags: ${newTags.join(', ')}`);
+
+      return { tags: suggestedTags, newTags };
     } finally {
       clearTimeout(timeoutId);
     }
   } catch (err) {
-    // Log the error for CloudWatch visibility, then return empty array (never throws)
+    // Log the error for CloudWatch visibility, then return empty result (never throws)
     console.error('[suggest-tags] suggestTagsFromReadme error:', err instanceof Error ? `${err.name}: ${err.message}` : err);
-    return [];
+    return { tags: [], newTags: [] };
   }
 }
 
 /**
  * Lambda handler for POST /tags/suggest.
- * Accepts a README and returns AI-suggested tags from the registry.
+ * Accepts a README and returns AI-suggested tags from the registry plus new tag suggestions.
  */
 export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   // Handle preflight OPTIONS requests
@@ -171,7 +193,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        body: JSON.stringify({ tags: [] } satisfies SuggestTagsResponse),
+        body: JSON.stringify({ tags: [], newTags: [] } satisfies SuggestTagsResponse),
       };
     }
 
@@ -188,12 +210,12 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        body: JSON.stringify({ tags: [] } satisfies SuggestTagsResponse),
+        body: JSON.stringify({ tags: [], newTags: [] } satisfies SuggestTagsResponse),
       };
     }
 
-    // 4. Build prompt and invoke AI model
-    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing a "tags" field with an array of up to ${MAX_AI_SUGGESTED_TAGS} suggested tags. Only suggest tags from the available tags list.`;
+    // 4. Build prompt and invoke AI model (allows both registry tags and new suggestions)
+    const prompt = `You are a tag classification system. Given a project README and a list of available tags, suggest the most relevant tags for this project.\n\nAvailable tags: ${registryTags.join(', ')}\n\nREADME:\n${readmeContent}\n\nRespond with a JSON object containing:\n- "tags": an array of up to ${MAX_AI_SUGGESTED_TAGS} suggested tags from the available tags list\n- "newTags": an array of up to ${MAX_NEW_TAG_SUGGESTIONS} new tags you think are relevant but are NOT in the available list (lowercase, alphanumeric with hyphens/underscores only, max ${MAX_TAG_LENGTH} chars each)`;
 
     console.log(`[suggest-tags] Invoking model: ${MODEL_ID}`);
 
@@ -213,7 +235,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        body: JSON.stringify({ tags: [] } satisfies SuggestTagsResponse),
+        body: JSON.stringify({ tags: [], newTags: [] } satisfies SuggestTagsResponse),
       };
     }
 
@@ -223,7 +245,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        body: JSON.stringify({ tags: [] } satisfies SuggestTagsResponse),
+        body: JSON.stringify({ tags: [], newTags: [] } satisfies SuggestTagsResponse),
       };
     }
 
@@ -231,7 +253,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        body: JSON.stringify({ tags: [] } satisfies SuggestTagsResponse),
+        body: JSON.stringify({ tags: [], newTags: [] } satisfies SuggestTagsResponse),
       };
     }
 
@@ -243,12 +265,31 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       .filter((tag: string) => registryLower.has(tag))
       .slice(0, MAX_AI_SUGGESTED_TAGS);
 
+    // 8. Parse and validate new tags (not in registry)
+    const newTags: string[] = [];
+    if (parsed.newTags && Array.isArray(parsed.newTags)) {
+      for (const tag of parsed.newTags) {
+        if (typeof tag !== 'string') continue;
+        const normalized = tag.toLowerCase().trim();
+        if (
+          normalized.length > 0 &&
+          normalized.length <= MAX_TAG_LENGTH &&
+          TAG_PATTERN.test(normalized) &&
+          !registryLower.has(normalized) &&
+          newTags.length < MAX_NEW_TAG_SUGGESTIONS
+        ) {
+          newTags.push(normalized);
+        }
+      }
+    }
+
     console.log(`[suggest-tags] Suggesting ${suggestedTags.length} tags: ${suggestedTags.join(', ')}`);
+    console.log(`[suggest-tags] Suggesting ${newTags.length} new tags: ${newTags.join(', ')}`);
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      body: JSON.stringify({ tags: suggestedTags } satisfies SuggestTagsResponse),
+      body: JSON.stringify({ tags: suggestedTags, newTags } satisfies SuggestTagsResponse),
     };
   } catch (err) {
     // Log the error for debugging, then return empty tags array
@@ -256,7 +297,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      body: JSON.stringify({ tags: [] } satisfies SuggestTagsResponse),
+      body: JSON.stringify({ tags: [], newTags: [] } satisfies SuggestTagsResponse),
     };
   }
 }

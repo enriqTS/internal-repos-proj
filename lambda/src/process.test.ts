@@ -174,7 +174,7 @@ describe('process handler - auto-tag integration', () => {
     process.env.BUCKET_NAME = 'test-frontend-bucket';
     process.env.STAGING_BUCKET = 'test-staging-bucket';
     mockGenerateReadme.mockResolvedValue({ readme: '' });
-    mockSuggestTagsFromReadme.mockResolvedValue([]);
+    mockSuggestTagsFromReadme.mockResolvedValue({ tags: [], newTags: [] });
     mockAddTagsToRegistry.mockResolvedValue([]);
   });
 
@@ -191,7 +191,7 @@ describe('process handler - auto-tag integration', () => {
     // README generation produces a valid readme
     mockGenerateReadme.mockResolvedValue({ readme: '# My Project\nA cool project' });
     // Tag suggestion returns auto-tags
-    mockSuggestTagsFromReadme.mockResolvedValue(['react', 'typescript']);
+    mockSuggestTagsFromReadme.mockResolvedValue({ tags: ['react', 'typescript'], newTags: [] });
 
     const result = await handler(makeEvent({ sessionId: 'session-1' }));
 

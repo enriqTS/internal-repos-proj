@@ -257,7 +257,8 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       readmeContent !== 'No description provided'
     ) {
       try {
-        autoTags = await suggestTagsFromReadme(readmeContent);
+        const suggestResult = await suggestTagsFromReadme(readmeContent);
+        autoTags = suggestResult.tags;
       } catch {
         // Should not throw (suggestTagsFromReadme catches internally),
         // but defensive catch for safety

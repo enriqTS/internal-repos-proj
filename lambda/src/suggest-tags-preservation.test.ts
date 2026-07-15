@@ -93,12 +93,12 @@ describe('Preservation: suggestTagsFromReadme returns registry-existing tags', (
 
           // Property: All returned tags should be from the registry (lowercased)
           const registryLower = new Set(uniqueRegistry.map((t) => t.toLowerCase()));
-          for (const tag of result) {
+          for (const tag of result.tags) {
             expect(registryLower.has(tag)).toBe(true);
           }
 
           // Property: returned tags are a subset of what AI suggested (filtered to registry)
-          expect(result.length).toBeLessThanOrEqual(aiSuggestedTags.length);
+          expect(result.tags.length).toBeLessThanOrEqual(aiSuggestedTags.length);
         },
       ),
       { numRuns: 30 },
@@ -116,7 +116,7 @@ describe('Preservation: suggestTagsFromReadme returns registry-existing tags', (
         async (emptyReadme) => {
           const { suggestTagsFromReadme } = await import('./suggest-tags');
           const result = await suggestTagsFromReadme(emptyReadme);
-          expect(result).toEqual([]);
+          expect(result).toEqual({ tags: [], newTags: [] });
         },
       ),
       { numRuns: 10 },
@@ -129,7 +129,7 @@ describe('Preservation: suggestTagsFromReadme returns registry-existing tags', (
     const { suggestTagsFromReadme } = await import('./suggest-tags');
     const result = await suggestTagsFromReadme('# Valid Project\n\nHas content.');
 
-    expect(result).toEqual([]);
+    expect(result).toEqual({ tags: [], newTags: [] });
     // AI model should NOT be called when registry is empty
     expect(mockCreate).not.toHaveBeenCalled();
   });
@@ -152,11 +152,11 @@ describe('Preservation: suggestTagsFromReadme returns registry-existing tags', (
     const { suggestTagsFromReadme } = await import('./suggest-tags');
     const result = await suggestTagsFromReadme('# Test\n\nPython project with Terraform.');
 
-    // Only registry tags should be returned
-    expect(result).toContain('python');
-    expect(result).toContain('terraform');
-    expect(result).not.toContain('novel-tag');
-    expect(result).not.toContain('unknown');
+    // Only registry tags should be returned in tags field
+    expect(result.tags).toContain('python');
+    expect(result.tags).toContain('terraform');
+    expect(result.tags).not.toContain('novel-tag');
+    expect(result.tags).not.toContain('unknown');
   });
 
   it('suggestTagsFromReadme caps results at MAX_AI_SUGGESTED_TAGS', async () => {
@@ -178,6 +178,6 @@ describe('Preservation: suggestTagsFromReadme returns registry-existing tags', (
     const result = await suggestTagsFromReadme('# Test Project with many tags');
 
     // MAX_AI_SUGGESTED_TAGS is 25
-    expect(result.length).toBeLessThanOrEqual(25);
+    expect(result.tags.length).toBeLessThanOrEqual(25);
   });
 });
