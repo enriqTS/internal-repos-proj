@@ -6,7 +6,7 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
 
 ## Tasks
 
-- [ ] 1. Write bug condition exploration tests
+- [x] 1. Write bug condition exploration tests
   - **Property 1: Bug Condition** - UX Defects Exist in Unfixed Code
   - **CRITICAL**: These tests MUST FAIL on unfixed code - failure confirms the bugs exist
   - **DO NOT attempt to fix the tests or the code when they fail**
@@ -25,7 +25,7 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
   - Mark task complete when tests are written, run, and failures are documented
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
 
-- [ ] 2. Write preservation property tests (BEFORE implementing fixes)
+- [x] 2. Write preservation property tests (BEFORE implementing fixes)
   - **Property 2: Preservation** - Existing Behaviors Unchanged
   - **IMPORTANT**: Follow observation-first methodology
   - Observe behavior on UNFIXED code for non-buggy inputs:
@@ -47,9 +47,9 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
   - Mark task complete when tests are written, run, and passing on unfixed code
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10_
 
-- [ ] 3. Fix Bug 1 — Date typo in metadata files
+- [x] 3. Fix Bug 1 — Date typo in metadata files
 
-  - [ ] 3.1 Fix the date typo in metadata.json files
+  - [x] 3.1 Fix the date typo in metadata.json files
     - In `templates/chatbot-rag-agentcore/metadata.json`: change `"2025-07-14"` to `"2026-07-14"`
     - In `templates/chatbot-rag-mantle/metadata.json`: change `"2025-07-14"` to `"2026-07-14"`
     - _Bug_Condition: isBugCondition(input) where input.templateName IN ["chatbot-rag-agentcore", "chatbot-rag-mantle"] AND date == "2025-07-14"_
@@ -57,9 +57,9 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
     - _Preservation: Other templates' dates remain unchanged_
     - _Requirements: 2.1, 3.1_
 
-- [ ] 4. Fix Bug 2 — Show exact dates visibly in card grid
+- [x] 4. Fix Bug 2 — Show exact dates visibly in card grid
 
-  - [ ] 4.1 Update date rendering in card-grid.ts
+  - [x] 4.1 Update date rendering in card-grid.ts
     - Change date `textContent` from `formatRelativeDate(item.date)` to `"${formatRelativeDate(item.date)} · ${item.date}"`
     - Remove the `title` attribute on the `<time>` element (exact date is now visible inline)
     - _Bug_Condition: isBugCondition(input) where input.type == "view_card" AND exactDateVisible == false_
@@ -67,9 +67,9 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
     - _Preservation: Template detail page date display unchanged (uses separate rendering)_
     - _Requirements: 2.2, 3.2_
 
-- [ ] 5. Fix Bug 3 — Allow long names to wrap in card grid
+- [x] 5. Fix Bug 3 — Allow long names to wrap in card grid
 
-  - [ ] 5.1 Update card CSS in card-grid.ts
+  - [x] 5.1 Update card CSS in card-grid.ts
     - Remove `aspect-ratio: 1` from `.card-grid-item`
     - Remove `overflow: hidden` from `.card-grid-item`
     - Replace `.card-grid-item__name` styles: remove `white-space: nowrap; overflow: hidden; text-overflow: ellipsis`
@@ -79,9 +79,9 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
     - _Preservation: Short names continue to display on a single line; responsive grid layout (1/2/4 cols) unchanged_
     - _Requirements: 2.3, 3.3, 3.7_
 
-- [ ] 6. Fix Bug 5 — Add upload button to projects page
+- [x] 6. Fix Bug 5 — Add upload button to projects page
 
-  - [ ] 6.1 Add upload affordance to renderSearchView in main.ts
+  - [x] 6.1 Add upload affordance to renderSearchView in main.ts
     - Wrap existing `<h2>` heading in a flex container (`display: flex; align-items: center; justify-content: space-between`)
     - Add an upload button/link (`<a href="#/upload">`) styled similar to `.upload-submit` (accent color, mono font)
     - _Bug_Condition: isBugCondition(input) where input.type == "view_projects_page" AND noUploadButtonVisible_
@@ -89,9 +89,9 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
     - _Preservation: Direct navigation to #/upload continues to render the upload form; existing nav items unchanged_
     - _Requirements: 2.6, 3.6_
 
-- [ ] 7. Fix Bug 4 — Lightbox for architecture images
+- [x] 7. Fix Bug 4 — Lightbox for architecture images
 
-  - [ ] 7.1 Implement showImageLightbox function in template-detail.ts
+  - [x] 7.1 Implement showImageLightbox function in template-detail.ts
     - Create overlay div with `role="dialog"`, `aria-modal="true"`, reuse existing overlay pattern (`.delete-dialog-overlay`)
     - Add close button (×) with `aria-label="Close"`
     - Add `<img>` with `max-width: 90vw; max-height: 90vh; object-fit: contain`
@@ -99,7 +99,7 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
     - Add Escape key listener to close
     - _Requirements: 2.5_
 
-  - [ ] 7.2 Replace anchor with lightbox trigger in renderArchitectureSection
+  - [x] 7.2 Replace anchor with lightbox trigger in renderArchitectureSection
     - Remove `<a href target="_blank" rel="noopener noreferrer">` wrapper
     - Replace with clickable element that calls `showImageLightbox(imageUrl, name)`
     - Maintain `aria-label="View full-size architecture diagram for {name}"` on the trigger
@@ -108,13 +108,13 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
     - _Preservation: Image onerror handler continues to remove architecture section on load failure_
     - _Requirements: 2.5, 3.5_
 
-- [ ] 8. Fix Bug 6 — AI new tag suggestions (Lambda + types + frontend)
+- [x] 8. Fix Bug 6 — AI new tag suggestions (Lambda + types + frontend)
 
-  - [ ] 8.1 Update SuggestTagsResponse type in shared/src/types.ts
+  - [x] 8.1 Update SuggestTagsResponse type in shared/src/types.ts
     - Add `newTags?: string[]` field to the `SuggestTagsResponse` interface
     - _Requirements: 2.4_
 
-  - [ ] 8.2 Update suggest-tags.ts Lambda handler
+  - [x] 8.2 Update suggest-tags.ts Lambda handler
     - Modify the AI prompt to allow suggesting up to 3 new tags not in registry (instruct model to return `{tags: [...], newTags: [...]}`)
     - Parse `newTags` from the AI response in addition to `tags`
     - Validate new tags against `TAG_PATTERN` and `MAX_TAG_LENGTH`
@@ -125,26 +125,26 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
     - _Preservation: Tags that exist in registry are still returned correctly in `tags` field; addTagsToRegistry() still persists manually-created new tags_
     - _Requirements: 2.4, 2.7, 3.4, 3.9_
 
-  - [ ] 8.3 Update tag-selector.ts to support AI-suggested new tags
+  - [x] 8.3 Update tag-selector.ts to support AI-suggested new tags
     - Add method to accept new AI-suggested tags that don't exist in `availableTags`
     - Add them to `availableTags`, mark as selected, track in `newTags` set, and mark as suggested
     - _Preservation: Manual tag creation via "Add new tag" input continues working with existing validation_
     - _Requirements: 2.4, 3.8_
 
-  - [ ] 8.4 Update upload-form.ts to handle newTags from suggestion response
+  - [x] 8.4 Update upload-form.ts to handle newTags from suggestion response
     - Handle both `tags` and `newTags` from the suggestion API response
     - Apply existing tags via `tagSelector.applySuggestions(result.data.tags)`
     - Apply new tags via the new tag-selector method for AI-suggested new tags
     - _Requirements: 2.4_
 
-  - [ ] 8.5 Remove tags.json from repo and update .gitignore
+  - [x] 8.5 Remove tags.json from repo and update .gitignore
     - Delete `tags.json` from repository root
     - Add `tags.json` to `.gitignore`
     - CI/CD "Ensure tag registry exists" step remains unchanged (creates empty tags.json in S3 if missing)
     - _Preservation: fetchTagRegistry() continues fetching from CDN URL unchanged; CI/CD initialization unchanged_
     - _Requirements: 2.8, 2.9, 3.10_
 
-- [ ] 9. Verify bug condition exploration tests now pass
+- [x] 9. Verify bug condition exploration tests now pass
   - **Property 1: Expected Behavior** - All UX Defects Resolved
   - **IMPORTANT**: Re-run the SAME tests from task 1 - do NOT write new tests
   - The tests from task 1 encode the expected behavior for all 6 bugs
@@ -153,7 +153,7 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
   - **EXPECTED OUTCOME**: All tests PASS (confirms all bugs are fixed)
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
-- [ ] 10. Verify preservation tests still pass
+- [x] 10. Verify preservation tests still pass
   - **Property 2: Preservation** - No Regressions Introduced
   - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
   - Run all preservation property tests from step 2
@@ -161,7 +161,7 @@ Implementation plan for fixing six UX defects in the Internal Repos portal: inco
   - Confirm all preservation tests still pass after all fixes applied
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10_
 
-- [ ] 11. Checkpoint - Ensure all tests pass
+- [x] 11. Checkpoint - Ensure all tests pass
   - Run full test suite (frontend + lambda)
   - Ensure all exploration tests pass (bugs fixed)
   - Ensure all preservation tests pass (no regressions)

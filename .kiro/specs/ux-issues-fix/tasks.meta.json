@@ -1,0 +1,337 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration tests": {
+      "status": "passed",
+      "failingExample": "All 6 tests FAILED as expected (confirming bugs exist):\n\n1a: expected '2025-07-14' to be '2026-07-14' — metadata.json date typo confirmed\n1b: expected '2 weeks ago' to contain '2026-07-01' — ISO date hidden in title attribute only\n1c: expected true to be false — card CSS has aspect-ratio: 1 and white-space: nowrap\n1d: expected null not to be null — no upload link exists on projects page\n1e: expected <a target=\"_blank\">...</a> to be null — architecture image opens new tab\n1f: SuggestTagsResponse only has tags: string[], no newTags field",
+      "lastRunTimestamp": 1784149451511
+    },
+    "2. Write preservation property tests (BEFORE implementing fixes)": {
+      "status": "passed",
+      "lastRunTimestamp": 1784149605112
+    },
+    "10. Verify preservation tests still pass": {
+      "status": "passed",
+      "lastRunTimestamp": 1784150337565
+    },
+    "9. Verify bug condition exploration tests now pass": {
+      "status": "passed",
+      "lastRunTimestamp": 1784150345881
+    }
+  },
+  "executionHistory": {
+    "1. Write bug condition exploration tests": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229511
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149239649
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149674987
+      }
+    ],
+    "2. Write preservation property tests (BEFORE implementing fixes)": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229549
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149240324
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149675907
+      }
+    ],
+    "3.1 Fix the date typo in metadata.json files": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229580
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149681167
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149906102
+      }
+    ],
+    "4.1 Update date rendering in card-grid.ts": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229630
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149681952
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149906883
+      }
+    ],
+    "5.1 Update card CSS in card-grid.ts": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229664
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149682872
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149907555
+      }
+    ],
+    "6.1 Add upload affordance to renderSearchView in main.ts": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229695
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149683571
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149908340
+      }
+    ],
+    "7.1 Implement showImageLightbox function in template-detail.ts": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229726
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149912803
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150019027
+      }
+    ],
+    "7.2 Replace anchor with lightbox trigger in renderArchitectureSection": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229763
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149913628
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150019715
+      }
+    ],
+    "8.1 Update SuggestTagsResponse type in shared/src/types.ts": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229791
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150025520
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150285645
+      }
+    ],
+    "8.2 Update suggest-tags.ts Lambda handler": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229821
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150026190
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150286437
+      }
+    ],
+    "8.3 Update tag-selector.ts to support AI-suggested new tags": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229851
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150026914
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150287311
+      }
+    ],
+    "8.4 Update upload-form.ts to handle newTags from suggestion response": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229884
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150027837
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150288212
+      }
+    ],
+    "8.5 Remove tags.json from repo and update .gitignore": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229912
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150029568
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150289056
+      }
+    ],
+    "9. Verify bug condition exploration tests now pass": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229938
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150294291
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150359195
+      }
+    ],
+    "10. Verify preservation tests still pass": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149229967
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150295027
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150359900
+      }
+    ],
+    "11. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149230010
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150295707
+      },
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150360663
+      }
+    ],
+    "3. Fix Bug 1 — Date typo in metadata files": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149906162
+      }
+    ],
+    "4. Fix Bug 2 — Show exact dates visibly in card grid": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149906918
+      }
+    ],
+    "5. Fix Bug 3 — Allow long names to wrap in card grid": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149907586
+      }
+    ],
+    "6. Fix Bug 5 — Add upload button to projects page": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784149908388
+      }
+    ],
+    "7. Fix Bug 4 — Lightbox for architecture images": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150019739
+      }
+    ],
+    "8. Fix Bug 6 — AI new tag suggestions (Lambda + types + frontend)": [
+      {
+        "executionId": "46c2ba3e-7fca-408e-b3fe-aa12031b48b3",
+        "chatSessionId": "sess_14702947-f331-4988-b990-5cf4599a6e86",
+        "timestamp": 1784150289082
+      }
+    ]
+  }
+}
