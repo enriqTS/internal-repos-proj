@@ -46,18 +46,17 @@ describe('renderProjectDetail', () => {
       const container = createContainer();
       await renderProjectDetail('projects/my-project/', container);
 
-      expect(container.querySelector('.project-name')?.textContent).toBe('my-project');
-      expect(container.querySelector('.project-description')?.textContent).toBe(
-        'A test project for internal use',
-      );
+      expect(container.querySelector('h1')?.textContent).toBe('my-project');
+      const descEl = container.querySelector('p');
+      expect(descEl?.textContent).toBe('A test project for internal use');
 
-      const tags = container.querySelectorAll('.project-tags .tag');
+      const tags = container.querySelectorAll('span[class*="font-mono"][class*="text-xs"]');
       expect(tags.length).toBe(3);
       expect(tags[0].textContent).toBe('web');
       expect(tags[1].textContent).toBe('api');
       expect(tags[2].textContent).toBe('typescript');
 
-      expect(container.querySelector('.project-date')?.textContent).toBe('2024-03-15');
+      expect(container.querySelector('time')?.textContent).toBe('2024-03-15');
     });
 
     it('renders readme as HTML using marked', async () => {
@@ -95,7 +94,7 @@ describe('renderProjectDetail', () => {
       const container = createContainer();
       await renderProjectDetail('projects/my-project/', container);
 
-      const link = container.querySelector('a.download-link') as HTMLAnchorElement;
+      const link = container.querySelector('a[download]') as HTMLAnchorElement;
       expect(link).not.toBeNull();
       expect(link.href).toBe('https://cdn.example.com/projects/my-project/artifact.zip');
       expect(link.getAttribute('download')).toBe('my-project.zip');
@@ -118,7 +117,7 @@ describe('renderProjectDetail', () => {
       expect(errorMsg?.textContent).toBe('Detalhes do projeto não disponíveis');
 
       // No metadata or readme should be rendered
-      expect(container.querySelector('.project-metadata')).toBeNull();
+      expect(container.querySelector('h1')).toBeNull();
       expect(container.querySelector('.project-readme')).toBeNull();
     });
   });
@@ -141,10 +140,9 @@ describe('renderProjectDetail', () => {
       await renderProjectDetail('projects/my-project/', container);
 
       // Metadata should still be visible
-      expect(container.querySelector('.project-name')?.textContent).toBe('my-project');
-      expect(container.querySelector('.project-description')?.textContent).toBe(
-        'A test project for internal use',
-      );
+      expect(container.querySelector('h1')?.textContent).toBe('my-project');
+      const descEl = container.querySelector('p');
+      expect(descEl?.textContent).toBe('A test project for internal use');
 
       // Readme error should be shown
       const readmeError = container.querySelector('.error-message');
@@ -172,17 +170,18 @@ describe('renderProjectDetail', () => {
       const container = createContainer();
       await renderProjectDetail('projects/my-project/', container);
 
-      // Should not have <a> link
-      const link = container.querySelector('a.download-link');
+      // Should not have download <a> link
+      const link = container.querySelector('a[download]');
       expect(link).toBeNull();
 
       // Should have disabled span
-      const disabledLink = container.querySelector('.download-link.disabled');
+      const disabledLink = container.querySelector('span[aria-disabled="true"]');
       expect(disabledLink).not.toBeNull();
-      expect(disabledLink?.getAttribute('aria-disabled')).toBe('true');
 
       // Should have unavailable message
-      const unavailableMsg = container.querySelector('.artifact-unavailable');
+      const sections = container.querySelectorAll('section');
+      const downloadSection = Array.from(sections).find(s => s.querySelector('span[aria-disabled="true"]'));
+      const unavailableMsg = downloadSection?.querySelector('p');
       expect(unavailableMsg).not.toBeNull();
       expect(unavailableMsg?.textContent).toBe('Artefato não disponível para download');
     });
@@ -204,7 +203,7 @@ describe('renderProjectDetail', () => {
       const container = createContainer();
       await renderProjectDetail('projects/my-project/', container);
 
-      const dateEl = container.querySelector('.project-date');
+      const dateEl = container.querySelector('time');
       expect(dateEl?.textContent).toBe('2023-12-25');
       expect(dateEl?.getAttribute('datetime')).toBe('2023-12-25');
     });

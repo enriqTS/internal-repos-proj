@@ -3,6 +3,7 @@ import { fetchProjectReadme, fetchProjectMetadata } from './api';
 import { showDeleteDialog } from './delete-dialog';
 import { t } from './i18n';
 import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
+import { heading, badge, button } from './ui';
 
 /**
  * Get the base URL for constructing artifact download links.
@@ -48,7 +49,7 @@ export async function renderProjectDetail(
   // Back navigation link — rendered before fetch so it's always visible
   const backLink = document.createElement('a');
   backLink.href = '#/projects';
-  backLink.className = 'back-link';
+  backLink.className = 'inline-flex items-center gap-1 text-sm text-accent font-mono hover:text-accent-hover transition-colors duration-180 mb-4';
   backLink.textContent = t('projectDetail.back');
   container.appendChild(backLink);
 
@@ -64,7 +65,7 @@ export async function renderProjectDetail(
 
   // Build the detail page structure
   const detailWrapper = document.createElement('div');
-  detailWrapper.className = 'project-detail';
+  detailWrapper.className = 'flex flex-col gap-6';
 
   // Render metadata section
   const metadataSection = renderMetadata(metadata);
@@ -94,7 +95,7 @@ export async function renderProjectDetail(
  */
 function renderMetadataError(container: HTMLElement): void {
   const errorEl = document.createElement('p');
-  errorEl.className = 'error-message metadata-error';
+  errorEl.className = 'text-sm text-error font-mono metadata-error';
   errorEl.textContent = t('projectDetail.unavailable');
   container.appendChild(errorEl);
 }
@@ -104,30 +105,26 @@ function renderMetadataError(container: HTMLElement): void {
  */
 function renderMetadata(metadata: ProjectMetadata): HTMLElement {
   const section = document.createElement('section');
-  section.className = 'project-metadata';
+  section.className = 'flex flex-col gap-3';
 
-  const nameEl = document.createElement('h1');
-  nameEl.className = 'project-name';
-  nameEl.textContent = metadata.name;
+  const nameEl = heading(metadata.name, 1);
   section.appendChild(nameEl);
 
   const descEl = document.createElement('p');
-  descEl.className = 'project-description';
+  descEl.className = 'text-base text-text-muted leading-relaxed';
   descEl.textContent = metadata.description;
   section.appendChild(descEl);
 
   const tagsEl = document.createElement('div');
-  tagsEl.className = 'project-tags';
+  tagsEl.className = 'flex flex-wrap gap-2';
   for (const tag of metadata.tags) {
-    const tagSpan = document.createElement('span');
-    tagSpan.className = 'tag';
-    tagSpan.textContent = tag;
-    tagsEl.appendChild(tagSpan);
+    const tagEl = badge(tag);
+    tagsEl.appendChild(tagEl);
   }
   section.appendChild(tagsEl);
 
   const dateEl = document.createElement('time');
-  dateEl.className = 'project-date';
+  dateEl.className = 'text-sm text-text-muted font-mono';
   dateEl.textContent = metadata.date;
   dateEl.setAttribute('datetime', metadata.date);
   section.appendChild(dateEl);
@@ -135,9 +132,9 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
   // Repository link (if available)
   if (metadata.repositoryUrl) {
     const repoEl = document.createElement('div');
-    repoEl.className = 'project-repository';
+    repoEl.className = 'flex items-center gap-2 text-sm';
     const repoLabel = document.createElement('span');
-    repoLabel.className = 'repository-label';
+    repoLabel.className = 'font-semibold text-text';
     repoLabel.textContent = t('projectDetail.repository');
     repoEl.appendChild(repoLabel);
     const repoLink = document.createElement('a');
@@ -145,25 +142,23 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
     repoLink.textContent = metadata.repositoryUrl;
     repoLink.target = '_blank';
     repoLink.rel = 'noopener noreferrer';
-    repoLink.className = 'repository-link';
+    repoLink.className = 'text-accent hover:text-accent-hover underline transition-colors duration-180 break-all';
     repoEl.appendChild(repoLink);
     section.appendChild(repoEl);
   }
 
   // Project actions (Edit and Delete buttons)
   const actionsEl = document.createElement('div');
-  actionsEl.className = 'project-actions';
+  actionsEl.className = 'flex items-center gap-3 mt-2';
 
   const editBtn = document.createElement('a');
-  editBtn.className = 'project-edit-btn';
+  editBtn.className = 'px-4 py-2 font-mono text-sm font-semibold text-accent bg-surface border border-accent rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent inline-flex items-center';
   editBtn.href = `#/project/${encodeURIComponent(metadata.name)}/edit`;
   editBtn.textContent = t('projectDetail.edit');
   actionsEl.appendChild(editBtn);
 
-  const deleteBtn = document.createElement('button');
+  const deleteBtn = button(t('projectDetail.delete'), 'danger');
   deleteBtn.type = 'button';
-  deleteBtn.className = 'project-delete-btn';
-  deleteBtn.textContent = t('projectDetail.delete');
   deleteBtn.addEventListener('click', () => {
     showDeleteDialog(metadata.name);
   });
@@ -184,11 +179,11 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
  */
 function renderDownloadSection(projectPath: string, available: boolean, projectName: string): HTMLElement {
   const section = document.createElement('section');
-  section.className = 'project-download';
+  section.className = 'flex flex-col gap-2';
 
   if (available) {
     const link = document.createElement('a');
-    link.className = 'download-link';
+    link.className = 'inline-flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline';
     link.href = `${getBaseUrl()}/${projectPath}artifact.zip`;
     link.textContent = t('projectDetail.download');
     link.setAttribute('download', `${projectName}.zip`);
@@ -196,13 +191,13 @@ function renderDownloadSection(projectPath: string, available: boolean, projectN
     section.appendChild(link);
   } else {
     const disabledLink = document.createElement('span');
-    disabledLink.className = 'download-link disabled';
+    disabledLink.className = 'inline-flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-semibold text-text-muted bg-surface border border-border rounded-sm opacity-60 cursor-not-allowed';
     disabledLink.textContent = t('projectDetail.downloadDisabled');
     disabledLink.setAttribute('aria-disabled', 'true');
     section.appendChild(disabledLink);
 
     const unavailableMsg = document.createElement('p');
-    unavailableMsg.className = 'artifact-unavailable';
+    unavailableMsg.className = 'text-xs text-text-muted';
     unavailableMsg.textContent = t('projectDetail.artifactUnavailable');
     section.appendChild(unavailableMsg);
   }
