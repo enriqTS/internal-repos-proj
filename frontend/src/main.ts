@@ -34,19 +34,13 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
 
   // Create search UI structure
   const headingRow = document.createElement('div');
-  headingRow.className = 'flex items-center justify-between';
+  headingRow.className = 'flex items-center justify-between mb-4';
 
   const heading = document.createElement('h2');
   heading.className = 'font-body text-2xl font-semibold text-text tracking-tight';
   heading.textContent = t('search.heading');
 
-  const uploadBtn = document.createElement('a');
-  uploadBtn.href = '#/upload';
-  uploadBtn.className = 'px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline';
-  uploadBtn.textContent = t('upload.heading');
-
   headingRow.appendChild(heading);
-  headingRow.appendChild(uploadBtn);
 
   const input = createInput({ type: 'text', placeholder: t('search.placeholder') });
   input.setAttribute('aria-label', t('search.placeholder'));
