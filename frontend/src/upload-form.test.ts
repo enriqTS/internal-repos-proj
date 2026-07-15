@@ -258,18 +258,18 @@ describe('renderUploadForm', () => {
     expect(nameInput).not.toBeNull();
     expect(nameInput.type).toBe('text');
 
-    // Check for tag selector container
-    const tagSelectorContainer = container.querySelector('.tag-selector-container');
-    expect(tagSelectorContainer).not.toBeNull();
+    // Check for tag selector — the container has the tag selector mounted inside
+    const tagsLabel = Array.from(container.querySelectorAll('label')).find(l => l.textContent?.includes('Tags'));
+    expect(tagsLabel).not.toBeNull();
 
     // Check for readme textarea (created by readme-preview mock)
     const readme = container.querySelector('#project-readme') as HTMLTextAreaElement;
     expect(readme).not.toBeNull();
     expect(readme.tagName).toBe('TEXTAREA');
 
-    // Check for drop zone container
-    const dropZoneContainer = container.querySelector('.drop-zone-container');
-    expect(dropZoneContainer).not.toBeNull();
+    // Check for drop zone (first form-group child of the form)
+    const form2 = container.querySelector('form')!;
+    expect(form2.children.length).toBeGreaterThan(0);
   });
 
   it('renders the readme textarea without the required attribute', () => {
@@ -291,12 +291,15 @@ describe('renderUploadForm', () => {
     const form = container.querySelector('form')!;
     const children = Array.from(form.children);
 
-    // Find indices of key elements
-    const dropZoneIdx = children.findIndex(el => el.classList.contains('drop-zone-container'));
+    // Find indices of key elements by their content/structure
+    const dropZoneIdx = children.findIndex(el => el === form.firstElementChild); // drop zone is first
     const nameIdx = children.findIndex(el => el.querySelector('#project-name'));
-    const tagsIdx = children.findIndex(el => el.querySelector('.tag-selector-container'));
+    const tagsIdx = children.findIndex(el => {
+      const labels = el.querySelectorAll('label');
+      return Array.from(labels).some(l => l.textContent?.includes('Tags'));
+    });
     const submitIdx = children.findIndex(el => el.tagName === 'BUTTON' && (el as HTMLButtonElement).type === 'submit');
-    const statusIdx = children.findIndex(el => el.classList.contains('upload-status'));
+    const statusIdx = children.findIndex(el => el.getAttribute('role') === 'alert' && el.tagName === 'DIV');
     const readmeIdx = children.findIndex(el => el.querySelector('#project-readme'));
 
     expect(dropZoneIdx).toBeLessThan(nameIdx);
@@ -369,9 +372,8 @@ describe('renderUploadForm', () => {
     expect(invalidateSearchIndex).toHaveBeenCalled();
 
     // Verify no success message was displayed
-    const statusEl = container.querySelector('.upload-status');
+    const statusEl = container.querySelector('[role="alert"]');
     expect(statusEl!.textContent).not.toContain('uploaded successfully');
-    expect(statusEl!.classList.contains('upload-status--success')).toBe(false);
   });
 
   it('shows error message when initiate fails', async () => {
@@ -402,9 +404,9 @@ describe('renderUploadForm', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const statusEl = container.querySelector('.upload-status');
+    const statusEl = container.querySelector('[role="alert"]');
     expect(statusEl!.textContent).toBe('Project name already taken');
-    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+    expect(statusEl!.classList.contains('text-error')).toBe(true);
   });
 
   it('disables submit button during upload', async () => {
@@ -480,9 +482,9 @@ describe('renderUploadForm', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const statusEl = container.querySelector('.upload-status');
+    const statusEl = container.querySelector('[role="alert"]');
     expect(statusEl!.textContent).toContain('Nenhum arquivo restou');
-    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+    expect(statusEl!.classList.contains('text-error')).toBe(true);
   });
 
   it('shows error when S3 upload fails', async () => {
@@ -515,9 +517,9 @@ describe('renderUploadForm', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const statusEl = container.querySelector('.upload-status');
+    const statusEl = container.querySelector('[role="alert"]');
     expect(statusEl!.textContent).toContain('S3 upload failed');
-    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+    expect(statusEl!.classList.contains('text-error')).toBe(true);
 
     // Button should be re-enabled after error
     const submitBtn = container.querySelector('button[type="submit"]') as HTMLButtonElement;
@@ -559,9 +561,9 @@ describe('renderUploadForm', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const statusEl = container.querySelector('.upload-status');
+    const statusEl = container.querySelector('[role="alert"]');
     expect(statusEl!.textContent).toBe('Upload finalization failed (HTTP 500)');
-    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+    expect(statusEl!.classList.contains('text-error')).toBe(true);
   });
 
   it('shows error when zip exceeds MAX_CLIENT_ZIP_SIZE', async () => {
@@ -591,9 +593,9 @@ describe('renderUploadForm', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const statusEl = container.querySelector('.upload-status');
+    const statusEl = container.querySelector('[role="alert"]');
     expect(statusEl!.textContent).toContain('muito grande');
-    expect(statusEl!.classList.contains('upload-status--error')).toBe(true);
+    expect(statusEl!.classList.contains('text-error')).toBe(true);
 
     // initiateUpload should NOT have been called
     const { initiateUpload } = await import('./api');

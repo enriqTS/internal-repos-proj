@@ -12,6 +12,7 @@ import { createDropZone } from './drop-zone';
 import { createReadmePreview, type ReadmePreviewAPI } from './readme-preview';
 import { invalidateSearchIndex } from './search-state';
 import { t } from './i18n';
+import { button, heading, input } from './ui';
 import JSZip from 'jszip';
 
 /**
@@ -336,7 +337,7 @@ export async function handleReadmeAutofill(
 
   // Show autofill notice
   const notice = document.createElement('span');
-  notice.className = 'readme-autofill-notice';
+  notice.className = 'text-xs text-success';
   notice.textContent = t('readmePreview.autofill', { filename: readmeFile.name });
   notice.setAttribute('aria-live', 'polite');
   noticeContainer.appendChild(notice);
@@ -344,7 +345,7 @@ export async function handleReadmeAutofill(
   // Show truncation warning if applicable
   if (truncated) {
     const warning = document.createElement('span');
-    warning.className = 'readme-truncation-warning';
+    warning.className = 'text-xs text-error';
     warning.textContent = t('readmePreview.truncated', { max: MAX_README_LENGTH.toLocaleString() });
     warning.setAttribute('role', 'alert');
     noticeContainer.appendChild(warning);
@@ -359,24 +360,23 @@ export function renderUploadForm(container: HTMLElement): void {
   container.innerHTML = '';
 
   const wrapper = document.createElement('div');
-  wrapper.className = 'upload-form-wrapper';
+  wrapper.className = 'max-w-2xl mx-auto px-4 py-8';
 
-  const heading = document.createElement('h2');
-  heading.textContent = t('upload.heading');
-  wrapper.appendChild(heading);
+  const headingEl = heading(t('upload.heading'), 2);
+  wrapper.appendChild(headingEl);
 
   const form = document.createElement('form');
-  form.className = 'upload-form';
+  form.className = 'flex flex-col gap-6';
   form.noValidate = true;
 
   // --- 1. Drop Zone (first element) ---
   const dropZoneContainer = document.createElement('div');
-  dropZoneContainer.className = 'form-group drop-zone-container';
+  dropZoneContainer.className = 'flex flex-col gap-2';
   form.appendChild(dropZoneContainer);
 
   // Files error element (shown on validation failure)
   const filesErrorEl = document.createElement('span');
-  filesErrorEl.className = 'field-error';
+  filesErrorEl.className = 'field-error text-xs text-error mt-1';
   filesErrorEl.setAttribute('aria-live', 'polite');
   dropZoneContainer.appendChild(filesErrorEl);
 
@@ -400,18 +400,18 @@ export function renderUploadForm(container: HTMLElement): void {
 
   // --- 3. Tags field — Tag Selector component ---
   const tagsGroupWrapper = document.createElement('div');
-  tagsGroupWrapper.className = 'form-group';
+  tagsGroupWrapper.className = 'flex flex-col gap-2';
 
   const tagsLabel = document.createElement('label');
   tagsLabel.textContent = t('upload.tagsLabel');
   tagsGroupWrapper.appendChild(tagsLabel);
 
   const tagSelectorContainer = document.createElement('div');
-  tagSelectorContainer.className = 'tag-selector-container';
+  tagSelectorContainer.className = 'mt-1';
   tagsGroupWrapper.appendChild(tagSelectorContainer);
 
   const tagWarningEl = document.createElement('span');
-  tagWarningEl.className = 'field-warning';
+  tagWarningEl.className = 'field-warning text-xs text-text-muted mt-1';
   tagWarningEl.setAttribute('aria-live', 'polite');
   tagsGroupWrapper.appendChild(tagWarningEl);
 
@@ -436,22 +436,20 @@ export function renderUploadForm(container: HTMLElement): void {
   });
 
   // --- 4. Submit button ---
-  const submitBtn = document.createElement('button');
+  const submitBtn = button(t('upload.submit'), 'primary');
   submitBtn.type = 'submit';
-  submitBtn.className = 'upload-submit';
-  submitBtn.textContent = t('upload.submit');
   form.appendChild(submitBtn);
 
   // --- 5. Status message area ---
   const statusEl = document.createElement('div');
-  statusEl.className = 'upload-status';
+  statusEl.className = 'text-sm mt-2 text-text-muted';
   statusEl.setAttribute('role', 'alert');
   statusEl.setAttribute('aria-live', 'polite');
   form.appendChild(statusEl);
 
   // --- 6. Readme (with preview toggle) ---
   const readmeGroupWrapper = document.createElement('div');
-  readmeGroupWrapper.className = 'form-group';
+  readmeGroupWrapper.className = 'flex flex-col gap-2';
 
   const readmeLabel = document.createElement('label');
   readmeLabel.textContent = t('upload.readmeLabel');
@@ -461,7 +459,7 @@ export function renderUploadForm(container: HTMLElement): void {
   readmeGroupWrapper.appendChild(readmePreviewContainer);
 
   const readmeErrorEl = document.createElement('span');
-  readmeErrorEl.className = 'field-error';
+  readmeErrorEl.className = 'field-error text-xs text-error mt-1';
   readmeErrorEl.setAttribute('aria-live', 'polite');
   readmeGroupWrapper.appendChild(readmeErrorEl);
 
@@ -478,7 +476,7 @@ export function renderUploadForm(container: HTMLElement): void {
 
   // --- 7. Readme notice container ---
   const readmeNoticeContainer = document.createElement('div');
-  readmeNoticeContainer.className = 'readme-notice-container';
+  readmeNoticeContainer.className = 'flex flex-col gap-1 mt-2';
   readmeNoticeContainer.setAttribute('aria-live', 'polite');
   form.appendChild(readmeNoticeContainer);
 
@@ -573,7 +571,7 @@ export function renderUploadForm(container: HTMLElement): void {
 
     // Clear previous status and field errors
     statusEl.textContent = '';
-    statusEl.className = 'upload-status';
+    statusEl.className = 'text-sm mt-2 text-text-muted';
     clearFieldErrors(form);
 
     const name = nameGroup.input.value;
@@ -598,7 +596,7 @@ export function renderUploadForm(container: HTMLElement): void {
     // If no tags selected and README is available, attempt to get AI suggestions as fallback
     if (selectedTags.length === 0 && readme.length >= 50) {
       statusEl.textContent = t('upload.suggestingTags');
-      statusEl.className = 'upload-status upload-status--loading';
+      statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
       const suggestResult = await suggestTags(readme);
       if (suggestResult.ok) {
         if (suggestResult.data.tags.length > 0) {
@@ -620,7 +618,7 @@ export function renderUploadForm(container: HTMLElement): void {
     const filteredFiles = filterFileList(files!);
     if (filteredFiles.length === 0) {
       statusEl.textContent = t('upload.noFilesAfterFilter');
-      statusEl.className = 'upload-status upload-status--error';
+      statusEl.className = 'text-sm mt-2 text-error';
       return;
     }
 
@@ -630,7 +628,7 @@ export function renderUploadForm(container: HTMLElement): void {
 
     // 2. Create zip client-side
     statusEl.textContent = t('upload.zipping');
-    statusEl.className = 'upload-status upload-status--loading';
+    statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
     const zip = new JSZip();
     for (const file of filteredFiles) {
       const relativePath = file.webkitRelativePath || file.name;
@@ -643,7 +641,7 @@ export function renderUploadForm(container: HTMLElement): void {
     // 3. Check size
     if (blob.size > MAX_CLIENT_ZIP_SIZE) {
       statusEl.textContent = t('upload.tooLarge');
-      statusEl.className = 'upload-status upload-status--error';
+      statusEl.className = 'text-sm mt-2 text-error';
       submitBtn.disabled = false;
       submitBtn.textContent = t('upload.submit');
       return;
@@ -657,7 +655,7 @@ export function renderUploadForm(container: HTMLElement): void {
     const initiateResult = await initiateUpload({ name: name.trim(), tags: tagInputs, readme, ...(repoUrl && { repositoryUrl: repoUrl }) });
     if (!initiateResult.ok) {
       statusEl.textContent = initiateResult.error;
-      statusEl.className = 'upload-status upload-status--error';
+      statusEl.className = 'text-sm mt-2 text-error';
       submitBtn.disabled = false;
       submitBtn.textContent = t('upload.submit');
       return;
@@ -671,7 +669,7 @@ export function renderUploadForm(container: HTMLElement): void {
       });
     } catch (err) {
       statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
-      statusEl.className = 'upload-status upload-status--error';
+      statusEl.className = 'text-sm mt-2 text-error';
       submitBtn.disabled = false;
       submitBtn.textContent = t('upload.submit');
       return;
@@ -682,7 +680,7 @@ export function renderUploadForm(container: HTMLElement): void {
     const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
     if (!finalizeResult.ok) {
       statusEl.textContent = finalizeResult.error;
-      statusEl.className = 'upload-status upload-status--error';
+      statusEl.className = 'text-sm mt-2 text-error';
       submitBtn.disabled = false;
       submitBtn.textContent = t('upload.submit');
       return;
@@ -724,28 +722,29 @@ function createFieldGroup(
   options: { maxLength?: number; placeholder?: string; required?: boolean } = {},
 ): FieldGroup {
   const wrapper = document.createElement('div');
-  wrapper.className = 'form-group';
+  wrapper.className = 'flex flex-col gap-2';
 
   const label = document.createElement('label');
   label.htmlFor = id;
   label.textContent = labelText;
   wrapper.appendChild(label);
 
-  const input = document.createElement('input');
-  input.type = type;
-  input.id = id;
-  input.name = id;
-  if (options.maxLength) input.maxLength = options.maxLength;
-  if (options.placeholder) input.placeholder = options.placeholder;
-  if (options.required) input.required = true;
-  wrapper.appendChild(input);
+  const inputEl = input({
+    type,
+    id,
+    placeholder: options.placeholder,
+    maxLength: options.maxLength,
+  });
+  inputEl.name = id;
+  if (options.required) inputEl.required = true;
+  wrapper.appendChild(inputEl);
 
   const errorEl = document.createElement('span');
-  errorEl.className = 'field-error';
+  errorEl.className = 'field-error text-xs text-error mt-1';
   errorEl.setAttribute('aria-live', 'polite');
   wrapper.appendChild(errorEl);
 
-  return { wrapper, input, errorEl };
+  return { wrapper, input: inputEl, errorEl };
 }
 
 function createTextareaGroup(
@@ -754,7 +753,7 @@ function createTextareaGroup(
   options: { maxLength?: number; placeholder?: string; required?: boolean; rows?: number } = {},
 ): TextareaGroup {
   const wrapper = document.createElement('div');
-  wrapper.className = 'form-group';
+  wrapper.className = 'flex flex-col gap-2';
 
   const label = document.createElement('label');
   label.htmlFor = id;
@@ -764,6 +763,7 @@ function createTextareaGroup(
   const textarea = document.createElement('textarea');
   textarea.id = id;
   textarea.name = id;
+  textarea.className = 'w-full px-3 py-2.5 font-mono text-sm border border-border rounded-sm bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm resize-y min-h-[180px] leading-relaxed';
   if (options.maxLength) textarea.maxLength = options.maxLength;
   if (options.placeholder) textarea.placeholder = options.placeholder;
   if (options.required) textarea.required = true;
@@ -771,7 +771,7 @@ function createTextareaGroup(
   wrapper.appendChild(textarea);
 
   const errorEl = document.createElement('span');
-  errorEl.className = 'field-error';
+  errorEl.className = 'field-error text-xs text-error mt-1';
   errorEl.setAttribute('aria-live', 'polite');
   wrapper.appendChild(errorEl);
 
@@ -780,29 +780,29 @@ function createTextareaGroup(
 
 function createFileGroup(id: string, labelText: string): FileFieldGroup {
   const wrapper = document.createElement('div');
-  wrapper.className = 'form-group';
+  wrapper.className = 'flex flex-col gap-2';
 
   const label = document.createElement('label');
   label.htmlFor = id;
   label.textContent = labelText;
   wrapper.appendChild(label);
 
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.id = id;
-  input.name = id;
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.id = id;
+  fileInput.name = id;
   // webkitdirectory for folder selection
-  input.setAttribute('webkitdirectory', '');
-  input.setAttribute('directory', '');
-  input.multiple = true;
-  wrapper.appendChild(input);
+  fileInput.setAttribute('webkitdirectory', '');
+  fileInput.setAttribute('directory', '');
+  fileInput.multiple = true;
+  wrapper.appendChild(fileInput);
 
   const errorEl = document.createElement('span');
-  errorEl.className = 'field-error';
+  errorEl.className = 'field-error text-xs text-error mt-1';
   errorEl.setAttribute('aria-live', 'polite');
   wrapper.appendChild(errorEl);
 
-  return { wrapper, input, errorEl };
+  return { wrapper, input: fileInput, errorEl };
 }
 
 function clearFieldErrors(form: HTMLFormElement): void {
