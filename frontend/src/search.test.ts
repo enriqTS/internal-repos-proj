@@ -165,7 +165,7 @@ describe('search module', () => {
 
     it('should display "No results found" when results are empty', () => {
       renderResults([], container);
-      const noResults = container.querySelector('.card-grid-empty');
+      const noResults = container.querySelector('p');
       expect(noResults).not.toBeNull();
       expect(noResults!.textContent).toBe('Nenhum resultado encontrado');
     });
@@ -174,15 +174,15 @@ describe('search module', () => {
       const results = search('');
       renderResults(results, container);
 
-      const items = container.querySelectorAll('.card-grid-item');
+      const items = container.querySelectorAll('[role="link"]');
       expect(items).toHaveLength(3);
 
       const firstItem = items[0];
-      expect(firstItem.querySelector('.card-grid-item__name')!.textContent).toBe('data-pipeline');
-      expect(firstItem.querySelector('.card-grid-item__description')!.textContent).toBe(
+      expect(firstItem.querySelector('h3')!.textContent).toBe('data-pipeline');
+      expect(firstItem.querySelector('p')!.textContent).toBe(
         'ETL pipeline for data warehouse ingestion',
       );
-      const tags = firstItem.querySelectorAll('.card-grid-item__tag');
+      const tags = firstItem.querySelectorAll('span');
       expect(tags).toHaveLength(3);
       expect(tags[0].textContent).toBe('data');
     });
@@ -190,7 +190,9 @@ describe('search module', () => {
     it('should clear previous content before rendering', () => {
       container.innerHTML = '<p>Old content</p>';
       renderResults([], container);
-      expect(container.querySelector('.card-grid-empty')).not.toBeNull();
+      const noResults = container.querySelector('p');
+      expect(noResults).not.toBeNull();
+      expect(noResults!.textContent).toBe('Nenhum resultado encontrado');
       expect(container.innerHTML).not.toContain('Old content');
     });
   });
@@ -203,7 +205,7 @@ describe('search module', () => {
       setupSearch(input, container);
 
       // Should render all projects initially
-      const items = container.querySelectorAll('.card-grid-item');
+      const items = container.querySelectorAll('[role="link"]');
       expect(items).toHaveLength(3);
     });
 
@@ -223,9 +225,9 @@ describe('search module', () => {
 
       // After debounce delay, shows filtered results
       vi.advanceTimersByTime(100);
-      const items = container.querySelectorAll('.card-grid-item');
+      const items = container.querySelectorAll('[role="link"]');
       expect(items.length).toBeGreaterThan(0);
-      expect(container.querySelector('.card-grid-item__name')!.textContent).toBe('auth-service');
+      expect(items[0].querySelector('h3')!.textContent).toBe('auth-service');
 
       vi.useRealTimers();
     });

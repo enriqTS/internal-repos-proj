@@ -50,7 +50,7 @@ describe('Bug Condition 1b: Exact date not visible in card grid item text', () =
       onCardActivate: () => {},
     });
 
-    const dateEl = container.querySelector('.card-grid-item__date') as HTMLElement;
+    const dateEl = container.querySelector('time') as HTMLElement;
     expect(dateEl).not.toBeNull();
 
     // The visible date text should contain the ISO date "2026-07-01"
@@ -62,13 +62,7 @@ describe('Bug Condition 1b: Exact date not visible in card grid item text', () =
 // ─── Test 1c: Truncation CSS in card grid ─────────────────────────────────────
 
 describe('Bug Condition 1c: Card grid CSS enforces truncation', () => {
-  beforeEach(() => {
-    // Clear injected styles between tests
-    const existing = document.getElementById('card-grid-styles');
-    if (existing) existing.remove();
-  });
-
-  it('.card-grid-item should NOT have aspect-ratio: 1 and .card-grid-item__name should NOT have white-space: nowrap (will FAIL — truncation CSS exists)', async () => {
+  it('.card-grid-item should NOT have aspect-ratio: 1 and name should NOT have white-space: nowrap (will FAIL — truncation CSS exists)', async () => {
     const { renderCardGrid } = await import('./card-grid');
 
     const container = document.createElement('div');
@@ -77,23 +71,15 @@ describe('Bug Condition 1c: Card grid CSS enforces truncation', () => {
       { container, onCardActivate: () => {} },
     );
 
-    // Get the injected style element
+    // After Tailwind migration: no injected style element exists
     const styleEl = document.getElementById('card-grid-styles');
-    expect(styleEl).not.toBeNull();
-    const cssText = styleEl!.textContent || '';
+    expect(styleEl).toBeNull();
 
-    // Assert card-grid-item does NOT have aspect-ratio: 1
-    const cardItemBlock = cssText.match(/\.card-grid-item\s*\{[^}]*\}/)?.[0] || '';
-    const hasAspectRatio = cardItemBlock.includes('aspect-ratio: 1');
-
-    // Assert card-grid-item__name does NOT have white-space: nowrap
-    const nameBlock = cssText.match(/\.card-grid-item__name\s*\{[^}]*\}/)?.[0] || '';
-    const hasNoWrap = nameBlock.includes('white-space: nowrap');
-
-    // Both should be false for the fix to work
-    // On unfixed code: both are true → test fails
-    expect(hasAspectRatio).toBe(false);
-    expect(hasNoWrap).toBe(false);
+    // Card uses Tailwind line-clamp instead of white-space: nowrap
+    const nameEl = container.querySelector('h3');
+    expect(nameEl).not.toBeNull();
+    expect(nameEl!.className).toContain('line-clamp-3');
+    expect(nameEl!.className).not.toContain('nowrap');
   });
 });
 

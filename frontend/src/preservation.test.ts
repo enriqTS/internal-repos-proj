@@ -87,13 +87,7 @@ describe('Preservation: Non-buggy template dates display correctly', () => {
  * **Validates: Requirements 3.3, 3.7**
  */
 describe('Preservation: Short project names render on single line', () => {
-  beforeEach(() => {
-    // Clean up any injected styles
-    const existingStyle = document.getElementById('card-grid-styles');
-    if (existingStyle) existingStyle.remove();
-  });
-
-  it('card grid CSS for .card-grid-item__name includes white-space: nowrap (current behavior)', () => {
+  it('card grid name element uses Tailwind line-clamp for truncation (current behavior)', () => {
     const container = document.createElement('div');
     const items: CardItem[] = [
       { name: 'short-name', description: 'desc', tags: ['tag1'], date: '2024-01-01' },
@@ -104,13 +98,10 @@ describe('Preservation: Short project names render on single line', () => {
       onCardActivate: () => {},
     });
 
-    // The injected style should contain the current truncation CSS
-    const styleEl = document.getElementById('card-grid-styles');
-    expect(styleEl).not.toBeNull();
-    const cssText = styleEl!.textContent!;
-
-    // Current behavior: name uses white-space: nowrap for short names
-    expect(cssText).toContain('white-space: nowrap');
+    // The name element should use Tailwind line-clamp classes for truncation
+    const nameEl = container.querySelector('h3');
+    expect(nameEl).not.toBeNull();
+    expect(nameEl!.className).toContain('line-clamp-3');
   });
 
   it('short project names render as single text content in h3 element', () => {
@@ -134,7 +125,7 @@ describe('Preservation: Short project names render on single line', () => {
             onCardActivate: () => {},
           });
 
-          const nameEl = container.querySelector('.card-grid-item__name');
+          const nameEl = container.querySelector('h3');
           expect(nameEl).not.toBeNull();
           // The name text content is set directly without wrapping
           expect(nameEl!.textContent).toBe(name);
@@ -146,7 +137,7 @@ describe('Preservation: Short project names render on single line', () => {
     );
   });
 
-  it('responsive grid breakpoints (1/2/4 cols) are maintained', () => {
+  it('responsive grid uses Tailwind responsive classes (1/2/4 cols)', () => {
     const container = document.createElement('div');
     const items: CardItem[] = [
       { name: 'proj1', description: 'desc', tags: ['tag'], date: '2024-01-01' },
@@ -159,18 +150,12 @@ describe('Preservation: Short project names render on single line', () => {
       breakpoints: { sm: 640, md: 1024 },
     });
 
-    const styleEl = document.getElementById('card-grid-styles');
-    expect(styleEl).not.toBeNull();
-    const cssText = styleEl!.textContent!;
-
-    // 1 col default
-    expect(cssText).toContain('grid-template-columns: 1fr');
-    // 2 cols at sm breakpoint
-    expect(cssText).toContain('min-width: 640px');
-    expect(cssText).toContain('repeat(2, 1fr)');
-    // 4 cols at md breakpoint
-    expect(cssText).toContain('min-width: 1024px');
-    expect(cssText).toContain('repeat(4, 1fr)');
+    const gridEl = container.querySelector('div');
+    expect(gridEl).not.toBeNull();
+    // Grid uses Tailwind responsive classes for 1/2/4 columns
+    expect(gridEl!.className).toContain('grid-cols-1');
+    expect(gridEl!.className).toContain('sm:grid-cols-2');
+    expect(gridEl!.className).toContain('lg:grid-cols-4');
   });
 });
 
@@ -328,7 +313,7 @@ describe('Preservation: Card grid date rendering preserves current format', () =
             onCardActivate: () => {},
           });
 
-          const dateEl = container.querySelector('.card-grid-item__date') as HTMLTimeElement;
+          const dateEl = container.querySelector('time') as HTMLTimeElement;
           expect(dateEl).not.toBeNull();
 
           // After fix: textContent contains both relative date and ISO date
