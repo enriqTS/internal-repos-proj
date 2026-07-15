@@ -1598,15 +1598,15 @@
     </style>
   </head>
   <body>
-    <header>
-      <h1><a href="#/">Repos Internos</a></h1>
-      <nav aria-label="Main navigation">
-        <a href="#/projects" data-nav="projects">Projetos</a>
-        <a href="#/templates" data-nav="templates">Templates</a>
-        <a href="#/upload">Upload</a>
+    <header class="fixed top-0 left-0 right-0 z-50 bg-header-bg backdrop-blur-sm border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between">
+      <h1 class="font-mono text-base font-bold tracking-tight"><a href="#/" class="no-underline text-text flex items-center gap-2">Repos Internos</a></h1>
+      <nav aria-label="Main navigation" class="flex items-center gap-1">
+        <a href="#/projects" data-nav="projects" class="font-mono text-sm text-text-muted hover:text-accent transition-colors duration-180 px-3 py-1.5 rounded-sm no-underline">Projetos</a>
+        <a href="#/templates" data-nav="templates" class="font-mono text-sm text-text-muted hover:text-accent transition-colors duration-180 px-3 py-1.5 rounded-sm no-underline">Templates</a>
+        <a href="#/upload" class="font-mono text-sm text-text-muted hover:text-accent transition-colors duration-180 px-3 py-1.5 rounded-sm no-underline">Upload</a>
       </nav>
     </header>
-    <main id="app"></main>
+    <main id="app" class="max-w-4xl mx-auto mt-20 px-4 sm:px-6 lg:px-8 animate-[fadeIn_300ms_ease]"></main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

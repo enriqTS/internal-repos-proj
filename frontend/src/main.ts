@@ -14,6 +14,7 @@ import { renderTemplatesPage } from './templates-page';
 import { renderTemplateDetail } from './template-detail';
 import { renderLandingPage } from './landing-page';
 import { t } from './i18n';
+import { container as createContainer, input as createInput } from './ui';
 
 import { searchIndexLoaded, markSearchIndexLoaded, invalidateSearchIndex } from './search-state';
 
@@ -27,57 +28,56 @@ export { invalidateSearchIndex };
  */
 
 async function renderSearchView(_params: Record<string, string>, container: HTMLElement): Promise<void> {
+  // Wrap content in a responsive container
+  const wrapper = createContainer();
+  container.appendChild(wrapper);
+
   // Create search UI structure
   const headingRow = document.createElement('div');
-  headingRow.style.display = 'flex';
-  headingRow.style.alignItems = 'center';
-  headingRow.style.justifyContent = 'space-between';
+  headingRow.className = 'flex items-center justify-between';
 
   const heading = document.createElement('h2');
+  heading.className = 'font-body text-2xl font-semibold text-text tracking-tight';
   heading.textContent = t('search.heading');
 
   const uploadBtn = document.createElement('a');
   uploadBtn.href = '#/upload';
-  uploadBtn.className = 'upload-submit';
+  uploadBtn.className = 'px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline';
   uploadBtn.textContent = t('upload.heading');
-  uploadBtn.style.textDecoration = 'none';
 
   headingRow.appendChild(heading);
   headingRow.appendChild(uploadBtn);
 
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = t('search.placeholder');
-  input.className = 'search-input';
+  const input = createInput({ type: 'text', placeholder: t('search.placeholder') });
   input.setAttribute('aria-label', t('search.placeholder'));
 
   const resultsContainer = document.createElement('div');
-  resultsContainer.className = 'results-container';
+  resultsContainer.className = 'mt-6';
 
   const filterContainer = document.createElement('div');
-  filterContainer.className = 'tag-filter-container';
+  filterContainer.className = 'mt-3';
 
-  container.appendChild(headingRow);
-  container.appendChild(input);
-  container.appendChild(filterContainer);
-  container.appendChild(resultsContainer);
+  wrapper.appendChild(headingRow);
+  wrapper.appendChild(input);
+  wrapper.appendChild(filterContainer);
+  wrapper.appendChild(resultsContainer);
 
   if (!searchIndexLoaded) {
     // Show loading state
-    resultsContainer.innerHTML = `<p class="loading">${t('search.loading')}</p>`;
+    resultsContainer.innerHTML = `<p class="text-center text-text-muted py-12 text-sm">${t('search.loading')}</p>`;
 
     const result = await fetchSearchIndex();
     if (!result.ok) {
       resultsContainer.innerHTML = '';
       const errorEl = document.createElement('div');
-      errorEl.className = 'error';
+      errorEl.className = 'text-center p-8 text-error';
       errorEl.innerHTML = `
         <p>${t('search.error')}</p>
-        <button class="retry-btn">${t('search.retry')}</button>
+        <button class="mt-3 px-5 py-2 font-mono text-xs font-medium bg-surface border border-border-strong rounded-sm cursor-pointer transition-all duration-180 hover:border-accent hover:text-accent">${t('search.retry')}</button>
       `;
       resultsContainer.appendChild(errorEl);
 
-      const retryBtn = errorEl.querySelector('.retry-btn') as HTMLButtonElement;
+      const retryBtn = errorEl.querySelector('button') as HTMLButtonElement;
       retryBtn.addEventListener('click', () => {
         invalidateSearchIndex();
         renderSearchView(_params, container);
@@ -111,7 +111,7 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
 async function renderDetailView(params: Record<string, string>, container: HTMLElement): Promise<void> {
   const projectName = decodeURIComponent(params.name || '');
   if (!projectName) {
-    container.innerHTML = '<p class="error">No project specified</p>';
+    container.innerHTML = '<p class="text-center p-8 text-error font-medium">No project specified</p>';
     return;
   }
 
@@ -133,7 +133,7 @@ function renderUploadView(_params: Record<string, string>, container: HTMLElemen
 async function renderEditView(params: Record<string, string>, container: HTMLElement): Promise<void> {
   const projectName = decodeURIComponent(params.name || '');
   if (!projectName) {
-    container.innerHTML = '<p class="error">No project specified</p>';
+    container.innerHTML = '<p class="text-center p-8 text-error font-medium">No project specified</p>';
     return;
   }
   await renderEditForm(projectName, container);
@@ -190,7 +190,7 @@ export function getActiveNavSection(path: string): 'projects' | 'templates' | nu
 
 /**
  * Update the active navigation link based on the current hash.
- * Applies `nav-active` class to the correct nav link and removes it from others.
+ * Applies active styling classes to the correct nav link and removes them from others.
  */
 export function updateNavActive(): void {
   const hash = window.location.hash.slice(1) || '/'; // remove '#', default to '/'
@@ -198,11 +198,11 @@ export function updateNavActive(): void {
   const navLinks = document.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Main navigation"] a[data-nav]');
 
   navLinks.forEach((link) => {
-    link.classList.remove('nav-active');
+    link.classList.remove('text-accent', 'font-semibold');
 
     const navId = link.getAttribute('data-nav');
     if (navId && navId === activeSection) {
-      link.classList.add('nav-active');
+      link.classList.add('text-accent', 'font-semibold');
     }
   });
 }
