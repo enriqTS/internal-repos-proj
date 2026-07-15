@@ -126,13 +126,14 @@ vi.mock('./api', () => ({
   uploadToS3: vi.fn(),
   finalizeUpload: vi.fn(),
   fetchTagRegistry: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
-  suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
+  suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: { tags: [], newTags: [] } })),
 }));
 
 vi.mock('./tag-selector', () => {
   const mockTagSelector = {
     setAvailableTags: vi.fn(),
     applySuggestions: vi.fn(),
+    applyNewSuggestions: vi.fn(),
     getSelectedTags: vi.fn(() => []),
     getNewTags: vi.fn(() => []),
     hasUserInteracted: vi.fn(() => false),

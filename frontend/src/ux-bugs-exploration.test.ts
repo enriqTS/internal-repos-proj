@@ -110,7 +110,7 @@ vi.mock('./api', () => ({
   uploadToS3: vi.fn(() => Promise.resolve(undefined)),
   finalizeUpload: vi.fn(() => Promise.resolve({ ok: true, data: { message: 'Success', path: 'projects/test/' } })),
   deleteProject: vi.fn(() => Promise.resolve({ ok: true })),
-  suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
+  suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: { tags: [], newTags: [] } })),
 }));
 
 vi.mock('./search', () => ({

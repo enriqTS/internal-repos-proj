@@ -271,9 +271,9 @@ export async function fetchTagRegistry(): Promise<ApiResult<string[]>> {
 
 /**
  * Request AI tag suggestions based on README content.
- * POST to /tags/suggest with the readme text; returns suggested tags from the registry.
+ * POST to /tags/suggest with the readme text; returns suggested tags (existing + new).
  */
-export async function suggestTags(readme: string): Promise<ApiResult<string[]>> {
+export async function suggestTags(readme: string): Promise<ApiResult<SuggestTagsResponse>> {
   const apiUrl = getApiUrl();
   const apiKey = getApiKey();
   if (!apiUrl) return { ok: false, error: 'API endpoint is not configured' };
@@ -295,7 +295,7 @@ export async function suggestTags(readme: string): Promise<ApiResult<string[]>> 
       return { ok: false, error: (body as any).error ?? `Tag suggestion failed (HTTP ${response.status})` };
     }
 
-    return { ok: true, data: body.tags };
+    return { ok: true, data: body };
   } catch (err) {
     return {
       ok: false,

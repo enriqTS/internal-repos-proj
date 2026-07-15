@@ -511,8 +511,13 @@ export function renderUploadForm(container: HTMLElement): void {
         tagSuggestionInFlight = true;
         updateSubmitState();
         suggestTags(content).then((result) => {
-          if (result.ok && result.data.length > 0 && tagSelector && !tagSelector.hasUserInteracted()) {
-            tagSelector.applySuggestions(result.data);
+          if (result.ok && tagSelector && !tagSelector.hasUserInteracted()) {
+            if (result.data.tags.length > 0) {
+              tagSelector.applySuggestions(result.data.tags);
+            }
+            if (result.data.newTags && result.data.newTags.length > 0) {
+              tagSelector.applyNewSuggestions(result.data.newTags);
+            }
           }
         }).finally(() => {
           tagSuggestionInFlight = false;
@@ -595,8 +600,13 @@ export function renderUploadForm(container: HTMLElement): void {
       statusEl.textContent = t('upload.suggestingTags');
       statusEl.className = 'upload-status upload-status--loading';
       const suggestResult = await suggestTags(readme);
-      if (suggestResult.ok && suggestResult.data.length > 0) {
-        tagSelector!.applySuggestions(suggestResult.data);
+      if (suggestResult.ok) {
+        if (suggestResult.data.tags.length > 0) {
+          tagSelector!.applySuggestions(suggestResult.data.tags);
+        }
+        if (suggestResult.data.newTags && suggestResult.data.newTags.length > 0) {
+          tagSelector!.applyNewSuggestions(suggestResult.data.newTags);
+        }
         selectedTags = tagSelector!.getSelectedTags();
       }
     }
