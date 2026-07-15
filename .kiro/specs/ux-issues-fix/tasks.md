@@ -1,4 +1,8 @@
-# Implementation Plan
+## Overview
+
+Implementation plan for fixing six UX defects in the Internal Repos portal: incorrect template dates, hidden exact dates, truncated project names, registry-only AI tag suggestions, new-tab architecture images, and missing upload button on projects page. Follows the exploratory bugfix workflow: write bug condition tests first (expect failure), write preservation tests (expect pass), implement fixes, then verify all tests pass.
+
+## Tasks
 
 - [ ] 1. Write bug condition exploration tests
   - **Property 1: Bug Condition** - UX Defects Exist in Unfixed Code
@@ -161,3 +165,60 @@
   - Ensure all preservation tests pass (no regressions)
   - Ensure existing unit tests still pass
   - Ask the user if questions arise
+
+## Notes
+
+- This bugfix addresses 6 independent UX defects that can be fixed in parallel after the exploration/preservation tests are written.
+- The exploratory bug condition tests (task 1) are designed to FAIL on the unfixed code — this is expected and confirms the bugs exist.
+- The preservation tests (task 2) are designed to PASS on the unfixed code — this captures the baseline behavior that must not regress.
+- After all fixes are applied, both test sets should pass, confirming correctness and no regressions.
+- The AI tag suggestion feature (Bug 6) spans Lambda, shared types, and frontend — it's the most complex fix and should be done carefully.
+- The `tags.json` removal (task 8.5) is safe because the tag registry is managed exclusively in S3 by the Lambda.
+
+## Task Dependency Graph
+
+```json
+{
+  "nodes": [
+    { "id": "1", "label": "Bug condition exploration tests" },
+    { "id": "2", "label": "Preservation property tests" },
+    { "id": "3", "label": "Fix Bug 1 - Date typo" },
+    { "id": "4", "label": "Fix Bug 2 - Visible dates" },
+    { "id": "5", "label": "Fix Bug 3 - Name wrapping" },
+    { "id": "6", "label": "Fix Bug 5 - Upload button" },
+    { "id": "7", "label": "Fix Bug 4 - Lightbox" },
+    { "id": "8", "label": "Fix Bug 6 - AI new tags" },
+    { "id": "9", "label": "Verify exploration tests pass" },
+    { "id": "10", "label": "Verify preservation tests pass" },
+    { "id": "11", "label": "Checkpoint" }
+  ],
+  "edges": [
+    { "from": "1", "to": "3" },
+    { "from": "1", "to": "4" },
+    { "from": "1", "to": "5" },
+    { "from": "1", "to": "6" },
+    { "from": "1", "to": "7" },
+    { "from": "1", "to": "8" },
+    { "from": "2", "to": "3" },
+    { "from": "2", "to": "4" },
+    { "from": "2", "to": "5" },
+    { "from": "2", "to": "6" },
+    { "from": "2", "to": "7" },
+    { "from": "2", "to": "8" },
+    { "from": "3", "to": "9" },
+    { "from": "4", "to": "9" },
+    { "from": "5", "to": "9" },
+    { "from": "6", "to": "9" },
+    { "from": "7", "to": "9" },
+    { "from": "8", "to": "9" },
+    { "from": "3", "to": "10" },
+    { "from": "4", "to": "10" },
+    { "from": "5", "to": "10" },
+    { "from": "6", "to": "10" },
+    { "from": "7", "to": "10" },
+    { "from": "8", "to": "10" },
+    { "from": "9", "to": "11" },
+    { "from": "10", "to": "11" }
+  ]
+}
+```
