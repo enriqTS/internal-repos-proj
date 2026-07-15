@@ -44,6 +44,17 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
 
   const input = createInput({ type: 'text', placeholder: t('search.placeholder') });
   input.setAttribute('aria-label', t('search.placeholder'));
+  input.className += ' flex-1';
+
+  const newBtn = document.createElement('a');
+  newBtn.href = '#/upload';
+  newBtn.className = 'px-4 py-2 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline whitespace-nowrap';
+  newBtn.textContent = 'Novo';
+
+  const searchRow = document.createElement('div');
+  searchRow.className = 'flex items-center gap-4';
+  searchRow.appendChild(input);
+  searchRow.appendChild(newBtn);
 
   const resultsContainer = document.createElement('div');
   resultsContainer.className = 'mt-6';
@@ -52,7 +63,7 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
   filterContainer.className = 'mt-3';
 
   wrapper.appendChild(headingRow);
-  wrapper.appendChild(input);
+  wrapper.appendChild(searchRow);
   wrapper.appendChild(filterContainer);
   wrapper.appendChild(resultsContainer);
 
