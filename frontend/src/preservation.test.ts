@@ -331,15 +331,12 @@ describe('Preservation: Card grid date rendering preserves current format', () =
           const dateEl = container.querySelector('.card-grid-item__date') as HTMLTimeElement;
           expect(dateEl).not.toBeNull();
 
-          // Current behavior: textContent is the relative date only
-          const expectedText = formatRelativeDate(isoDate);
+          // After fix: textContent contains both relative date and ISO date
+          const expectedText = `${formatRelativeDate(isoDate)} · ${isoDate}`;
           expect(dateEl.textContent).toBe(expectedText);
 
           // datetime attribute is the ISO date
           expect(dateEl.getAttribute('datetime')).toBe(isoDate);
-
-          // title attribute contains the ISO date (for hover)
-          expect(dateEl.getAttribute('title')).toBe(isoDate);
         },
       ),
       { numRuns: 50 },

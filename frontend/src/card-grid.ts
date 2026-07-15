@@ -56,8 +56,6 @@ function injectStyles(sm: number, md: number): void {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  aspect-ratio: 1;
-  overflow: hidden;
   min-width: 0;
 }
 
@@ -83,9 +81,10 @@ function injectStyles(sm: number, md: number): void {
   font-weight: 600;
   color: var(--color-text, #2c2a26);
   margin: 0;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .card-grid-item__description {
@@ -204,9 +203,8 @@ export function renderCardGrid(items: CardItem[], options: CardGridOptions): voi
 
     const dateEl = document.createElement('time');
     dateEl.className = 'card-grid-item__date';
-    dateEl.textContent = formatRelativeDate(item.date);
+    dateEl.textContent = `${formatRelativeDate(item.date)} · ${item.date}`;
     dateEl.setAttribute('datetime', item.date);
-    dateEl.setAttribute('title', item.date);
 
     card.appendChild(nameEl);
     card.appendChild(descEl);
