@@ -27,8 +27,22 @@ export { invalidateSearchIndex };
 
 async function renderSearchView(_params: Record<string, string>, container: HTMLElement): Promise<void> {
   // Create search UI structure
+  const headingRow = document.createElement('div');
+  headingRow.style.display = 'flex';
+  headingRow.style.alignItems = 'center';
+  headingRow.style.justifyContent = 'space-between';
+
   const heading = document.createElement('h2');
   heading.textContent = t('search.heading');
+
+  const uploadBtn = document.createElement('a');
+  uploadBtn.href = '#/upload';
+  uploadBtn.className = 'upload-submit';
+  uploadBtn.textContent = t('upload.heading');
+  uploadBtn.style.textDecoration = 'none';
+
+  headingRow.appendChild(heading);
+  headingRow.appendChild(uploadBtn);
 
   const input = document.createElement('input');
   input.type = 'text';
@@ -42,7 +56,7 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
   const filterContainer = document.createElement('div');
   filterContainer.className = 'tag-filter-container';
 
-  container.appendChild(heading);
+  container.appendChild(headingRow);
   container.appendChild(input);
   container.appendChild(filterContainer);
   container.appendChild(resultsContainer);
