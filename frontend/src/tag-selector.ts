@@ -1,4 +1,5 @@
 import { TAG_PATTERN, MAX_TAG_LENGTH } from 'shared/constants';
+import { input, button } from './ui';
 
 /**
  * Options for creating a TagSelector component.
@@ -50,60 +51,53 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
 
   // DOM elements
   const root = document.createElement('div');
-  root.className = 'tag-selector';
+  root.className = 'relative inline-block';
 
   // Toggle button (collapsible)
   const toggleBtn = document.createElement('button');
   toggleBtn.type = 'button';
-  toggleBtn.className = 'tag-filter-toggle';
+  toggleBtn.className = 'font-mono text-xs font-medium bg-tag-bg text-tag-text px-2 py-0.5 rounded-sm tracking-wide cursor-pointer border-none transition-all duration-180 hover:bg-accent-subtle';
   toggleBtn.setAttribute('aria-expanded', 'false');
   toggleBtn.textContent = 'Select tags';
   root.appendChild(toggleBtn);
 
   // Dropdown panel
   const panelEl = document.createElement('div');
-  panelEl.className = 'tag-filter-panel';
+  panelEl.className = 'absolute top-full left-0 mt-1 bg-surface border border-border rounded-md shadow-md z-50 min-w-[200px] max-h-[240px] overflow-y-auto p-2';
   panelEl.setAttribute('hidden', '');
   root.appendChild(panelEl);
 
   const tagListEl = document.createElement('ul');
-  tagListEl.className = 'tag-filter-list';
+  tagListEl.className = 'flex flex-col gap-1 list-none m-0 p-0';
   tagListEl.setAttribute('role', 'group');
   panelEl.appendChild(tagListEl);
 
   const limitMsg = document.createElement('p');
-  limitMsg.className = 'tag-selector-limit-msg';
+  limitMsg.className = 'text-xs text-text-muted mt-1 px-1';
   limitMsg.textContent = `Maximum of ${maxTags} tags reached`;
   limitMsg.hidden = true;
   panelEl.appendChild(limitMsg);
 
   // "Add new tag" section (inside the panel)
   const addSection = document.createElement('div');
-  addSection.className = 'tag-selector-add';
-  addSection.style.marginTop = '0.5rem';
-  addSection.style.borderTop = '1px solid var(--color-border)';
-  addSection.style.paddingTop = '0.5rem';
+  addSection.className = 'mt-2 border-t border-border pt-2';
 
   const addInputWrapper = document.createElement('div');
-  addInputWrapper.className = 'tag-selector-add-input-wrapper';
+  addInputWrapper.className = 'flex items-center gap-1';
 
-  const addInput = document.createElement('input');
-  addInput.type = 'text';
-  addInput.className = 'tag-selector-add-input';
-  addInput.placeholder = 'New tag...';
-  addInput.maxLength = MAX_TAG_LENGTH;
+  const addInput = input({ placeholder: 'New tag...', maxLength: MAX_TAG_LENGTH });
+  addInput.className = 'flex-1 px-2 py-1 font-mono text-xs border border-border rounded-sm bg-surface text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent-subtle';
   addInputWrapper.appendChild(addInput);
 
-  const addSubmitBtn = document.createElement('button');
+  const addSubmitBtn = button('Add', 'secondary');
   addSubmitBtn.type = 'button';
-  addSubmitBtn.className = 'tag-selector-add-submit';
-  addSubmitBtn.textContent = 'Add';
+  addSubmitBtn.className = 'px-2 py-1 font-mono text-xs font-semibold text-accent bg-surface border border-accent rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent';
   addInputWrapper.appendChild(addSubmitBtn);
 
   addSection.appendChild(addInputWrapper);
 
   const errorEl = document.createElement('span');
-  errorEl.className = 'tag-selector-error';
+  errorEl.className = 'text-xs text-error mt-1 block';
   addSection.appendChild(errorEl);
 
   panelEl.appendChild(addSection);
@@ -224,7 +218,7 @@ export function createTagSelector(options: TagSelectorOptions): TagSelectorAPI {
       const span = document.createElement('span');
       span.textContent = tag;
       if (suggestedTags.has(tag)) {
-        span.style.fontStyle = 'italic';
+        span.className = 'italic';
       }
 
       label.appendChild(checkbox);
