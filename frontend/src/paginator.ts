@@ -3,6 +3,7 @@
  * Slices a result set into pages and renders page navigation controls.
  */
 import { t } from './i18n';
+import { iconButton } from './ui';
 
 export interface PaginatorOptions {
   /** Container element to render into */
@@ -44,7 +45,7 @@ export function createPaginator(options: PaginatorOptions): PaginatorAPI {
 
   // Root wrapper element
   const wrapper = document.createElement('div');
-  wrapper.className = 'paginator';
+  wrapper.className = 'flex items-center justify-center gap-2 mt-4';
   container.appendChild(wrapper);
 
   function calcTotalPages(): number {
@@ -99,11 +100,10 @@ export function createPaginator(options: PaginatorOptions): PaginatorAPI {
     wrapper.removeAttribute('hidden');
 
     // Previous button
-    const prevBtn = document.createElement('button');
-    prevBtn.className = 'paginator__btn';
+    const prevBtn = iconButton({ ariaLabel: t('paginator.previous') });
     prevBtn.textContent = '←';
-    prevBtn.setAttribute('aria-label', t('paginator.previous'));
     prevBtn.disabled = currentPage === 1;
+    if (prevBtn.disabled) prevBtn.className += ' opacity-50 cursor-not-allowed';
     prevBtn.addEventListener('click', () => goToPage(currentPage - 1));
     wrapper.appendChild(prevBtn);
 
@@ -112,16 +112,18 @@ export function createPaginator(options: PaginatorOptions): PaginatorAPI {
     for (const item of visiblePages) {
       if (item === '...') {
         const ellipsis = document.createElement('span');
-        ellipsis.className = 'paginator__ellipsis';
+        ellipsis.className = 'font-mono text-xs text-text-muted px-1';
         ellipsis.textContent = '…';
         ellipsis.setAttribute('aria-hidden', 'true');
         wrapper.appendChild(ellipsis);
       } else {
         const pageBtn = document.createElement('button');
-        pageBtn.className = 'paginator__btn';
+        const baseClasses = 'px-3 py-1.5 font-mono text-sm border border-border rounded-sm cursor-pointer transition-all duration-180 hover:border-accent hover:text-accent';
         if (item === currentPage) {
-          pageBtn.classList.add('paginator__btn--active');
+          pageBtn.className = baseClasses + ' bg-accent text-on-accent border-accent';
           pageBtn.setAttribute('aria-current', 'page');
+        } else {
+          pageBtn.className = baseClasses + ' bg-surface text-text';
         }
         pageBtn.textContent = String(item);
         pageBtn.setAttribute('aria-label', `Page ${item}`);
@@ -131,17 +133,16 @@ export function createPaginator(options: PaginatorOptions): PaginatorAPI {
     }
 
     // Next button
-    const nextBtn = document.createElement('button');
-    nextBtn.className = 'paginator__btn';
+    const nextBtn = iconButton({ ariaLabel: t('paginator.next') });
     nextBtn.textContent = '→';
-    nextBtn.setAttribute('aria-label', t('paginator.next'));
     nextBtn.disabled = currentPage === totalPages;
+    if (nextBtn.disabled) nextBtn.className += ' opacity-50 cursor-not-allowed';
     nextBtn.addEventListener('click', () => goToPage(currentPage + 1));
     wrapper.appendChild(nextBtn);
 
     // Page info text
     const info = document.createElement('span');
-    info.className = 'paginator__info';
+    info.className = 'font-mono text-xs text-text-muted';
     info.textContent = `Page ${currentPage} of ${totalPages}`;
     wrapper.appendChild(info);
   }
