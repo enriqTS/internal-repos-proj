@@ -2,6 +2,7 @@
  * Frontend entry point.
  * Wires the router with search, project detail, and upload views.
  */
+import './styles.css';
 import { createRouter, type Route } from './router';
 import { fetchSearchIndex } from './api';
 import { initializeSearch, setupSearch, search, renderResults } from './search';
