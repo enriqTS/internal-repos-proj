@@ -229,4 +229,6 @@ export interface SuggestTagsRequest {
 export interface SuggestTagsResponse {
   /** Array of suggested tags (all exist in the tag registry) */
   tags: string[];
+  /** Array of AI-suggested new tags not yet in the registry (up to 3) */
+  newTags?: string[];
 }
