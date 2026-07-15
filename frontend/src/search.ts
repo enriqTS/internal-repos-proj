@@ -144,7 +144,7 @@ export function setupSearch(
 
   // Create a container for the paginator and append it after the results
   const paginatorContainer = document.createElement('div');
-  paginatorContainer.className = 'paginator-container';
+  paginatorContainer.className = 'mt-6 flex justify-center';
   resultsContainer.insertAdjacentElement('afterend', paginatorContainer);
 
   const paginator: PaginatorAPI = createPaginator({
