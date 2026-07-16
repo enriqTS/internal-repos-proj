@@ -71,7 +71,7 @@ export function createCodeViewer(options: CodeViewerOptions): HTMLElement {
 
   // Case c & d: Text file (with or without highlighting)
   const isLargeFile = fileSize > LARGE_FILE_THRESHOLD;
-  return renderCodeContent(content, filename, isLargeFile);
+  return renderCodeContent(content, filename, isLargeFile, fileUrl);
 }
 
 /**
@@ -108,7 +108,7 @@ function renderBinaryMessage(): HTMLElement {
 /**
  * Render code content with line numbers, optional syntax highlighting, and copy button.
  */
-function renderCodeContent(content: string, filename: string, isLargeFile: boolean): HTMLElement {
+function renderCodeContent(content: string, filename: string, isLargeFile: boolean, fileUrl: string): HTMLElement {
   // Outer relative container for positioning the copy button
   const wrapper = document.createElement('div');
   wrapper.className = 'relative border border-border rounded-sm bg-surface';
@@ -121,12 +121,26 @@ function renderCodeContent(content: string, filename: string, isLargeFile: boole
     wrapper.appendChild(notice);
   }
 
-  // Copy button (positioned top-right)
+  // Button group (positioned top-right)
+  const btnGroup = document.createElement('div');
+  btnGroup.className = 'absolute top-2 right-2 flex items-center gap-1 z-10';
+
+  // Copy button
   const copyBtn = document.createElement('button');
-  copyBtn.className = 'absolute top-2 right-2 px-3 py-1 text-xs font-mono font-semibold text-text-muted bg-surface border border-border rounded-sm cursor-pointer transition-all duration-180 hover:text-text hover:border-border-strong z-10';
+  copyBtn.className = 'px-3 py-1 text-xs font-mono font-semibold text-text-muted bg-surface border border-border rounded-sm cursor-pointer transition-all duration-180 hover:text-text hover:border-border-strong';
   copyBtn.textContent = 'Copy';
   copyBtn.addEventListener('click', () => handleCopy(copyBtn, content));
-  wrapper.appendChild(copyBtn);
+  btnGroup.appendChild(copyBtn);
+
+  // Download button (anchor styled as button)
+  const downloadBtn = document.createElement('a');
+  downloadBtn.className = 'px-3 py-1 text-xs font-mono font-semibold text-text-muted bg-surface border border-border rounded-sm cursor-pointer transition-all duration-180 hover:text-text hover:border-border-strong no-underline';
+  downloadBtn.textContent = 'Download';
+  downloadBtn.href = fileUrl;
+  downloadBtn.setAttribute('download', filename);
+  btnGroup.appendChild(downloadBtn);
+
+  wrapper.appendChild(btnGroup);
 
   // Scrollable code area
   const scrollContainer = document.createElement('div');

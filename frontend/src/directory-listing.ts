@@ -12,6 +12,8 @@ export interface DirectoryListingOptions {
   onDirectorySelect: (path: string) => void;
   /** Callback when a file is activated */
   onFileSelect: (entry: FileTreeEntry) => void;
+  /** Optional callback to trigger download for an entry (file or folder) */
+  onDownload?: (entry: FileTreeEntry) => void;
 }
 
 /**
@@ -38,7 +40,7 @@ function basename(path: string): string {
  * Returns a detached element ready to be appended to the document.
  */
 export function createDirectoryListing(options: DirectoryListingOptions): HTMLElement {
-  const { entries, onDirectorySelect, onFileSelect } = options;
+  const { entries, onDirectorySelect, onFileSelect, onDownload } = options;
 
   const container = document.createElement('div');
   container.setAttribute('role', 'listbox');
@@ -87,6 +89,20 @@ export function createDirectoryListing(options: DirectoryListingOptions): HTMLEl
     row.appendChild(icon);
     row.appendChild(name);
     row.appendChild(size);
+
+    // Download button (only shown if onDownload callback is provided)
+    if (onDownload) {
+      const dlBtn = document.createElement('button');
+      dlBtn.type = 'button';
+      dlBtn.className = 'flex-shrink-0 px-2 py-0.5 text-xs font-mono font-semibold text-text-muted bg-transparent border border-border rounded-sm cursor-pointer transition-all duration-180 hover:text-accent hover:border-accent';
+      dlBtn.textContent = '\u2B07';
+      dlBtn.setAttribute('aria-label', `Download ${basename(entry.path)}`);
+      dlBtn.addEventListener('click', (e: MouseEvent) => {
+        e.stopPropagation();
+        onDownload(entry);
+      });
+      row.appendChild(dlBtn);
+    }
 
     // Click handler
     row.addEventListener('click', () => {

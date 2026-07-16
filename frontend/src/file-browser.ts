@@ -1,4 +1,5 @@
 import type { FileTreeManifest, FileTreeEntry } from 'shared/types';
+import JSZip from 'jszip';
 import { createBreadcrumbNav, generateBreadcrumbs } from './breadcrumb-nav';
 import { createCodeViewer } from './code-viewer';
 import { createDirectoryListing } from './directory-listing';
@@ -132,6 +133,77 @@ function getEntryName(path: string): string {
   return lastSlash === -1 ? trimmed : trimmed.slice(lastSlash + 1);
 }
 
+// ─── Download Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Triggers a browser download from a Blob with the given filename.
+ */
+function triggerDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Downloads all files under a directory, zips them client-side with JSZip,
+ * and triggers a browser download. Shows progress via the provided status element.
+ */
+async function downloadFolderAsZip(
+  dirPath: string,
+  manifestEntries: FileTreeEntry[],
+  basePath: string,
+  statusEl: HTMLElement,
+): Promise<void> {
+  // Get all files recursively under this directory
+  const prefix = dirPath === '/' ? '' : dirPath;
+  const allFiles = manifestEntries.filter(
+    (e) => e.type === 'file' && e.path.startsWith(prefix),
+  );
+
+  if (allFiles.length === 0) {
+    statusEl.textContent = 'No files to download';
+    setTimeout(() => { statusEl.textContent = ''; }, 2000);
+    return;
+  }
+
+  const zip = new JSZip();
+  let completed = 0;
+
+  statusEl.textContent = `\u2B07 0/${allFiles.length}`;
+
+  for (const file of allFiles) {
+    try {
+      const url = `${basePath}files/${file.path}`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const blob = await response.blob();
+        // Preserve relative path structure within the folder
+        const relativePath = prefix ? file.path.slice(prefix.length) : file.path;
+        zip.file(relativePath, blob);
+      }
+    } catch {
+      // Skip files that fail to fetch
+    }
+    completed++;
+    statusEl.textContent = `\u2B07 ${completed}/${allFiles.length}`;
+  }
+
+  statusEl.textContent = 'Generating zip…';
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+  // Determine folder name for the zip filename
+  const trimmed = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
+  const folderName = trimmed.split('/').pop() || 'project';
+  triggerDownload(zipBlob, `${folderName}.zip`);
+
+  statusEl.textContent = '';
+}
+
 // ─── File Browser Component ───────────────────────────────────────────────────
 
 /**
@@ -219,6 +291,10 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
     wrapper.className = 'file-browser-browsing flex flex-col gap-4';
     wrapper.dataset.path = currentPath;
 
+    // Header area: breadcrumb + download folder button
+    const header = document.createElement('div');
+    header.className = 'flex items-center justify-between gap-2 flex-wrap';
+
     // Breadcrumb navigation
     const pathSegments = currentPath
       ? currentPath.replace(/\/$/, '').split('/')
@@ -232,7 +308,33 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
       },
       rootLabel: 'root',
     });
-    wrapper.appendChild(breadcrumbNav);
+    header.appendChild(breadcrumbNav);
+
+    // "Download Folder" button + progress indicator
+    const dlArea = document.createElement('div');
+    dlArea.className = 'flex items-center gap-2';
+
+    const dlStatus = document.createElement('span');
+    dlStatus.className = 'text-xs font-mono text-text-muted';
+
+    const dlBtn = document.createElement('button');
+    dlBtn.type = 'button';
+    dlBtn.className =
+      'px-3 py-1.5 text-xs font-mono font-semibold text-accent bg-surface border border-accent rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent';
+    dlBtn.textContent = '\u2B07 Download Folder';
+    dlBtn.addEventListener('click', () => {
+      if (!manifest) return;
+      dlBtn.disabled = true;
+      downloadFolderAsZip(currentPath || '', manifest.entries, basePath, dlStatus).finally(() => {
+        dlBtn.disabled = false;
+      });
+    });
+
+    dlArea.appendChild(dlStatus);
+    dlArea.appendChild(dlBtn);
+    header.appendChild(dlArea);
+
+    wrapper.appendChild(header);
 
     // Directory listing
     if (manifest) {
@@ -250,6 +352,24 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
           currentPath = entry.path;
           onNavigate?.(entry.path);
           loadFileContent(entry.path);
+        },
+        onDownload: (entry: FileTreeEntry) => {
+          if (entry.type === 'file') {
+            // Direct file download via CDN link
+            const a = document.createElement('a');
+            a.href = `${basePath}files/${entry.path}`;
+            const filename = entry.path.split('/').pop() || entry.path;
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          } else if (manifest) {
+            // Folder zip download
+            dlBtn.disabled = true;
+            downloadFolderAsZip(entry.path, manifest.entries, basePath, dlStatus).finally(() => {
+              dlBtn.disabled = false;
+            });
+          }
         },
       });
       wrapper.appendChild(listing);
