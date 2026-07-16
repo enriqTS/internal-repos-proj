@@ -492,12 +492,13 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
       manifest = data;
 
       // Navigate to initial path or root
+      // Don't call onNavigate here — this is the initial auto-load, not a user action.
+      // The URL already reflects the correct state (either root or deep-linked path).
       if (initialPath) {
-        navigateToPath(initialPath);
+        navigateToPath(initialPath, false);
       } else {
         currentPath = '';
         setState('BROWSING');
-        onNavigate?.('');
       }
     } catch {
       renderFetchError();
@@ -550,8 +551,12 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
    * Navigate to a specific path within the manifest.
    * Determines whether the path is a directory or file and sets state accordingly.
    * If the path is not found in the manifest, falls back to root with a notice.
+   *
+   * @param userInitiated When true, fires onNavigate callback to update URL hash.
+   *   Set to false for programmatic/initial navigations where the URL already
+   *   reflects the correct state (e.g. deep link restoration on page load).
    */
-  function navigateToPath(path: string): void {
+  function navigateToPath(path: string, userInitiated = true): void {
     if (!manifest) return;
 
     // Normalize path — remove leading slash if present
@@ -569,12 +574,12 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
       if (dirEntry) {
         currentPath = asDir;
         setState('BROWSING');
-        onNavigate?.(asDir);
+        if (userInitiated) onNavigate?.(asDir);
       } else {
         // Path not found — fall back to root and show notice
         currentPath = '';
         setState('BROWSING');
-        onNavigate?.('');
+        if (userInitiated) onNavigate?.('');
         showPathNotFoundNotice(normalizedPath);
       }
       return;
@@ -583,7 +588,7 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
     if (entry.type === 'directory') {
       currentPath = normalizedPath;
       setState('BROWSING');
-      onNavigate?.(normalizedPath);
+      if (userInitiated) onNavigate?.(normalizedPath);
     } else {
       // It's a file — load it
       currentPath = normalizedPath;
