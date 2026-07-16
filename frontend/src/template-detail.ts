@@ -293,6 +293,7 @@ export async function renderTemplateDetail(
     container: fileBrowserSection,
     basePath,
     initialPath: initialFilePath,
+    autoLoad: true,
     onNavigate: (path: string) => {
       const hash = encodeFilePath('template', name, path);
       window.location.hash = hash;

@@ -32,8 +32,9 @@ const validMetadata = {
  * Helper: set up mockFetch to return successful metadata, readme, and architecture image HEAD.
  * Call order from renderTemplateDetail:
  *   1. fetchTemplateMetadata → GET metadata.json
- *   2. resolveArchitectureImageUrl → HEAD architecture image (concurrent with readme)
- *   3. fetchTemplateReadme → GET readme.md (concurrent with image HEAD)
+ *   2. fileBrowser autoLoad → GET file-tree.json (non-awaited, but fetch is called sync)
+ *   3. resolveArchitectureImageUrl → HEAD architecture image (concurrent with readme)
+ *   4. fetchTemplateReadme → GET readme.md (concurrent with image HEAD)
  */
 function mockSuccessfulRender(overrides?: {
   metadata?: Record<string, unknown>;
@@ -51,13 +52,19 @@ function mockSuccessfulRender(overrides?: {
     json: () => Promise.resolve(metadata),
   });
 
-  // 2. HEAD request for architecture image
+  // 2. file-tree.json fetch (fileBrowser autoLoad)
+  mockFetch.mockResolvedValueOnce({
+    ok: false,
+    status: 404,
+  });
+
+  // 3. HEAD request for architecture image
   mockFetch.mockResolvedValueOnce({
     ok: archHeadOk,
     headers: new Headers(archHeadOk ? { 'content-type': 'image/svg+xml' } : {}),
   });
 
-  // 3. readme.md fetch
+  // 4. readme.md fetch
   mockFetch.mockResolvedValueOnce({
     ok: true,
     text: () => Promise.resolve(readme),
@@ -135,6 +142,12 @@ describe('renderTemplateDetail', () => {
         json: () => Promise.resolve(validMetadata),
       });
 
+      // file-tree.json fetch (fileBrowser autoLoad) — 404
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      });
+
       // architecture HEAD succeeds
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -175,20 +188,26 @@ describe('renderTemplateDetail', () => {
         json: () => Promise.resolve(metadataNoImage),
       });
 
+      // file-tree.json fetch (fileBrowser autoLoad) — 404 (call #2)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      });
+
       // Promise.all starts resolveArchitectureImageUrl and fetchTemplateReadme concurrently.
       // resolveArchitectureImageUrl calls fetch first (SVG HEAD), then fetchTemplateReadme calls fetch.
       // After SVG HEAD resolves with ok:false, resolveArchitectureImageUrl tries PNG HEAD.
 
-      // SVG HEAD fails (call #2 - from resolveArchitectureImageUrl)
+      // SVG HEAD fails (call #3 - from resolveArchitectureImageUrl)
       mockFetch.mockResolvedValueOnce({ ok: false, headers: new Headers() });
 
-      // readme succeeds (call #3 - from fetchTemplateReadme)
+      // readme succeeds (call #4 - from fetchTemplateReadme)
       mockFetch.mockResolvedValueOnce({
         ok: true,
         text: () => Promise.resolve('# Docs'),
       });
 
-      // PNG HEAD fails (call #4 - from resolveArchitectureImageUrl after SVG fails)
+      // PNG HEAD fails (call #5 - from resolveArchitectureImageUrl after SVG fails)
       mockFetch.mockResolvedValueOnce({ ok: false, headers: new Headers() });
 
       const container = createContainer();
@@ -278,6 +297,12 @@ describe('renderTemplateDetail', () => {
         json: () => Promise.resolve(metadataWithPng),
       });
 
+      // file-tree.json fetch (fileBrowser autoLoad) — 404
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      });
+
       // Direct HEAD for architecture.png succeeds
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -297,12 +322,12 @@ describe('renderTemplateDetail', () => {
       const archSection = container.querySelector('.template-architecture');
       expect(archSection).not.toBeNull();
 
-      // Should only have made 3 fetch calls total (metadata, HEAD, readme)
+      // Should only have made 4 fetch calls total (metadata, file-tree, HEAD, readme)
       // No SVG fallback attempt
-      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(mockFetch).toHaveBeenCalledTimes(4);
 
-      // Verify the HEAD call was for the PNG directly
-      const headCall = mockFetch.mock.calls[1];
+      // Verify the HEAD call was for the PNG directly (call #3, index 2)
+      const headCall = mockFetch.mock.calls[2];
       expect(headCall[0]).toBe('https://cdn.example.com/templates/basic-lambda/architecture.png');
       expect(headCall[1]).toEqual({ method: 'HEAD' });
     });
@@ -319,6 +344,12 @@ describe('renderTemplateDetail', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(metadataInvalidImage),
+      });
+
+      // file-tree.json fetch (fileBrowser autoLoad) — 404
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
       });
 
       // SVG HEAD succeeds (fallback path)
@@ -339,8 +370,8 @@ describe('renderTemplateDetail', () => {
       // Architecture section rendered (SVG fallback succeeded)
       expect(container.querySelector('.template-architecture')).not.toBeNull();
 
-      // The HEAD call should be for architecture.svg (fallback), not "other.jpg"
-      const headCall = mockFetch.mock.calls[1];
+      // The HEAD call should be for architecture.svg (fallback), not "other.jpg" (call #3, index 2)
+      const headCall = mockFetch.mock.calls[2];
       expect(headCall[0]).toBe('https://cdn.example.com/templates/basic-lambda/architecture.svg');
       expect(headCall[1]).toEqual({ method: 'HEAD' });
     });

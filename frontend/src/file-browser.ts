@@ -1,4 +1,7 @@
 import type { FileTreeManifest, FileTreeEntry } from 'shared/types';
+import { createBreadcrumbNav, generateBreadcrumbs } from './breadcrumb-nav';
+import { createCodeViewer } from './code-viewer';
+import { createDirectoryListing } from './directory-listing';
 import { marked, renderReadmeSection } from './shared-markdown';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -19,6 +22,8 @@ export interface FileBrowserOptions {
   initialPath?: string;
   /** Callback when navigation changes (for URL hash updates) */
   onNavigate?: (path: string) => void;
+  /** When true, skips the IDLE state and loads the manifest immediately on mount */
+  autoLoad?: boolean;
 }
 
 export interface FileBrowserAPI {
@@ -140,7 +145,7 @@ function getEntryName(path: string): string {
  * - VIEWING_FILE: shows breadcrumb + code viewer (replaces directory listing entirely)
  */
 export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
-  const { container, basePath, initialPath, onNavigate } = options;
+  const { container, basePath, initialPath, onNavigate, autoLoad } = options;
 
   let state: FileBrowserState = 'IDLE';
   let manifest: FileTreeManifest | null = null;
@@ -207,20 +212,48 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
   }
 
   /**
-   * Render BROWSING state — placeholder for sub-components (directory listing, breadcrumb).
-   * Sub-components will be wired in later tasks.
-   * Also renders per-folder README below the listing if one exists.
+   * Render BROWSING state — breadcrumb nav + directory listing + optional README below.
    */
   function renderBrowsing(): void {
     const wrapper = document.createElement('div');
     wrapper.className = 'file-browser-browsing flex flex-col gap-4';
     wrapper.dataset.path = currentPath;
 
-    // Placeholder: breadcrumb and directory listing will be injected by later tasks
-    const placeholder = document.createElement('div');
-    placeholder.className = 'text-sm text-text-muted font-mono';
-    placeholder.textContent = `Browsing: ${currentPath || '/'}`;
-    wrapper.appendChild(placeholder);
+    // Breadcrumb navigation
+    const pathSegments = currentPath
+      ? currentPath.replace(/\/$/, '').split('/')
+      : [];
+    const breadcrumbNav = createBreadcrumbNav({
+      segments: pathSegments,
+      onNavigate: (targetPath: string) => {
+        currentPath = targetPath;
+        setState('BROWSING');
+        onNavigate?.(targetPath);
+      },
+      rootLabel: 'root',
+    });
+    wrapper.appendChild(breadcrumbNav);
+
+    // Directory listing
+    if (manifest) {
+      const children = getDirectoryChildren(manifest, currentPath);
+      const sorted = sortEntries(children);
+
+      const listing = createDirectoryListing({
+        entries: sorted,
+        onDirectorySelect: (path: string) => {
+          currentPath = path;
+          setState('BROWSING');
+          onNavigate?.(path);
+        },
+        onFileSelect: (entry: FileTreeEntry) => {
+          currentPath = entry.path;
+          onNavigate?.(entry.path);
+          loadFileContent(entry.path);
+        },
+      });
+      wrapper.appendChild(listing);
+    }
 
     container.appendChild(wrapper);
 
@@ -292,18 +325,41 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
   }
 
   /**
-   * Render VIEWING_FILE state — placeholder for code viewer.
-   * Code viewer sub-component will be wired in later tasks.
+   * Render VIEWING_FILE state — breadcrumb nav + code viewer.
    */
   function renderViewingFile(): void {
     const wrapper = document.createElement('div');
     wrapper.className = 'file-browser-viewing flex flex-col gap-4';
     wrapper.dataset.path = currentPath;
 
-    const placeholder = document.createElement('div');
-    placeholder.className = 'text-sm text-text-muted font-mono';
-    placeholder.textContent = `Viewing: ${currentPath}`;
-    wrapper.appendChild(placeholder);
+    // Breadcrumb navigation (for a file path, segments include the file name)
+    const breadcrumbs = generateBreadcrumbs(currentPath, 'root');
+    const pathSegments = breadcrumbs.slice(1).map((s) => s.label);
+    const breadcrumbNav = createBreadcrumbNav({
+      segments: pathSegments,
+      onNavigate: (targetPath: string) => {
+        currentPath = targetPath;
+        setState('BROWSING');
+        onNavigate?.(targetPath);
+      },
+      rootLabel: 'root',
+    });
+    wrapper.appendChild(breadcrumbNav);
+
+    // Code viewer
+    const content = fileCache.get(currentPath) ?? '';
+    const filename = currentPath.split('/').pop() ?? currentPath;
+    let fileSize = 0;
+    if (manifest) {
+      const entry = manifest.entries.find((e) => e.path === currentPath);
+      if (entry && entry.size != null) {
+        fileSize = entry.size;
+      }
+    }
+    const fileUrl = `${basePath}files/${currentPath}`;
+
+    const viewer = createCodeViewer({ content, filename, fileSize, fileUrl });
+    wrapper.appendChild(viewer);
 
     container.appendChild(wrapper);
   }
@@ -521,6 +577,12 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
   // ─── Public API ───────────────────────────────────────────────────────────────
 
   function mount(): void {
+    // If autoLoad is true, skip IDLE and load manifest directly
+    if (autoLoad) {
+      loadManifest();
+      return;
+    }
+
     setState('IDLE');
 
     // If there's an initial path, auto-activate
