@@ -1,4 +1,5 @@
 import type { FileTreeManifest, FileTreeEntry } from 'shared/types';
+import { marked, renderReadmeSection } from './shared-markdown';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -208,6 +209,7 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
   /**
    * Render BROWSING state — placeholder for sub-components (directory listing, breadcrumb).
    * Sub-components will be wired in later tasks.
+   * Also renders per-folder README below the listing if one exists.
    */
   function renderBrowsing(): void {
     const wrapper = document.createElement('div');
@@ -221,6 +223,60 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
     wrapper.appendChild(placeholder);
 
     container.appendChild(wrapper);
+
+    // Per-folder README rendering (async, below the listing)
+    if (manifest) {
+      const readmeEntry = hasReadme(manifest, currentPath);
+      if (readmeEntry) {
+        renderReadmeBelow(wrapper, readmeEntry);
+      }
+    }
+  }
+
+  /**
+   * Fetch and render a README file below the directory listing.
+   * Shows a loading indicator while fetching. Silently hides on failure.
+   */
+  async function renderReadmeBelow(
+    wrapper: HTMLElement,
+    readmeEntry: FileTreeEntry,
+  ): Promise<void> {
+    // Show loading indicator
+    const loadingEl = document.createElement('div');
+    loadingEl.className = 'file-browser-readme-loading text-sm text-text-muted font-mono py-2';
+    loadingEl.setAttribute('role', 'status');
+    loadingEl.setAttribute('aria-live', 'polite');
+    loadingEl.textContent = 'Loading README…';
+    wrapper.appendChild(loadingEl);
+
+    try {
+      const url = `${basePath}files/${readmeEntry.path}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        // Silently hide README section on fetch failure
+        loadingEl.remove();
+        return;
+      }
+
+      const readmeContent = await response.text();
+      const readmeHtml = await marked.parse(readmeContent);
+
+      // Replace loading indicator with rendered README
+      loadingEl.remove();
+
+      // Only render if we're still in BROWSING state at the same path
+      // (user may have navigated away during the fetch)
+      if (state !== 'BROWSING' || !wrapper.isConnected) {
+        return;
+      }
+
+      const readmeSection = renderReadmeSection(readmeHtml, 'file-browser-readme');
+      wrapper.appendChild(readmeSection);
+    } catch {
+      // Silently hide README section on any error
+      loadingEl.remove();
+    }
   }
 
   /**
