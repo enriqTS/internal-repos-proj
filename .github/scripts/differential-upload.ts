@@ -17,6 +17,10 @@
  * Requirements: 1.2, 8.1, 8.6, 9.1, 9.2, 9.3
  */
 
+import { createHash } from 'node:crypto';
+import { readFile, readdir, stat } from 'node:fs/promises';
+import { join } from 'node:path';
+
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
 export interface LocalFile {
@@ -134,4 +138,69 @@ export function getContentType(filename: string): string {
   if (lastDot === -1) return DEFAULT_CONTENT_TYPE;
   const ext = filename.slice(lastDot).toLowerCase();
   return CONTENT_TYPE_MAP[ext] ?? DEFAULT_CONTENT_TYPE;
+}
+
+// ─── Directory Walker ────────────────────────────────────────────────────────
+
+/**
+ * Recursively walks a directory and returns all files with their relative paths.
+ * Excludes directories listed in EXCLUDED_DIRS.
+ * Always uses forward-slash separators in relativePath regardless of OS.
+ *
+ * Requirements: 1.1, 1.2, 1.3, 1.5
+ */
+export async function walkDirectory(baseDir: string): Promise<LocalFile[]> {
+  const files: LocalFile[] = [];
+
+  async function walk(dir: string, prefix: string): Promise<void> {
+    const entries = await readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+
+      if (entry.isDirectory()) {
+        if (EXCLUDED_DIRS.has(entry.name)) continue;
+        await walk(join(dir, entry.name), relativePath);
+      } else if (entry.isFile()) {
+        const fileStat = await stat(join(dir, entry.name));
+        files.push({
+          relativePath,
+          absolutePath: join(dir, entry.name),
+          size: fileStat.size,
+        });
+      }
+    }
+  }
+
+  await walk(baseDir, '');
+  return files;
+}
+
+// ─── Hash Computation ────────────────────────────────────────────────────────
+
+/**
+ * Computes SHA-256 hashes for an array of local files.
+ * Processes files sequentially for deterministic output ordering.
+ * Returns both hex (for manifest) and base64 (for S3 ChecksumSHA256) representations.
+ *
+ * Requirements: 1.1, 1.5, 1.6
+ */
+export async function computeFileHashes(files: LocalFile[]): Promise<HashResult[]> {
+  const results: HashResult[] = [];
+
+  for (const file of files) {
+    const content = await readFile(file.absolutePath);
+    const hash = createHash('sha256');
+    hash.update(content);
+    const digest = hash.digest();
+
+    results.push({
+      relativePath: file.relativePath,
+      hash: digest.toString('hex'),
+      hashBase64: digest.toString('base64'),
+      size: file.size,
+    });
+  }
+
+  return results;
 }
