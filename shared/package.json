@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./types": "./src/types.ts",
-    "./constants": "./src/constants.ts"
+    "./constants": "./src/constants.ts",
+    "./content-type-map": "./src/content-type-map.ts"
   },
   "scripts": {
     "build": "tsc"
