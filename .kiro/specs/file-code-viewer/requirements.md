@@ -2,19 +2,23 @@
 
 ## Introduction
 
-This feature adds a GitHub-style file/code viewer to the project detail and template detail pages. Users can browse the file tree and view individual file contents with syntax highlighting. The approach uses a pre-exploded files architecture with a dual-path upload pipeline: the frontend accepts both folder uploads (individual files staged directly to S3, no client-side zipping) and `.zip` file uploads (staged as-is). In both cases, the Lambda produces the same output — individual S3 objects under `files/`, a `file-tree.json` manifest, and an `artifact.zip` for the download button. At browse time, the frontend fetches only the lightweight manifest for tree rendering and loads individual files on demand. For templates, file expansion happens at CI/CD deploy time. highlight.js (already used for README rendering) provides syntax coloring. No client-side zip extraction is needed.
+This feature adds a GitHub/GitLab-style file browser and code viewer to the project detail and template detail pages. Users navigate directories via a flat listing (one directory level at a time) and view individual file contents with syntax highlighting. The approach uses a pre-exploded files architecture with a dual-path upload pipeline: the frontend accepts both folder uploads (individual files staged directly to S3, no client-side zipping) and `.zip` file uploads (staged as-is). In both cases, the Lambda produces the same output — individual S3 objects under `files/`, a `file-tree.json` manifest, and an `artifact.zip` for the download button. At browse time, the frontend fetches only the lightweight manifest for directory rendering and loads individual files on demand. For templates, file expansion happens at CI/CD deploy time. highlight.js (already used for README rendering) provides syntax coloring. No client-side zip extraction is needed.
+
+The UI follows the GitHub repository browsing pattern: breadcrumb navigation at the top, a flat directory listing showing only the current folder's contents, clicking a folder navigates into it, and clicking a file replaces the listing with a full-page code view. If a directory contains a README.md, it is rendered below the listing.
 
 ## Glossary
 
-- **File_Browser**: The combined UI component consisting of the File_Tree and the Code_Viewer, displayed on detail pages to let users explore project or template files.
-- **File_Tree**: A collapsible, hierarchical tree view representing the directory structure derived from the file-tree.json manifest.
-- **Code_Viewer**: The panel that displays the contents of a selected file with syntax highlighting, line numbers, and a copy action.
+- **File_Browser**: The combined UI component consisting of the Breadcrumb_Nav, the Directory_Listing, the optional README preview, and the Code_Viewer, displayed on detail pages to let users explore project or template files.
+- **Directory_Listing**: A flat table/list UI component showing the contents of the current directory only (folders first, then files, each group sorted alphabetically). Each row displays an icon (folder or file), the entry name, and optionally the file size.
+- **Breadcrumb_Nav**: A horizontal navigation bar showing the current path as clickable segments (e.g., `root / src / components /`). Each segment navigates to that directory level.
+- **Code_Viewer**: The full-page view that replaces the Directory_Listing when a file is selected, displaying the file contents with syntax highlighting, line numbers, and a copy action. Includes the Breadcrumb_Nav for navigation back to the parent directory.
 - **File_Tree_Manifest**: The `file-tree.json` file stored in S3, containing a structured representation of all files and directories with metadata (path, size, type).
 - **File_Expander**: The server-side logic (Lambda for projects, CI/CD script for templates) that processes staged uploads (either individual files or a zip), explodes them into individual S3 objects, generates the File_Tree_Manifest, and produces the Artifact_Zip.
 - **Drop_Zone**: The frontend UI component that accepts both folder drops/selections (via webkitdirectory) and `.zip` file drops/selections, auto-detecting the upload mode.
 - **Language_Mapper**: The module that maps file extensions and special filenames to highlight.js language identifiers for syntax highlighting.
 - **Detail_Page**: Either the project detail page or the template detail page where the File_Browser is rendered.
 - **Artifact_Zip**: The `artifact.zip` file stored in S3 and served via CloudFront, preserved for direct download functionality. For folder uploads, the Lambda generates this server-side; for zip uploads, the original zip is used.
+- **Per_Folder_README**: The behavior where, if the currently viewed directory contains a file named `README.md` or `README`, that file is fetched and rendered as markdown below the Directory_Listing.
 
 ## Requirements
 
@@ -77,7 +81,7 @@ This feature adds a GitHub-style file/code viewer to the project detail and temp
 1. THE Detail_Page SHALL display a "Browse Files" action that initiates manifest loading only when the user activates it.
 2. WHEN the user activates the "Browse Files" action, THE File_Browser SHALL fetch the File_Tree_Manifest from the CDN URL at `{cdnUrl}/{path}file-tree.json`.
 3. WHILE the File_Tree_Manifest is being fetched, THE Detail_Page SHALL display a loading indicator with a text label such as "Loading files…".
-4. WHEN the File_Tree_Manifest has been fetched and parsed, THE Detail_Page SHALL replace the loading indicator with the File_Browser showing the File_Tree.
+4. WHEN the File_Tree_Manifest has been fetched and parsed, THE Detail_Page SHALL replace the loading indicator with the File_Browser showing the Directory_Listing of the root directory.
 5. IF the File_Tree_Manifest cannot be fetched (network error, 404, or invalid JSON), THEN THE Detail_Page SHALL display an error message describing the failure and allow the user to retry.
 6. IF the File_Tree_Manifest does not exist for a project uploaded before this feature (legacy project), THEN THE Detail_Page SHALL display a message indicating that file browsing is not available for this project.
 
@@ -87,41 +91,65 @@ This feature adds a GitHub-style file/code viewer to the project detail and temp
 
 #### Acceptance Criteria
 
-1. WHEN the user selects a file in the File_Tree, THE Code_Viewer SHALL fetch the file content from the CDN URL at `{cdnUrl}/{path}files/{filePath}`.
-2. WHILE a file is being fetched, THE Code_Viewer SHALL display a loading indicator within the viewer panel.
+1. WHEN the user selects a file in the Directory_Listing, THE Code_Viewer SHALL fetch the file content from the CDN URL at `{cdnUrl}/{path}files/{filePath}`.
+2. WHILE a file is being fetched, THE Code_Viewer SHALL display a loading indicator within the viewer area.
 3. IF a file cannot be fetched (network error or 404), THEN THE Code_Viewer SHALL display an error message and allow the user to retry.
 4. WHEN a file has been fetched and displayed, THE File_Browser SHALL cache the file content in memory so that re-selecting the same file does not trigger another network request.
 5. IF the selected file exceeds 500 KB in size (determined from the File_Tree_Manifest size field), THEN THE Code_Viewer SHALL display a warning and require explicit user confirmation before fetching the file.
 
-### Requirement 5: File Tree Component
+### Requirement 5: Directory Listing Component
 
-**User Story:** As a user, I want to see a hierarchical file tree representing the project structure, so that I can navigate and understand how files are organized.
+**User Story:** As a user, I want to see a flat listing of the current directory's contents (like GitHub's repo view), so that I can navigate folders and select files one level at a time.
 
 #### Acceptance Criteria
 
-1. WHEN the File_Tree_Manifest has been parsed, THE File_Tree SHALL render a hierarchical tree view representing all directories and files from the manifest.
-2. THE File_Tree SHALL sort entries with directories listed before files, and items within each group sorted alphabetically in a case-insensitive manner.
-3. THE File_Tree SHALL display a visual indicator (icon or symbol) distinguishing directories from files.
-4. WHEN the user activates a directory node in the File_Tree, THE File_Tree SHALL toggle its expanded or collapsed state, showing or hiding its child entries.
-5. WHEN the user activates a file node in the File_Tree, THE Code_Viewer SHALL fetch and display the contents of that file.
-6. THE File_Tree SHALL highlight the currently selected file node to indicate which file is being viewed.
-7. THE File_Tree SHALL be keyboard navigable using arrow keys for traversal, Enter or Space for activation, and maintain a visible focus indicator on the focused node.
+1. WHEN the File_Tree_Manifest has been parsed and a directory is the current view, THE Directory_Listing SHALL render a flat list showing only the immediate children of that directory.
+2. THE Directory_Listing SHALL sort entries with directories listed before files, and items within each group sorted alphabetically in a case-insensitive manner.
+3. THE Directory_Listing SHALL display a visual indicator (icon or symbol) distinguishing directories from files for each row.
+4. THE Directory_Listing SHALL display the entry name for each row, and optionally the file size for file entries.
+5. WHEN the user activates a directory row in the Directory_Listing, THE File_Browser SHALL navigate into that directory, replacing the listing with the contents of the selected directory and updating the Breadcrumb_Nav.
+6. WHEN the user activates a file row in the Directory_Listing, THE File_Browser SHALL replace the Directory_Listing entirely with the Code_Viewer displaying that file's contents.
+7. THE Directory_Listing SHALL be keyboard navigable using arrow keys for traversal, Enter or Space for activation, and maintain a visible focus indicator on the focused row.
 
-### Requirement 6: Code Viewer with Syntax Highlighting
+### Requirement 6: Breadcrumb Navigation
+
+**User Story:** As a user, I want a breadcrumb bar showing my current path in the file tree, so that I can quickly navigate back to any parent directory.
+
+#### Acceptance Criteria
+
+1. THE Breadcrumb_Nav SHALL display the current path as a series of clickable segments (e.g., `root / src / components /`), where each segment represents a directory level.
+2. WHEN the user activates a breadcrumb segment, THE File_Browser SHALL navigate to that directory, updating the Directory_Listing to show the contents of the selected directory.
+3. THE Breadcrumb_Nav SHALL always include a root segment that navigates back to the top-level directory of the project or template.
+4. WHILE viewing a file in the Code_Viewer, THE Breadcrumb_Nav SHALL remain visible and show the full path to the file, with all directory segments clickable to navigate back.
+5. THE Breadcrumb_Nav SHALL be keyboard accessible, with each segment focusable and activatable via Enter or Space.
+
+### Requirement 7: Per-Folder README Rendering
+
+**User Story:** As a user, I want to see the README of the current directory rendered below the file listing (like GitHub), so that I can read documentation in context without navigating away.
+
+#### Acceptance Criteria
+
+1. WHEN the Directory_Listing is displayed for a directory that contains a file named `README.md` or `README` (case-insensitive match), THE File_Browser SHALL fetch that README file from the CDN and render it as markdown below the Directory_Listing.
+2. WHILE the README file is being fetched, THE File_Browser SHALL display a loading indicator below the Directory_Listing.
+3. IF the current directory does not contain a README file, THEN THE File_Browser SHALL display nothing below the Directory_Listing.
+4. IF the README file cannot be fetched (network error or 404), THEN THE File_Browser SHALL hide the README section without displaying an error.
+5. THE rendered README SHALL use the same markdown rendering pipeline (marked library) and styling as the existing README sections on detail pages.
+
+### Requirement 8: Code Viewer with Syntax Highlighting
 
 **User Story:** As a user, I want to view file contents with syntax highlighting and line numbers, so that I can read code comfortably without downloading the full archive.
 
 #### Acceptance Criteria
 
-1. WHEN a file is fetched and displayed, THE Code_Viewer SHALL apply syntax highlighting using highlight.js.
-2. THE Code_Viewer SHALL display a breadcrumb path above the file content showing the full path of the currently viewed file.
+1. WHEN a file is fetched and displayed, THE Code_Viewer SHALL replace the Directory_Listing entirely, showing the file content as a full-page view.
+2. THE Code_Viewer SHALL apply syntax highlighting using highlight.js.
 3. THE Code_Viewer SHALL display line numbers alongside the file content, starting at 1.
 4. THE Code_Viewer SHALL provide a "Copy" button that copies the raw file content (without line numbers or HTML markup) to the clipboard when activated.
 5. WHEN the "Copy" button is activated, THE Code_Viewer SHALL provide visual feedback confirming the copy operation (e.g., button text changes to "Copied!" for 2 seconds).
 6. THE Code_Viewer SHALL render file content with horizontal scrolling for lines that exceed the viewport width, preserving original line formatting without wrapping.
 7. IF the selected file exceeds 500 KB in size, THEN THE Code_Viewer SHALL display the file content as plain text without syntax highlighting and SHALL show a notice indicating that highlighting was skipped for performance.
 
-### Requirement 7: Language and Extension Mapping
+### Requirement 9: Language and Extension Mapping
 
 **User Story:** As a user, I want files to be highlighted in the correct language based on their extension, so that syntax coloring is accurate and useful.
 
@@ -132,7 +160,7 @@ This feature adds a GitHub-style file/code viewer to the project detail and temp
 3. IF a file extension is not recognized by the Language_Mapper, THEN THE Code_Viewer SHALL use highlight.js auto-detection to determine the language.
 4. IF highlight.js auto-detection returns a low-confidence result, THEN THE Code_Viewer SHALL render the content as plain text.
 
-### Requirement 8: Binary File Handling
+### Requirement 10: Binary File Handling
 
 **User Story:** As a user, I want binary files clearly indicated and images previewed inline, so that I understand file types without confusion.
 
@@ -143,7 +171,7 @@ This feature adds a GitHub-style file/code viewer to the project detail and temp
 3. WHEN the user selects an image file (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`), THE Code_Viewer SHALL display an inline image preview using the CDN URL for that file.
 4. THE Code_Viewer SHALL display the image preview with a maximum width of 100% of the viewer area and preserve the image aspect ratio.
 
-### Requirement 9: Integration with Detail Pages
+### Requirement 11: Integration with Detail Pages
 
 **User Story:** As a user, I want to browse files on both project and template detail pages, so that I can explore any artifact in the repository.
 
@@ -154,28 +182,31 @@ This feature adds a GitHub-style file/code viewer to the project detail and temp
 3. THE File_Browser SHALL construct the manifest and file URLs using the same CDN base URL and path pattern used by the existing download link on each Detail_Page.
 4. WHILE the File_Browser is in its initial state (before the user activates "Browse Files"), THE Detail_Page SHALL display only the "Browse Files" action, consuming minimal vertical space.
 
-### Requirement 10: Deep Linking to Files
+### Requirement 12: Deep Linking to Files and Directories
 
-**User Story:** As a user, I want to share a link that opens a specific file in the viewer, so that I can point colleagues directly to relevant code.
-
-#### Acceptance Criteria
-
-1. WHEN the user selects a file in the File_Tree, THE Detail_Page SHALL update the URL hash to include the file path (e.g., `#/project/{name}/file/{filePath}` or `#/template/{name}/file/{filePath}`).
-2. WHEN the Detail_Page loads with a file path in the URL hash, THE File_Browser SHALL automatically fetch the File_Tree_Manifest, expand the File_Tree to reveal the target file, select it, and fetch and display its contents in the Code_Viewer.
-3. IF the file path specified in the URL hash does not exist in the manifest, THEN THE File_Browser SHALL display the File_Tree with no file selected and show a notice indicating that the linked file was not found.
-
-### Requirement 11: Responsive Layout
-
-**User Story:** As a user, I want the file browser to work well on all screen sizes, so that I can browse code on mobile and desktop.
+**User Story:** As a user, I want to share a link that opens a specific file or directory in the viewer, so that I can point colleagues directly to relevant code.
 
 #### Acceptance Criteria
 
-1. WHILE the viewport width is 768 px or wider, THE File_Browser SHALL display the File_Tree and Code_Viewer side by side.
-2. WHILE the viewport width is below 768 px, THE File_Browser SHALL stack the File_Tree above the Code_Viewer, with the File_Tree collapsible via a toggle button.
+1. WHEN the user navigates into a directory, THE Detail_Page SHALL update the URL hash to encode the current path (e.g., `#/project/{name}/files/src/components/` for directories).
+2. WHEN the user selects a file, THE Detail_Page SHALL update the URL hash to encode the file path (e.g., `#/project/{name}/files/src/main.ts` for files, or `#/template/{name}/files/src/main.ts` for templates).
+3. WHEN the Detail_Page loads with a directory path in the URL hash, THE File_Browser SHALL automatically fetch the File_Tree_Manifest and display the Directory_Listing for that directory with the Breadcrumb_Nav reflecting the path.
+4. WHEN the Detail_Page loads with a file path in the URL hash, THE File_Browser SHALL automatically fetch the File_Tree_Manifest, navigate to the file's parent directory context, and fetch and display the file contents in the Code_Viewer.
+5. IF the path specified in the URL hash does not exist in the manifest, THEN THE File_Browser SHALL display the root Directory_Listing and show a notice indicating that the linked path was not found.
+
+### Requirement 13: Responsive Layout
+
+**User Story:** As a user, I want the file browser to adapt naturally to different monitor resolutions and aspect ratios, so that I can browse code comfortably on any display.
+
+#### Acceptance Criteria
+
+1. THE File_Browser SHALL use a single-column layout that naturally adapts to different viewport widths and aspect ratios (16:9, 21:9, ultrawide).
+2. THE Directory_Listing SHALL occupy the full available width of the content area.
 3. THE Code_Viewer SHALL allow horizontal scrolling for lines that exceed the available width on all viewport sizes.
-4. THE File_Tree SHALL constrain its maximum height and provide vertical scrolling when the tree content exceeds the available space.
+4. THE Directory_Listing SHALL constrain its maximum height and provide vertical scrolling when the directory content exceeds the available space.
+5. THE Breadcrumb_Nav SHALL wrap gracefully when the path is too long for the available width.
 
-### Requirement 12: Migration of Existing Projects
+### Requirement 14: Migration of Existing Projects
 
 **User Story:** As a system operator, I want a one-time migration script that explodes existing project zips into individual files, so that all projects benefit from the new file browsing experience.
 
