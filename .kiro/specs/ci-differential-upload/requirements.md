@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This feature optimizes the CI/CD template deployment pipeline by implementing differential (hash-based) uploads. Instead of unconditionally uploading all template files on every push to main, the system computes content hashes, compares them against a stored manifest in S3, and uploads only files that have actually changed. This dramatically reduces deploy time when templates have not been modified or only a few files differ.
+This feature optimizes the CI/CD template deployment pipeline by implementing differential (hash-based) uploads using a hybrid approach: a hash manifest stored in S3 enables fast comparison without per-file HeadObject calls, while S3's native ChecksumSHA256 provides integrity verification on every upload (S3 validates that the received content matches the provided hash). Instead of unconditionally uploading all template files on every push to main, the system computes content hashes, compares them against the stored manifest, and uploads only files that have actually changed. This dramatically reduces deploy time when templates have not been modified or only a few files differ.
 
 ## Glossary
 
@@ -12,6 +12,7 @@ This feature optimizes the CI/CD template deployment pipeline by implementing di
 - **File_Tree_Manifest**: The existing `file-tree.json` manifest listing all files and directories for the file browser frontend component.
 - **Templates_Bucket**: The S3 bucket that stores deployed template assets, separate from the frontend bucket.
 - **Expand_Script**: The existing `expand-template-files.ts` script that walks a template directory and uploads each file individually to S3.
+- **ChecksumSHA256**: S3's native integrity verification feature that accepts a base64-encoded SHA-256 hash with PutObject requests; S3 independently computes the hash of the received content and rejects the upload if the values do not match, guaranteeing data integrity in transit.
 
 ## Requirements
 
@@ -26,6 +27,7 @@ This feature optimizes the CI/CD template deployment pipeline by implementing di
 3. THE Differential_Upload_Script SHALL produce a Hash_Manifest containing, for every discovered file: the relative path (using forward-slash separators relative to the template root directory), the lowercase hexadecimal SHA-256 hash (64 characters), and the file size in bytes.
 4. IF the template directory does not exist or contains zero files after exclusion rules are applied, THEN THE Differential_Upload_Script SHALL exit with a non-zero exit code and log an error message indicating the empty or missing directory.
 5. WHEN computing hashes, THE Differential_Upload_Script SHALL read each file sequentially in its entirety to produce a deterministic hash that is identical across repeated runs on unchanged file content.
+6. WHEN uploading a file to S3, THE Differential_Upload_Script SHALL reuse the pre-calculated SHA-256 hash (converted to base64 encoding) as the ChecksumSHA256 parameter in the PutObjectCommand, avoiding redundant hash computation for integrity verification.
 
 ### Requirement 2: Store and Retrieve Hash Manifest from S3
 
@@ -130,3 +132,15 @@ This feature optimizes the CI/CD template deployment pipeline by implementing di
 1. THE Differential_Upload_Script SHALL assign Content-Type by extracting the substring from the last dot (`.`) in the filename to the end, converting it to lowercase, and looking it up in the same CONTENT_TYPE_MAP used by the existing Expand_Script.
 2. IF a file has no dot in its filename OR its lowercase extension is not present in the CONTENT_TYPE_MAP, THEN THE Differential_Upload_Script SHALL assign `application/octet-stream` as the Content-Type.
 3. WHEN a file has multiple dots in its name (e.g., `archive.tar.gz`), THE Differential_Upload_Script SHALL use only the last extension segment (e.g., `.gz`) for Content-Type lookup.
+
+### Requirement 10: S3 Native Checksum Integrity Verification
+
+**User Story:** As a CI pipeline operator, I want every upload to S3 to include a native checksum so that S3 validates data integrity on receipt, ensuring no corruption occurs during transfer.
+
+#### Acceptance Criteria
+
+1. WHEN uploading any file to S3, THE Differential_Upload_Script SHALL include the pre-calculated SHA-256 hash (base64-encoded) as the `ChecksumSHA256` parameter in the PutObjectCommand.
+2. WHEN uploading any file to S3, THE Differential_Upload_Script SHALL set `ChecksumAlgorithm: "SHA256"` in the PutObjectCommand so that S3 stores the checksum with the object for future retrieval and validation.
+3. IF S3 returns an error indicating checksum mismatch during upload (BadDigest or similar integrity error), THEN THE Differential_Upload_Script SHALL retry the upload up to 2 additional times (re-reading and re-hashing the file content on each retry) before reporting the failure and continuing with remaining files.
+4. THE Differential_Upload_Script SHALL apply ChecksumSHA256 verification to all uploaded objects: template source files, metadata.json, readme.md, architecture images, artifact.zip, file-tree.json, and hash-manifest.json.
+5. WHEN computing the ChecksumSHA256 value for the PutObjectCommand, THE Differential_Upload_Script SHALL convert the raw SHA-256 digest bytes to base64 encoding (not the hexadecimal string), as required by the S3 API.
