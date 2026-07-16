@@ -1,0 +1,501 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create shared `FileTreeManifest` and `FileTreeEntry` types in `shared/types.ts`": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204517826
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204529241
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204909770
+      }
+    ],
+    "1.2 Create `shared/content-type-map.ts` with the content-type mapping module": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204517880
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204920485
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205010015
+      }
+    ],
+    "1.3 Create `frontend/src/language-mapper.ts` with language detection and file classification": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204517935
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204530055
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204910660
+      }
+    ],
+    "2.1 Create `lambda/src/file-expander.ts` with manifest generation logic": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204517970
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205070565
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205248631
+      }
+    ],
+    "2.3 Update `lambda/src/process.ts` to invoke File Expander after zip extraction": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518005
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205256680
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205710837
+      }
+    ],
+    "3. Checkpoint — Backend file expansion": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518037
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205718081
+      }
+    ],
+    "4.1 Update `lambda/src/initiate.ts` to support folder upload mode": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518082
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205258583
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205711643
+      }
+    ],
+    "5.1 Update `frontend/src/drop-zone.ts` to support zip file detection and dual-mode": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518116
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205071316
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205249868
+      }
+    ],
+    "5.3 Update `frontend/src/upload-form.ts` to handle folder-mode staging": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518144
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205257786
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205712448
+      }
+    ],
+    "6. Checkpoint — Dual-mode upload pipeline": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518183
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205718947
+      }
+    ],
+    "7.1 Create `frontend/src/file-browser.ts` — top-level File Browser component": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518220
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205726242
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205920597
+      }
+    ],
+    "7.2 Implement directory children extraction and sorting utilities in `file-browser.ts`": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518251
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205727568
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205921703
+      }
+    ],
+    "8.1 Create `frontend/src/directory-listing.ts`": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518290
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205728372
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205922505
+      }
+    ],
+    "9.1 Create `frontend/src/breadcrumb-nav.ts`": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518319
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205729377
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205923272
+      }
+    ],
+    "10.1 Create `frontend/src/code-viewer.ts`": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518355
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205730116
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205924066
+      }
+    ],
+    "11.1 Integrate README detection and rendering into File Browser": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518396
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205931390
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206202311
+      }
+    ],
+    "12. Checkpoint — Core frontend components": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518441
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206211657
+      }
+    ],
+    "13.1 Update `frontend/src/router.ts` and `frontend/src/main.ts` with file browsing routes": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518477
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205932565
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206203459
+      }
+    ],
+    "13.3 Handle invalid deep link paths": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518512
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205933417
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206204311
+      }
+    ],
+    "14.1 Update `frontend/src/project-detail.ts` to mount File Browser": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518551
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205934372
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206205263
+      }
+    ],
+    "14.2 Update `frontend/src/template-detail.ts` to mount File Browser": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518581
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205935169
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206205968
+      }
+    ],
+    "15.1 Create `.github/scripts/expand-template-files.ts` (or shell script)": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518616
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206218063
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206464023
+      }
+    ],
+    "15.2 Update `.github/workflows/deploy-project.yml` to invoke the expansion script": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518653
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206219235
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206465143
+      }
+    ],
+    "16.1 Create `scripts/migrate-files.ts` — one-time migration script": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518687
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206220269
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206465937
+      }
+    ],
+    "17. Final checkpoint — Full integration": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784204518718
+      },
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206466976
+      }
+    ],
+    "1. Shared modules and data types": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205010046
+      }
+    ],
+    "2. Backend — File Expander Lambda module": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205710916
+      }
+    ],
+    "4. Backend — Initiate Lambda dual-mode presigned URLs": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205711685
+      }
+    ],
+    "5. Frontend — Drop Zone dual-mode updates": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205712492
+      }
+    ],
+    "7. Frontend — File Browser orchestrator component": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205921744
+      }
+    ],
+    "8. Frontend — Directory Listing component": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205922541
+      }
+    ],
+    "9. Frontend — Breadcrumb Navigation component": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205923309
+      }
+    ],
+    "10. Frontend — Code Viewer component": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784205924120
+      }
+    ],
+    "11. Frontend — Per-folder README rendering": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206202375
+      }
+    ],
+    "13. Frontend — Deep linking and router integration": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206204351
+      }
+    ],
+    "14. Frontend — Integration with detail pages": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206206016
+      }
+    ],
+    "15. CI/CD — Template expansion script": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206465174
+      }
+    ],
+    "16. Migration script for existing projects": [
+      {
+        "executionId": "f5450745-7a4e-4342-9de1-7727906ba2c8",
+        "chatSessionId": "sess_30cd8b49-2b27-41ac-9a88-25b1708d9bb3",
+        "timestamp": 1784206465971
+      }
+    ]
+  }
+}
