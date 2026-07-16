@@ -303,15 +303,32 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
     // fetchSearchIndex is called exactly once (on the first home page render)
 
     /**
-     * Flush microtask queue — allows all pending Promise resolutions to settle.
-     * This is more reliable than fixed setTimeout delays for testing async code
-     * because it doesn't depend on wall-clock timing.
+     * Poll until a predicate becomes true, yielding to the event loop between checks.
+     * Unlike fixed setTimeout delays, this adapts to the actual speed of async resolution
+     * on any machine (local dev or slow CI runner).
      */
-    async function flushMicrotasks(): Promise<void> {
-      // Multiple ticks to handle chained .then() / await sequences
-      for (let i = 0; i < 10; i++) {
-        await new Promise(r => setTimeout(r, 0));
+    async function waitFor(
+      predicate: () => boolean,
+      timeout = 2000,
+    ): Promise<void> {
+      const start = Date.now();
+      while (!predicate()) {
+        if (Date.now() - start > timeout) {
+          throw new Error(`waitFor timed out after ${timeout}ms`);
+        }
+        await new Promise(r => setTimeout(r, 5));
       }
+    }
+
+    /**
+     * Settle: flush all currently-pending async work by yielding multiple
+     * event loop ticks. Used after navigations where we don't have a specific
+     * condition to poll for.
+     */
+    async function settle(): Promise<void> {
+      // Use real milliseconds to handle cases where jsdom's event loop
+      // may schedule work on actual timers rather than just microtasks
+      await new Promise(r => setTimeout(r, 50));
     }
 
     await fc.assert(
@@ -334,31 +351,25 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           document.body.appendChild(freshContainer);
           vi.clearAllMocks();
 
-          // Track hashchange listeners for cleanup to prevent accumulation across iterations
-          const hashChangeListeners: EventListenerOrEventListenerObject[] = [];
-          const originalAddEventListener = window.addEventListener;
-          vi.spyOn(window, 'addEventListener').mockImplementation(((type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
-            if (type === 'hashchange') {
-              hashChangeListeners.push(listener);
-            }
-            originalAddEventListener.call(window, type, listener, options);
-          }) as typeof window.addEventListener);
+          // Set hash to #/projects for the router to match on start
+          window.location.hash = '#/projects';
 
           const { fetchSearchIndex } = await import('./api');
           const mockedFetch = vi.mocked(fetchSearchIndex);
           mockedFetch.mockResolvedValue({ ok: true, data: [{ name: 'proj', description: 'desc', tags: ['t'], date: '2024-01-01', path: 'projects/proj/' }] });
 
-          // Initialize app with projects route
-          window.location.hash = '#/projects';
+          // Initialize app — router.start() calls onHashChange() which will invoke
+          // renderSearchView since hash is already #/projects
           await import('./main');
 
-          // Flush all pending async work from the initial render (fetchSearchIndex resolution,
-          // then initializeSearch + markSearchIndexLoaded, then setupSearch + event binding)
-          await flushMicrotasks();
+          // Wait deterministically until fetchSearchIndex has been called at least once.
+          // The router fires renderSearchView as a fire-and-forget async call, so we must
+          // poll rather than relying on a fixed number of microtask ticks.
+          await waitFor(() => mockedFetch.mock.calls.length >= 1);
+          // Also let the post-fetch logic (initializeSearch, markSearchIndexLoaded) complete
+          await settle();
 
           const callCountAfterInit = mockedFetch.mock.calls.length;
-          // Initial projects load should fetch
-          expect(callCountAfterInit).toBeGreaterThanOrEqual(1);
 
           // Perform each navigation in the sequence
           for (const nav of navigations) {
@@ -369,31 +380,41 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
             } else if (nav === 'project-detail') {
               window.location.hash = '#/project/proj';
             }
-            // Flush async work triggered by each hashchange + route handler
-            await flushMicrotasks();
+            // Let the route handler's async work settle
+            await settle();
           }
 
           // After all non-mutation navigations, fetchSearchIndex should NOT have been
           // called again (searchIndexLoaded stays true after successful initial load)
           expect(mockedFetch.mock.calls.length).toBe(callCountAfterInit);
-
-          // Cleanup: remove all hashchange listeners added during this iteration
-          for (const listener of hashChangeListeners) {
-            window.removeEventListener('hashchange', listener);
-          }
-          vi.mocked(window.addEventListener).mockRestore();
         },
       ),
       { numRuns: 15 },
     );
-  });
+  }, 30_000);
 
   it('failed mutations do NOT reset searchIndexLoaded', async () => {
     /**
-     * Flush microtask queue — allows all pending Promise resolutions to settle.
+     * Poll until a predicate becomes true, yielding to the event loop between checks.
      */
-    async function flushMicrotasks(): Promise<void> {
-      for (let i = 0; i < 10; i++) {
+    async function waitFor(
+      predicate: () => boolean,
+      timeout = 2000,
+    ): Promise<void> {
+      const start = Date.now();
+      while (!predicate()) {
+        if (Date.now() - start > timeout) {
+          throw new Error(`waitFor timed out after ${timeout}ms`);
+        }
+        await new Promise(r => setTimeout(r, 5));
+      }
+    }
+
+    /**
+     * Settle: flush all currently-pending async work by yielding multiple event loop ticks.
+     */
+    async function settle(): Promise<void> {
+      for (let i = 0; i < 20; i++) {
         await new Promise(r => setTimeout(r, 0));
       }
     }
@@ -413,6 +434,9 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           document.body.appendChild(freshContainer);
           vi.clearAllMocks();
 
+          // Set hash to #/projects for the router to match on start
+          window.location.hash = '#/projects';
+
           const apiModule = await import('./api');
           const mockedFetch = vi.mocked(apiModule.fetchSearchIndex);
           mockedFetch.mockResolvedValue({ ok: true, data: [] });
@@ -427,7 +451,8 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // Initialize app — performs initial index load
           window.location.hash = '#/projects';
           await import('./main');
-          await flushMicrotasks();
+          await waitFor(() => mockedFetch.mock.calls.length >= 1);
+          await settle();
 
           const callCountAfterInit = mockedFetch.mock.calls.length;
           expect(callCountAfterInit).toBeGreaterThanOrEqual(1);
@@ -435,45 +460,45 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // Attempt a failing mutation
           if (failureType === 'failed-upload') {
             window.location.hash = '#/upload';
-            await flushMicrotasks();
+            await settle();
             const form = document.querySelector('form');
             if (form) {
               const nameInput = document.querySelector('#project-name') as HTMLInputElement;
               if (nameInput) nameInput.value = 'test';
               form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-              await flushMicrotasks();
+              await settle();
             }
           } else if (failureType === 'failed-delete') {
             window.location.hash = '#/project/test-project';
-            await flushMicrotasks();
+            await settle();
             try {
               const { showDeleteDialog } = await import('./delete-dialog');
               showDeleteDialog('test-project');
-              await flushMicrotasks();
+              await settle();
               const input = document.querySelector('.delete-dialog-input') as HTMLInputElement;
               const confirmBtn = document.querySelector('.delete-dialog-confirm') as HTMLButtonElement;
               if (input && confirmBtn) {
                 input.value = 'test-project';
                 input.dispatchEvent(new Event('input'));
                 confirmBtn.click();
-                await flushMicrotasks();
+                await settle();
               }
             } catch {
               // Delete dialog may not render without project detail
             }
           } else if (failureType === 'failed-edit') {
             window.location.hash = '#/project/test-project/edit';
-            await flushMicrotasks();
+            await settle();
             const form = document.querySelector('form');
             if (form) {
               form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-              await flushMicrotasks();
+              await settle();
             }
           }
 
           // Navigate back to projects
           window.location.hash = '#/projects';
-          await flushMicrotasks();
+          await settle();
 
           // Failed mutations should NOT reset searchIndexLoaded,
           // so fetchSearchIndex should NOT be called again
@@ -482,5 +507,5 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
       ),
       { numRuns: 10 },
     );
-  });
+  }, 30_000);
 });
