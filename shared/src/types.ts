@@ -78,6 +78,10 @@ export interface InitiateRequest {
   mode?: 'create' | 'replace';
   /** Optional repository URL, extracted client-side from .git/config or provided manually */
   repositoryUrl?: string;
+  /** Upload type: 'zip' for single zip upload, 'folder' for individual file uploads. Defaults to 'zip'. */
+  uploadType?: 'zip' | 'folder';
+  /** File paths for folder mode — required when uploadType is 'folder' */
+  filePaths?: string[];
 }
 
 /**

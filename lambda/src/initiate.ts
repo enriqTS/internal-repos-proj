@@ -4,7 +4,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import { validateMetadata, validateTagInputs } from './validate';
 import { getTagRegistry } from './tag-registry';
-import { PRESIGNED_URL_EXPIRY, MAX_CLIENT_ZIP_SIZE, MAX_TAGS_COUNT, serializeTags } from 'shared';
+import { PRESIGNED_URL_EXPIRY, MAX_TAGS_COUNT, serializeTags } from 'shared';
 import type { InitiateRequest, InitiateResponse, SessionMetadata } from 'shared';
 
 const s3Client = new S3Client({});
@@ -69,7 +69,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     const name = body.name.trim();
-    const mode = (body as any).mode === 'replace' ? 'replace' : 'create';
+    const mode = body.mode === 'replace' ? 'replace' : 'create';
     const frontendBucket = process.env.BUCKET_NAME!;
     const stagingBucket = process.env.STAGING_BUCKET!;
 
@@ -95,14 +95,27 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       }
     }
 
-    // 6. Generate UUID v4 session ID
+    // 6. Determine upload type (defaults to 'zip' for backwards compatibility)
+    const uploadType: 'zip' | 'folder' = body.uploadType === 'folder' ? 'folder' : 'zip';
+    const filePaths = body.filePaths ?? [];
+
+    // 6.1 Validate folder mode requires filePaths
+    if (uploadType === 'folder' && filePaths.length === 0) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        body: JSON.stringify({ error: 'filePaths is required and must be non-empty for folder upload mode.' }),
+      };
+    }
+
+    // 7. Generate UUID v4 session ID
     const sessionId = randomUUID();
 
-    // 7. Serialize tags and extract new tags
+    // 8. Serialize tags and extract new tags
     const serializedTags = serializeTags(tags.map((t) => t.tag));
     const newTags = tags.filter((t) => t.isNew).map((t) => t.tag);
 
-    // 8. Write session metadata to staging bucket
+    // 9. Write session metadata to staging bucket
     const metadata: SessionMetadata = {
       sessionId,
       name,
@@ -112,6 +125,8 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       ...(newTags.length > 0 && { newTags }),
       ...(mode === 'replace' && { mode: 'replace' as const }),
       ...(body.repositoryUrl && { repositoryUrl: body.repositoryUrl }),
+      uploadType,
+      ...(uploadType === 'folder' && { filePaths }),
     };
 
     await s3Client.send(
@@ -123,7 +138,38 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       })
     );
 
-    // 9. Generate presigned PUT URL for upload.zip
+    const expiresAt = new Date(Date.now() + PRESIGNED_URL_EXPIRY * 1000).toISOString();
+
+    // 10. Generate presigned URL(s) based on upload type
+    if (uploadType === 'folder') {
+      // Folder mode: generate a presigned PUT URL for each file path
+      const uploadUrls: Record<string, string> = {};
+      for (const filePath of filePaths) {
+        const putCommand = new PutObjectCommand({
+          Bucket: stagingBucket,
+          Key: `staging/${sessionId}/files/${filePath}`,
+        });
+        const url = await getSignedUrl(s3Client, putCommand, {
+          expiresIn: PRESIGNED_URL_EXPIRY,
+        });
+        uploadUrls[filePath] = url;
+      }
+
+      const response: InitiateResponse = {
+        sessionId,
+        uploadUrls,
+        mode: 'folder',
+        expiresAt,
+      };
+
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        body: JSON.stringify(response),
+      };
+    }
+
+    // Zip mode: generate single presigned URL for upload.zip
     const putCommand = new PutObjectCommand({
       Bucket: stagingBucket,
       Key: `staging/${sessionId}/upload.zip`,
@@ -136,9 +182,6 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       unhoistableHeaders: new Set(['content-length']),
     });
 
-    const expiresAt = new Date(Date.now() + PRESIGNED_URL_EXPIRY * 1000).toISOString();
-
-    // 10. Return response
     const response: InitiateResponse = {
       sessionId,
       uploadUrl,
