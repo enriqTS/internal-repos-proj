@@ -1,11 +1,11 @@
 import type { TemplateMetadata } from 'shared/types';
-import { fetchTemplateMetadata, fetchTemplateReadme } from './api';
+import { fetchTemplateMetadata, fetchTemplateReadme } from '../api';
 import { createFileBrowser } from './file-browser';
-import { t } from './i18n';
-import { formatRelativeDate } from './relative-date';
-import { encodeFilePath } from './router';
-import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
-import { container, heading, badge, button } from './ui';
+import { t } from '../i18n';
+import { formatRelativeDate } from '../relative-date';
+import { encodeFilePath } from '../router';
+import { marked, renderReadmeSection, renderReadmeError } from '../shared-markdown';
+import { container, heading, badge, button } from '../ui';
 
 /**
  * Get the base URL for constructing CDN asset URLs.

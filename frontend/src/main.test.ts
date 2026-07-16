@@ -32,14 +32,14 @@ vi.mock('./api', () => ({
   suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: { tags: [], newTags: [] } })),
 }));
 
-vi.mock('./search', () => ({
+vi.mock('./pages/search', () => ({
   initializeSearch: vi.fn(),
   setupSearch: vi.fn(),
   search: vi.fn(() => []),
   renderResults: vi.fn(),
 }));
 
-vi.mock('./project-detail', () => ({
+vi.mock('./pages/project-detail', () => ({
   renderProjectDetail: vi.fn(),
 }));
 

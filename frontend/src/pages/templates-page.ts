@@ -5,12 +5,12 @@
  */
 import Fuse, { type IFuseOptions } from 'fuse.js';
 import type { TemplateIndexEntry, TemplateIndex } from 'shared/types';
-import { fetchTemplateIndex } from './api';
-import { renderCardGrid, type CardItem } from './components/card-grid';
-import { createTagFilter, type TagFilterAPI } from './components/tag-filter';
-import { createPaginator, type PaginatorAPI } from './components/paginator';
-import { t } from './i18n';
-import { container, heading, button, input as createInput } from './ui';
+import { fetchTemplateIndex } from '../api';
+import { renderCardGrid, type CardItem } from '../components/card-grid';
+import { createTagFilter, type TagFilterAPI } from '../components/tag-filter';
+import { createPaginator, type PaginatorAPI } from '../components/paginator';
+import { t } from '../i18n';
+import { container, heading, button, input as createInput } from '../ui';
 
 const ITEMS_PER_PAGE = 9;
 

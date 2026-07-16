@@ -6,13 +6,13 @@ import {
   DENY_LIST,
 } from 'shared/constants';
 import type { TagInput } from 'shared/types';
-import { initiateUpload, uploadToS3, uploadFilesToS3, finalizeUpload, fetchTagRegistry, suggestTags } from './api';
-import { createTagSelector, type TagSelectorAPI } from './components/tag-selector';
-import { createDropZone, detectUploadMode } from './components/drop-zone';
-import { createReadmePreview, type ReadmePreviewAPI } from './components/readme-preview';
-import { invalidateSearchIndex } from './search-state';
-import { t } from './i18n';
-import { button, heading, input } from './ui';
+import { initiateUpload, uploadToS3, uploadFilesToS3, finalizeUpload, fetchTagRegistry, suggestTags } from '../api';
+import { createTagSelector, type TagSelectorAPI } from '../components/tag-selector';
+import { createDropZone, detectUploadMode } from '../components/drop-zone';
+import { createReadmePreview, type ReadmePreviewAPI } from '../components/readme-preview';
+import { invalidateSearchIndex } from '../search-state';
+import { t } from '../i18n';
+import { button, heading, input } from '../ui';
 import JSZip from 'jszip';
 
 /**

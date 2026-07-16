@@ -5,14 +5,14 @@
 import './styles.css';
 import { createRouter, type Route } from './router';
 import { fetchSearchIndex } from './api';
-import { initializeSearch, setupSearch, search, renderResults } from './search';
-import { renderProjectDetail } from './project-detail';
-import { renderUploadForm } from './upload-form';
-import { renderEditForm } from './edit-form';
+import { initializeSearch, setupSearch, search, renderResults } from './pages/search';
+import { renderProjectDetail } from './pages/project-detail';
+import { renderUploadForm } from './pages/upload-form';
+import { renderEditForm } from './pages/edit-form';
 import { createThemeManager, createThemeToggle } from './theme-manager';
-import { renderTemplatesPage } from './templates-page';
-import { renderTemplateDetail } from './template-detail';
-import { renderLandingPage } from './landing-page';
+import { renderTemplatesPage } from './pages/templates-page';
+import { renderTemplateDetail } from './pages/template-detail';
+import { renderLandingPage } from './pages/landing-page';
 import { t } from './i18n';
 import { container as createContainer, input as createInput } from './ui';
 

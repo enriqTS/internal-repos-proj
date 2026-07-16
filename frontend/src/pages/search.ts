@@ -1,8 +1,8 @@
 import Fuse, { type IFuseOptions } from 'fuse.js';
 import type { ProjectIndexEntry, SearchIndex } from 'shared/types';
-import { createTagFilter, type TagFilterAPI } from './components/tag-filter';
-import { createPaginator, type PaginatorAPI } from './components/paginator';
-import { renderCardGrid, type CardItem } from './components/card-grid';
+import { createTagFilter, type TagFilterAPI } from '../components/tag-filter';
+import { createPaginator, type PaginatorAPI } from '../components/paginator';
+import { renderCardGrid, type CardItem } from '../components/card-grid';
 
 /**
  * Fuse.js configuration for fuzzy searching project entries.

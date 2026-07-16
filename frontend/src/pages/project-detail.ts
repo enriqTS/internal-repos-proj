@@ -1,11 +1,11 @@
 import type { ProjectMetadata } from 'shared/types';
-import { fetchProjectReadme, fetchProjectMetadata } from './api';
-import { showDeleteDialog } from './components/delete-dialog';
+import { fetchProjectReadme, fetchProjectMetadata } from '../api';
+import { showDeleteDialog } from '../components/delete-dialog';
 import { createFileBrowser } from './file-browser';
-import { t } from './i18n';
-import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
-import { heading, badge, button } from './ui';
-import { encodeFilePath } from './router';
+import { t } from '../i18n';
+import { marked, renderReadmeSection, renderReadmeError } from '../shared-markdown';
+import { heading, badge, button } from '../ui';
+import { encodeFilePath } from '../router';
 
 /**
  * Get the base URL for constructing artifact download links.

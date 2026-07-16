@@ -191,7 +191,7 @@ describe('Bug Condition 1d: No upload button on projects page', () => {
 
 describe('Bug Condition 1e: Architecture image should NOT open in new tab', () => {
   it('renderArchitectureSection should NOT wrap image in <a target="_blank"> (will FAIL — new-tab link exists)', async () => {
-    const { renderArchitectureSection } = await import('./template-detail');
+    const { renderArchitectureSection } = await import('./pages/template-detail');
 
     const section = renderArchitectureSection(
       'https://cdn.example.com/templates/test/architecture.svg',
