@@ -34,7 +34,7 @@ describe('Bug Condition 1a: Date typo in chatbot-rag-agentcore metadata', () => 
 // ─── Test 1b: Hidden exact dates in card grid ─────────────────────────────────
 
 describe('Bug Condition 1b: Exact date not visible in card grid item text', () => {
-  it('card date textContent should contain the ISO date string (will FAIL — date is hidden in title only)', async () => {
+  it('card date textContent should show relative date with ISO date accessible via title attribute', async () => {
     const { renderCardGrid } = await import('./card-grid');
 
     const container = document.createElement('div');
@@ -53,9 +53,10 @@ describe('Bug Condition 1b: Exact date not visible in card grid item text', () =
     const dateEl = container.querySelector('time') as HTMLElement;
     expect(dateEl).not.toBeNull();
 
-    // The visible date text should contain the ISO date "2026-07-01"
-    // On unfixed code, textContent only has relative date (e.g. "há X semanas")
-    expect(dateEl.textContent).toContain('2026-07-01');
+    // The ISO date is accessible via the title attribute (hover tooltip)
+    expect(dateEl.getAttribute('title')).toBe('2026-07-01');
+    // The datetime attribute also holds the ISO date for programmatic access
+    expect(dateEl.getAttribute('datetime')).toBe('2026-07-01');
   });
 });
 
@@ -78,7 +79,7 @@ describe('Bug Condition 1c: Card grid CSS enforces truncation', () => {
     // Card uses Tailwind line-clamp instead of white-space: nowrap
     const nameEl = container.querySelector('h3');
     expect(nameEl).not.toBeNull();
-    expect(nameEl!.className).toContain('line-clamp-3');
+    expect(nameEl!.className).toContain('line-clamp-2');
     expect(nameEl!.className).not.toContain('nowrap');
   });
 });

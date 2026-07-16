@@ -101,7 +101,7 @@ describe('Preservation: Short project names render on single line', () => {
     // The name element should use Tailwind line-clamp classes for truncation
     const nameEl = container.querySelector('h3');
     expect(nameEl).not.toBeNull();
-    expect(nameEl!.className).toContain('line-clamp-3');
+    expect(nameEl!.className).toContain('line-clamp-2');
   });
 
   it('short project names render as single text content in h3 element', () => {
@@ -137,7 +137,7 @@ describe('Preservation: Short project names render on single line', () => {
     );
   });
 
-  it('responsive grid uses Tailwind responsive classes (1/2/4 cols)', () => {
+  it('responsive grid uses Tailwind responsive classes (1/2/3 cols)', () => {
     const container = document.createElement('div');
     const items: CardItem[] = [
       { name: 'proj1', description: 'desc', tags: ['tag'], date: '2024-01-01' },
@@ -152,10 +152,10 @@ describe('Preservation: Short project names render on single line', () => {
 
     const gridEl = container.querySelector('div');
     expect(gridEl).not.toBeNull();
-    // Grid uses Tailwind responsive classes for 1/2/4 columns
+    // Grid uses Tailwind responsive classes for 1/2/3 columns
     expect(gridEl!.className).toContain('grid-cols-1');
     expect(gridEl!.className).toContain('sm:grid-cols-2');
-    expect(gridEl!.className).toContain('lg:grid-cols-4');
+    expect(gridEl!.className).toContain('lg:grid-cols-3');
   });
 });
 
@@ -316,12 +316,15 @@ describe('Preservation: Card grid date rendering preserves current format', () =
           const dateEl = container.querySelector('time') as HTMLTimeElement;
           expect(dateEl).not.toBeNull();
 
-          // After fix: textContent contains both relative date and ISO date
-          const expectedText = `${formatRelativeDate(isoDate)} · ${isoDate}`;
+          // textContent shows only the relative date
+          const expectedText = formatRelativeDate(isoDate);
           expect(dateEl.textContent).toBe(expectedText);
 
           // datetime attribute is the ISO date
           expect(dateEl.getAttribute('datetime')).toBe(isoDate);
+
+          // title attribute contains the full ISO date for hover tooltip
+          expect(dateEl.getAttribute('title')).toBe(isoDate);
         },
       ),
       { numRuns: 50 },

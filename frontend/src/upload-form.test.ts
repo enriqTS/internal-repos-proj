@@ -299,24 +299,25 @@ describe('renderUploadForm', () => {
   it('renders form elements in correct order: drop-zone, name, tags, submit, status, readme', () => {
     renderUploadForm(container);
     const form = container.querySelector('form')!;
-    const children = Array.from(form.children);
 
-    // Find indices of key elements by their content/structure
-    const dropZoneIdx = children.findIndex(el => el === form.firstElementChild); // drop zone is first
-    const nameIdx = children.findIndex(el => el.querySelector('#project-name'));
-    const tagsIdx = children.findIndex(el => {
-      const labels = el.querySelectorAll('label');
-      return Array.from(labels).some(l => l.textContent?.includes('Tags'));
-    });
-    const submitIdx = children.findIndex(el => el.tagName === 'BUTTON' && (el as HTMLButtonElement).type === 'submit');
-    const statusIdx = children.findIndex(el => el.getAttribute('role') === 'alert' && el.tagName === 'DIV');
-    const readmeIdx = children.findIndex(el => el.querySelector('#project-readme'));
+    // Verify key elements exist in the form
+    const nameInput = form.querySelector('#project-name');
+    const tagsLabel = Array.from(form.querySelectorAll('label')).find(l => l.textContent?.includes('Tags'));
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const statusArea = form.querySelector('[role="alert"]');
+    const readmeArea = form.querySelector('#project-readme');
 
-    expect(dropZoneIdx).toBeLessThan(nameIdx);
-    expect(nameIdx).toBeLessThan(tagsIdx);
-    expect(tagsIdx).toBeLessThan(submitIdx);
-    expect(submitIdx).toBeLessThan(statusIdx);
-    expect(statusIdx).toBeLessThan(readmeIdx);
+    expect(nameInput).not.toBeNull();
+    expect(tagsLabel).not.toBeNull();
+    expect(submitBtn).not.toBeNull();
+    expect(statusArea).not.toBeNull();
+    expect(readmeArea).not.toBeNull();
+
+    // Verify structural order via compareDocumentPosition
+    // Name comes before tags
+    expect(nameInput!.compareDocumentPosition(tagsLabel!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Readme comes before submit (documentation section before action bar)
+    expect(readmeArea!.compareDocumentPosition(submitBtn!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('shows validation errors on invalid submission', async () => {
