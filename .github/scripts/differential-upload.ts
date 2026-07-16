@@ -407,6 +407,46 @@ export function generateFileTree(files: LocalFile[]): FileTreeManifest {
   };
 }
 
+// ─── Artifact ZIP Generation ─────────────────────────────────────────────────
+
+/**
+ * Generates a zip archive from sourceDir, excluding specific patterns:
+ * docs/, .git*, build/, .kiro/, *.zip
+ *
+ * Uses archiver to create the zip in-memory and returns the complete Buffer.
+ *
+ * Requirements: 5.4, 5.5
+ */
+export async function generateArtifactZip(sourceDir: string): Promise<Buffer> {
+  const archiver = (await import('archiver')).default;
+
+  return new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+
+    const archive = archiver('zip', { zlib: { level: 6 } });
+
+    archive.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+
+    archive.on('end', () => {
+      resolve(Buffer.concat(chunks));
+    });
+
+    archive.on('error', (err: Error) => {
+      reject(err);
+    });
+
+    archive.glob('**/*', {
+      cwd: sourceDir,
+      ignore: ['docs/**', '.git*', '.git/**', 'build/**', '.kiro/**', '**/*.zip'],
+      dot: true,
+    });
+
+    archive.finalize();
+  });
+}
+
 // ─── S3 Upload Engine ────────────────────────────────────────────────────────
 
 export interface UploadOptions {
