@@ -92,26 +92,42 @@ export async function renderProjectDetail(
   const basePath = `${baseUrl}/${projectPath}`;
   const projectName = metadata.name;
 
+  // Supplementary content wrapper (readme) — hidden when viewing a file
+  const supplementaryContent = document.createElement('div');
+  supplementaryContent.className = 'project-supplementary';
+
   const fileBrowser = createFileBrowser({
     container: fileBrowserSection,
     basePath,
     initialPath: initialFilePath,
+    autoLoad: true,
     onNavigate: (path: string) => {
       const hash = encodeFilePath('project', projectName, path);
       window.location.hash = hash;
+      // Hide supplementary content when viewing a file
+      const isViewingFile = path !== '' && !path.endsWith('/');
+      supplementaryContent.style.display = isViewingFile ? 'none' : '';
     },
   });
   fileBrowser.mount();
 
   detailWrapper.appendChild(fileBrowserSection);
 
-  // Render readme or readme error
+  // Render readme or readme error into supplementary content
   if (!readmeResult.ok) {
-    detailWrapper.appendChild(renderReadmeError(t('projectDetail.docUnavailable')));
+    supplementaryContent.appendChild(renderReadmeError(t('projectDetail.docUnavailable')));
   } else {
     const readmeHtml = await marked.parse(readmeResult.data);
-    detailWrapper.appendChild(renderReadmeSection(readmeHtml, 'project-readme'));
+    supplementaryContent.appendChild(renderReadmeSection(readmeHtml, 'project-readme'));
   }
+
+  detailWrapper.appendChild(supplementaryContent);
+
+  // If initial path is a file, hide supplementary content immediately
+  if (initialFilePath && initialFilePath !== '' && !initialFilePath.endsWith('/')) {
+    supplementaryContent.style.display = 'none';
+  }
+
   container.appendChild(detailWrapper);
 }
 
