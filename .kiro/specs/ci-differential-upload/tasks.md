@@ -6,8 +6,8 @@ This plan implements a differential (hash-based) upload script (`.github/scripts
 
 ## Tasks
 
-- [ ] 1. Core utilities and interfaces
-  - [ ] 1.1 Create `.github/scripts/differential-upload.ts` with shared types, constants, and content-type resolver
+- [x] 1. Core utilities and interfaces
+  - [x] 1.1 Create `.github/scripts/differential-upload.ts` with shared types, constants, and content-type resolver
     - Define `LocalFile`, `HashResult`, `HashManifest`, `DiffResult`, `FileTreeEntry`, `FileTreeManifest` interfaces
     - Copy `EXCLUDED_DIRS` set and `CONTENT_TYPE_MAP` + `getContentType()` from `expand-template-files.ts`
     - Define `DEFAULT_CONTENT_TYPE = 'application/octet-stream'`
@@ -15,26 +15,26 @@ This plan implements a differential (hash-based) upload script (`.github/scripts
     - Add `MAX_MANIFEST_SIZE = 5 * 1024 * 1024` constant
     - _Requirements: 1.2, 8.1, 8.6, 9.1, 9.2, 9.3_
 
-  - [ ] 1.2 Implement the directory walker function
+  - [x] 1.2 Implement the directory walker function
     - Implement `async function walkDirectory(baseDir: string): Promise<LocalFile[]>`
     - Recursively traverse directories, skip entries in `EXCLUDED_DIRS`
     - Return `{ relativePath, absolutePath, size }` for each file using forward-slash separators
     - _Requirements: 1.1, 1.2, 1.3, 1.5_
 
-  - [ ] 1.3 Implement the hash computation module
+  - [x] 1.3 Implement the hash computation module
     - Implement `async function computeFileHashes(files: LocalFile[]): Promise<HashResult[]>`
     - Use `crypto.createHash('sha256')` to produce both hex (64 chars lowercase) and base64 representations from the same digest
     - Read each file sequentially for deterministic output
     - _Requirements: 1.1, 1.5, 1.6_
 
-- [ ] 2. Diff engine and manifest management
-  - [ ] 2.1 Implement the diff engine (pure function)
+- [x] 2. Diff engine and manifest management
+  - [x] 2.1 Implement the diff engine (pure function)
     - Implement `function computeDiff(local: HashManifest, remote: HashManifest | null): DiffResult`
     - Classify files as added, modified, deleted, or unchanged by comparing hash values
     - If `remote` is null, all local files go into `added`
     - _Requirements: 3.1, 3.4, 3.6_
 
-  - [ ] 2.2 Implement manifest validation and fetch/upload
+  - [x] 2.2 Implement manifest validation and fetch/upload
     - Implement `function validateManifest(parsed: unknown): HashManifest | null` — checks version === 1, required fields, returns null on invalid
     - Implement `async function fetchRemoteManifest(s3, bucket, key): Promise<HashManifest | null>` — returns null on 404/NoSuchKey, throws on transient errors
     - Implement `async function uploadManifest(s3, bucket, key, manifest): Promise<void>` — validates size < 5 MB before PUT
@@ -50,24 +50,24 @@ This plan implements a differential (hash-based) upload script (`.github/scripts
     - Use `fast-check` to generate random manifests and verify partition correctness
     - **Validates: Requirements 3.1, 3.4, 3.6, 2.3**
 
-- [ ] 3. Checkpoint — Core logic
+- [x] 3. Checkpoint — Core logic
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. S3 operations and artifact generation
-  - [ ] 4.1 Implement the S3 upload engine with checksum verification
+- [x] 4. S3 operations and artifact generation
+  - [x] 4.1 Implement the S3 upload engine with checksum verification
     - Implement `async function uploadWithChecksum(s3, options: UploadOptions): Promise<void>`
     - Include `ChecksumSHA256` (base64) and `ChecksumAlgorithm: "SHA256"` on every PutObject
     - Retry up to 2 additional times on checksum mismatch (re-read + re-hash on each retry)
     - Implement `async function deleteS3Object(s3, bucket, key): Promise<void>`
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 3.3_
 
-  - [ ] 4.2 Implement file-tree.json generation
+  - [x] 4.2 Implement file-tree.json generation
     - Implement `function generateFileTree(files: LocalFile[]): FileTreeManifest`
     - Produce `{ version: 1, totalFiles, totalSize, entries }` matching existing schema
     - Include directory entries deduced from file paths
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-  - [ ] 4.3 Implement artifact.zip generation
+  - [x] 4.3 Implement artifact.zip generation
     - Implement `async function generateArtifactZip(sourceDir: string, excludePatterns: string[]): Promise<Buffer>`
     - Use `archiver` to create zip in-memory
     - Exclude: `docs/`, `.git*`, `build/`, `.kiro/`, `*.zip`
@@ -82,15 +82,15 @@ This plan implements a differential (hash-based) upload script (`.github/scripts
     - **Property 12: File Tree Manifest Integrity**
     - **Validates: Requirements 1.1, 1.5, 1.6, 9.1, 9.2, 9.3, 8.1, 8.2, 8.3, 1.2, 4.3, 4.4, 10.5**
 
-- [ ] 5. CLI orchestration and metadata handling
-  - [ ] 5.1 Implement metadata and architecture image upload logic
+- [x] 5. CLI orchestration and metadata handling
+  - [x] 5.1 Implement metadata and architecture image upload logic
     - Implement conditional upload for `metadata.json` → `templates/{name}/metadata.json`
     - Implement conditional upload for `README.md` → `templates/{name}/readme.md`
     - Implement architecture image resolution: prefer SVG over PNG, upload to `templates/{name}/architecture.{ext}`
     - Include metadata/readme/architecture hashes in the manifest for differential tracking
     - _Requirements: 5.1, 5.2, 5.3, 5.6, 6.3, 6.4, 6.5, 6.6, 6.8_
 
-  - [ ] 5.2 Implement the main CLI entry point and orchestration pipeline
+  - [x] 5.2 Implement the main CLI entry point and orchestration pipeline
     - Parse CLI args: `<name> <source-dir> [prefix]` with prefix defaulting to `"templates"`
     - Validate `BUCKET_NAME` env var, directory existence, non-empty file list
     - Orchestrate: walk → hash → fetch manifest → diff → upload changed → delete removed → generate file-tree → upload metadata/readme/arch if changed → generate artifact.zip if needed → upload new manifest
@@ -107,11 +107,11 @@ This plan implements a differential (hash-based) upload script (`.github/scripts
     - Test artifact exclusion patterns
     - _Requirements: 7.3, 7.4, 1.4, 6.5, 5.4_
 
-- [ ] 6. Checkpoint — Script complete
+- [x] 6. Checkpoint — Script complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. CI workflow integration
-  - [ ] 7.1 Update `.github/workflows/deploy.yml` to use differential-upload.ts
+- [x] 7. CI workflow integration
+  - [x] 7.1 Update `.github/workflows/deploy.yml` to use differential-upload.ts
     - Replace "Package and deploy templates" step and "Expand template files for file browser" step with a single step
     - New step iterates over `templates/chatbot-rag-*/` directories and invokes `npx tsx .github/scripts/differential-upload.ts "$TEMPLATE" "$TEMPLATE_DIR"` for each
     - Set `BUCKET_NAME` env var from `steps.tf_outputs.outputs.templates_bucket`
@@ -125,7 +125,7 @@ This plan implements a differential (hash-based) upload script (`.github/scripts
     - Test manifest > 5 MB → exit 1
     - _Requirements: 8.4, 8.5, 8.7_
 
-- [ ] 8. Final checkpoint — Full integration
+- [x] 8. Final checkpoint — Full integration
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
