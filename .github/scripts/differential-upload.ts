@@ -20,7 +20,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -360,6 +360,128 @@ export async function uploadManifest(
       Body: body,
       ContentType: 'application/json',
       ChecksumAlgorithm: 'SHA256',
+    })
+  );
+}
+
+// ─── File Tree Generation ────────────────────────────────────────────────────
+
+/**
+ * Generates a file-tree.json manifest from a list of local files.
+ * Produces the same schema as `expand-template-files.ts` generateManifest():
+ * includes directory entries deduced from file paths, plus file entries with sizes.
+ *
+ * Requirements: 4.1, 4.2, 4.3, 4.4
+ */
+export function generateFileTree(files: LocalFile[]): FileTreeManifest {
+  let totalSize = 0;
+  const directories = new Set<string>();
+  const fileEntries: FileTreeEntry[] = [];
+
+  for (const file of files) {
+    totalSize += file.size;
+    fileEntries.push({
+      path: file.relativePath,
+      type: 'file',
+      size: file.size,
+    });
+
+    // Deduce parent directories from the relative path
+    const parts = file.relativePath.split('/');
+    for (let i = 1; i < parts.length; i++) {
+      const dirPath = parts.slice(0, i).join('/') + '/';
+      directories.add(dirPath);
+    }
+  }
+
+  // Build sorted directory entries
+  const dirEntries: FileTreeEntry[] = Array.from(directories)
+    .sort()
+    .map((path) => ({ path, type: 'directory' as const }));
+
+  return {
+    version: 1,
+    totalFiles: files.length,
+    totalSize,
+    entries: [...dirEntries, ...fileEntries],
+  };
+}
+
+// ─── S3 Upload Engine ────────────────────────────────────────────────────────
+
+export interface UploadOptions {
+  bucket: string;
+  key: string;
+  body: Buffer | string;
+  contentType: string;
+  checksumSHA256: string; // base64-encoded
+}
+
+/**
+ * Uploads a file to S3 with ChecksumSHA256 integrity verification.
+ * Retries up to 2 additional times on checksum mismatch errors.
+ * On other errors, throws immediately (no retry).
+ *
+ * Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
+ */
+export async function uploadWithChecksum(s3: S3Client, options: UploadOptions): Promise<void> {
+  const maxRetries = 2;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: options.bucket,
+          Key: options.key,
+          Body: options.body,
+          ContentType: options.contentType,
+          ChecksumSHA256: options.checksumSHA256,
+          ChecksumAlgorithm: 'SHA256',
+        })
+      );
+      return; // Success
+    } catch (err: unknown) {
+      const error = err as { name?: string; message?: string };
+      const errorName = error.name ?? '';
+      const errorMessage = error.message ?? '';
+
+      // Check if this is a checksum mismatch error
+      const isChecksumError =
+        errorName.includes('BadDigest') ||
+        errorName.includes('checksum') ||
+        errorName.includes('Checksum') ||
+        errorMessage.includes('BadDigest') ||
+        errorMessage.includes('checksum') ||
+        errorMessage.includes('Checksum');
+
+      if (!isChecksumError) {
+        // Not a checksum error — throw immediately, no retry
+        throw err;
+      }
+
+      if (attempt < maxRetries) {
+        console.warn(
+          `[upload] Checksum mismatch on attempt ${attempt + 1} for key "${options.key}". Retrying...`
+        );
+      } else {
+        // Exhausted retries — throw the error
+        throw err;
+      }
+    }
+  }
+}
+
+/**
+ * Deletes an object from S3.
+ * Lets errors propagate to the caller.
+ *
+ * Requirements: 3.3
+ */
+export async function deleteS3Object(s3: S3Client, bucket: string, key: string): Promise<void> {
+  await s3.send(
+    new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
     })
   );
 }
