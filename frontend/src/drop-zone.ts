@@ -1,8 +1,11 @@
 /**
  * Drop Zone component for file/folder selection via drag-and-drop or click.
  * Renders a styled interactive region that accepts files and provides visual feedback.
+ * Supports both folder (webkitdirectory) and .zip file upload modes.
  */
 import { t } from './i18n';
+
+export type UploadMode = 'zip' | 'folder';
 
 export interface DropZoneOptions {
   /** Container element to render into */
@@ -14,10 +17,27 @@ export interface DropZoneOptions {
 export interface DropZoneAPI {
   /** Get current selected files (null if none) */
   getFiles(): FileList | null;
+  /** Get the detected upload mode for the current files */
+  getUploadMode(): UploadMode | null;
   /** Reset to empty state */
   reset(): void;
   /** Destroy and clean up DOM + event listeners */
   destroy(): void;
+}
+
+/**
+ * Detect upload mode based on the selected/dropped files.
+ * If the FileList contains exactly one file whose name ends with `.zip` (case-insensitive),
+ * the detected mode is "zip"; otherwise the mode is "folder".
+ */
+export function detectUploadMode(files: FileList): UploadMode {
+  if (files.length === 1) {
+    const fileName = files[0].name;
+    if (fileName.toLowerCase().endsWith('.zip')) {
+      return 'zip';
+    }
+  }
+  return 'folder';
 }
 
 /**
@@ -31,13 +51,14 @@ function supportsDragAndDrop(): boolean {
 
 /**
  * Creates a Drop Zone component that provides a styled drag-and-drop area
- * for folder selection, replacing the native file input as the primary file selection UI.
+ * for folder and zip file selection, replacing the native file input as the primary file selection UI.
  */
 export function createDropZone(options: DropZoneOptions): DropZoneAPI {
   const { container, onFiles } = options;
 
   // Internal state
   let currentFiles: FileList | null = null;
+  let currentMode: UploadMode | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const hasDragDrop = supportsDragAndDrop();
@@ -56,17 +77,25 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
   summary.className = 'font-mono text-xs text-success mt-2';
   summary.hidden = true;
 
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.hidden = true;
-  fileInput.setAttribute('webkitdirectory', '');
-  fileInput.setAttribute('directory', '');
-  fileInput.multiple = true;
+  // Hidden input for folder selection (webkitdirectory)
+  const folderInput = document.createElement('input');
+  folderInput.type = 'file';
+  folderInput.hidden = true;
+  folderInput.setAttribute('webkitdirectory', '');
+  folderInput.setAttribute('directory', '');
+  folderInput.multiple = true;
+
+  // Hidden input for zip file selection
+  const zipInput = document.createElement('input');
+  zipInput.type = 'file';
+  zipInput.hidden = true;
+  zipInput.setAttribute('accept', '.zip');
 
   content.appendChild(text);
   content.appendChild(summary);
   zone.appendChild(content);
-  zone.appendChild(fileInput);
+  zone.appendChild(folderInput);
+  zone.appendChild(zipInput);
 
   // Set instructional text based on feature detection
   if (hasDragDrop) {
@@ -82,27 +111,43 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
 
   function handleFiles(files: FileList): void {
     currentFiles = files;
+    currentMode = detectUploadMode(files);
+
     // Update summary display
     text.hidden = true;
     summary.hidden = false;
-    summary.textContent = t('dropZone.summary', { count: files.length });
+
+    if (currentMode === 'zip') {
+      summary.textContent = t('dropZone.summaryZip', { name: files[0].name });
+    } else {
+      summary.textContent = t('dropZone.summaryFolder', { count: files.length });
+    }
+
     onFiles(files);
   }
 
-  // Click handler — trigger hidden file input
+  // Click handler — trigger hidden file input (folder by default)
   function handleClick(): void {
-    fileInput.click();
+    folderInput.click();
   }
 
-  function handleInputChange(): void {
-    const files = fileInput.files;
+  function handleFolderInputChange(): void {
+    const files = folderInput.files;
+    if (files && files.length > 0) {
+      handleFiles(files);
+    }
+  }
+
+  function handleZipInputChange(): void {
+    const files = zipInput.files;
     if (files && files.length > 0) {
       handleFiles(files);
     }
   }
 
   zone.addEventListener('click', handleClick);
-  fileInput.addEventListener('change', handleInputChange);
+  folderInput.addEventListener('change', handleFolderInputChange);
+  zipInput.addEventListener('change', handleZipInputChange);
 
   // --- Drag-and-drop handlers (only if supported) ---
 
@@ -159,9 +204,15 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
     return currentFiles;
   }
 
+  function getUploadMode(): UploadMode | null {
+    return currentMode;
+  }
+
   function reset(): void {
     currentFiles = null;
-    fileInput.value = '';
+    currentMode = null;
+    folderInput.value = '';
+    zipInput.value = '';
     text.hidden = false;
     summary.hidden = true;
     summary.textContent = '';
@@ -175,7 +226,8 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
   function destroy(): void {
     // Remove event listeners
     zone.removeEventListener('click', handleClick);
-    fileInput.removeEventListener('change', handleInputChange);
+    folderInput.removeEventListener('change', handleFolderInputChange);
+    zipInput.removeEventListener('change', handleZipInputChange);
 
     if (hasDragDrop) {
       zone.removeEventListener('dragenter', handleDragEnter);
@@ -195,6 +247,7 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
 
   return {
     getFiles,
+    getUploadMode,
     reset,
     destroy,
   };

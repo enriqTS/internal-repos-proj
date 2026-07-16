@@ -109,8 +109,10 @@ const strings = {
   'validation.repoInvalidUrl': 'Por favor, insira uma URL válida',
 
   // Drop Zone
-  'dropZone.text': 'Arraste uma pasta aqui ou clique para selecionar',
+  'dropZone.text': 'Arraste uma pasta ou arquivo .zip aqui, ou clique para selecionar',
   'dropZone.summary': '{count} arquivo(s) selecionado(s)',
+  'dropZone.summaryZip': '1 arquivo zip selecionado: {name}',
+  'dropZone.summaryFolder': '{count} arquivo(s) selecionado(s) da pasta',
 
   // Readme Preview
   'readmePreview.write': 'Escrever',
