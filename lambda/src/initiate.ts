@@ -142,6 +142,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const response: InitiateResponse = {
       sessionId,
       uploadUrl,
+      mode: 'zip',
       expiresAt,
     };
 

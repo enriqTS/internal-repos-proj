@@ -86,8 +86,12 @@ export interface InitiateRequest {
 export interface InitiateResponse {
   /** UUID v4 identifying the upload session */
   sessionId: string;
-  /** Presigned S3 PUT URL for uploading the zip */
-  uploadUrl: string;
+  /** Presigned S3 PUT URL for uploading the zip (zip mode) */
+  uploadUrl?: string;
+  /** Multiple presigned URLs mapped by file path (folder mode) */
+  uploadUrls?: Record<string, string>;
+  /** Upload mode for the frontend to track */
+  mode: 'zip' | 'folder';
   /** ISO 8601 timestamp when the presigned URL expires (15 min from creation) */
   expiresAt: string;
 }
@@ -132,6 +136,10 @@ export interface SessionMetadata {
   mode?: 'create' | 'replace';
   /** Repository URL extracted from .git/config or provided by user */
   repositoryUrl?: string;
+  /** Upload type: "zip" for single zip upload, "folder" for individual file uploads */
+  uploadType?: 'zip' | 'folder';
+  /** File paths for folder mode — used to track staged files */
+  filePaths?: string[];
 }
 
 /**
@@ -169,6 +177,35 @@ export interface DeleteResponse {
   message: string;
   /** Name of the deleted project */
   name: string;
+}
+
+// ─── File Tree Types ──────────────────────────────────────────────────────────
+
+/**
+ * The complete file tree manifest stored at {prefix}/file-tree.json.
+ * Flat array of all entries (files and directories) for efficient lookup.
+ */
+export interface FileTreeManifest {
+  /** Schema version for forward compatibility */
+  version: 1;
+  /** Total number of files (excluding directories) */
+  totalFiles: number;
+  /** Total size in bytes across all files */
+  totalSize: number;
+  /** Flat list of all entries */
+  entries: FileTreeEntry[];
+}
+
+/**
+ * A single entry in the file tree (either a file or directory).
+ */
+export interface FileTreeEntry {
+  /** Relative path from project root, e.g. "src/main.ts" or "src/" for dirs */
+  path: string;
+  /** Entry type */
+  type: 'file' | 'directory';
+  /** File size in bytes (only present for type: "file") */
+  size?: number;
 }
 
 // ─── Template Types ───────────────────────────────────────────────────────────

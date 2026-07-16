@@ -357,7 +357,7 @@ export async function renderEditForm(
         // Upload to S3 with progress
         statusEl.textContent = 'Uploading... 0%';
         try {
-          await uploadToS3(initiateResult.data.uploadUrl, blob, (pct) => {
+          await uploadToS3(initiateResult.data.uploadUrl!, blob, (pct) => {
             statusEl.textContent = `Uploading... ${pct}%`;
           });
         } catch (err) {

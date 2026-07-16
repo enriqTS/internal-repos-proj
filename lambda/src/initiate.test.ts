@@ -53,6 +53,7 @@ describe('initiate handler', () => {
     const body = JSON.parse(result.body);
     expect(body.sessionId).toBeDefined();
     expect(body.uploadUrl).toBe('https://presigned-url.example.com');
+    expect(body.mode).toBe('zip');
     expect(body.expiresAt).toBeDefined();
   });
 

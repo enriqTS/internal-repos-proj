@@ -664,7 +664,7 @@ export function renderUploadForm(container: HTMLElement): void {
     // 5. Upload to S3 with progress
     statusEl.textContent = t('upload.submitting');
     try {
-      await uploadToS3(initiateResult.data.uploadUrl, blob, (pct) => {
+      await uploadToS3(initiateResult.data.uploadUrl!, blob, (pct) => {
         statusEl.textContent = `${t('upload.submitting')} ${pct}%`;
       });
     } catch (err) {

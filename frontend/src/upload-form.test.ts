@@ -333,7 +333,7 @@ describe('renderUploadForm', () => {
 
     mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { sessionId: 'sess-123', uploadUrl: 'https://s3.example.com/presigned', expiresAt: '2025-01-01T00:15:00Z' },
+      data: { sessionId: 'sess-123', uploadUrl: 'https://s3.example.com/presigned', mode: 'zip', expiresAt: '2025-01-01T00:15:00Z' },
     });
     mockedUploadToS3.mockResolvedValueOnce(undefined);
     mockedFinalize.mockResolvedValueOnce({
@@ -420,7 +420,7 @@ describe('renderUploadForm', () => {
 
     mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { sessionId: 'sess-456', uploadUrl: 'https://s3.example.com/put', expiresAt: '2025-01-01T00:15:00Z' },
+      data: { sessionId: 'sess-456', uploadUrl: 'https://s3.example.com/put', mode: 'zip', expiresAt: '2025-01-01T00:15:00Z' },
     });
     mockedUploadToS3.mockReturnValueOnce(s3Promise);
     mockedFinalize.mockResolvedValueOnce({
@@ -494,7 +494,7 @@ describe('renderUploadForm', () => {
 
     mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { sessionId: 'sess-789', uploadUrl: 'https://s3.example.com/put', expiresAt: '2025-01-01T00:15:00Z' },
+      data: { sessionId: 'sess-789', uploadUrl: 'https://s3.example.com/put', mode: 'zip', expiresAt: '2025-01-01T00:15:00Z' },
     });
     mockedUploadToS3.mockRejectedValueOnce(new Error('S3 upload failed (HTTP 403)'));
 
@@ -534,7 +534,7 @@ describe('renderUploadForm', () => {
 
     mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { sessionId: 'sess-abc', uploadUrl: 'https://s3.example.com/put', expiresAt: '2025-01-01T00:15:00Z' },
+      data: { sessionId: 'sess-abc', uploadUrl: 'https://s3.example.com/put', mode: 'zip', expiresAt: '2025-01-01T00:15:00Z' },
     });
     mockedUploadToS3.mockResolvedValueOnce(undefined);
     mockedFinalize.mockResolvedValueOnce({
