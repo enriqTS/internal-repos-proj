@@ -2,9 +2,9 @@
  * Shared card grid renderer for projects and templates.
  * Renders a responsive grid of cards with accessibility support.
  */
-import { formatRelativeDate } from './relative-date';
-import { t } from './i18n';
-import { card, badge } from './ui';
+import { formatRelativeDate } from '../relative-date';
+import { t } from '../i18n';
+import { card, badge } from '../ui';
 
 export interface CardItem {
   name: string;

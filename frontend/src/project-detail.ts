@@ -1,6 +1,6 @@
 import type { ProjectMetadata } from 'shared/types';
 import { fetchProjectReadme, fetchProjectMetadata } from './api';
-import { showDeleteDialog } from './delete-dialog';
+import { showDeleteDialog } from './components/delete-dialog';
 import { createFileBrowser } from './file-browser';
 import { t } from './i18n';
 import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';

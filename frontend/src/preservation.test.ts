@@ -20,7 +20,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fc from 'fast-check';
-import { renderCardGrid, type CardItem } from './card-grid';
+import { renderCardGrid, type CardItem } from './components/card-grid';
 import { formatRelativeDate } from './relative-date';
 import { renderArchitectureSection } from './template-detail';
 

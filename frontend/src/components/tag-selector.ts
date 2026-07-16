@@ -1,5 +1,5 @@
 import { TAG_PATTERN, MAX_TAG_LENGTH } from 'shared/constants';
-import { input, button } from './ui';
+import { input, button } from '../ui';
 
 /**
  * Options for creating a TagSelector component.

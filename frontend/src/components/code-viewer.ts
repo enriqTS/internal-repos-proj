@@ -1,5 +1,5 @@
 import hljs from 'highlight.js';
-import { detectLanguage, isBinaryFile, isImageFile } from './language-mapper';
+import { detectLanguage, isBinaryFile, isImageFile } from '../language-mapper';
 
 /**
  * Options for creating a code viewer component.

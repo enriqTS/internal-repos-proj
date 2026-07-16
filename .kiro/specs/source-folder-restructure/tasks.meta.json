@@ -1,0 +1,101 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create `frontend/src/components/` directory and move component files": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664395
+      },
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238672985
+      }
+    ],
+    "1.2 Verify frontend build after component move": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664432
+      }
+    ],
+    "2.1 Create `frontend/src/pages/` directory and move page files": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664463
+      }
+    ],
+    "2.2 Verify frontend build after page move": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664502
+      }
+    ],
+    "3.1 Create `frontend/src/utils/` directory and move utility files": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664527
+      }
+    ],
+    "3.2 Verify frontend build and tests after utility move": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664553
+      }
+    ],
+    "4. Checkpoint - Verify full frontend integrity": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664578
+      }
+    ],
+    "5.1 Create `lambda/src/handlers/` directory and move handler files": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664604
+      }
+    ],
+    "5.2 Update `lambda/package.json` esbuild entry points": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664627
+      }
+    ],
+    "5.3 Verify backend build after handler move": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664651
+      }
+    ],
+    "6.1 Create `lambda/src/utils/` directory and move utility files": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664692
+      }
+    ],
+    "6.2 Verify backend build after utility move": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664724
+      }
+    ],
+    "7. Final checkpoint - Full verification": [
+      {
+        "executionId": "1bbbff47-0728-453a-aea5-095fab21a6a0",
+        "chatSessionId": "sess_e88f4826-b01e-4b8f-9d81-f9940b42f32a",
+        "timestamp": 1784238664751
+      }
+    ]
+  }
+}

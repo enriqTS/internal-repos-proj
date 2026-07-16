@@ -15,7 +15,7 @@ import {
   uploadToS3,
   finalizeUpload,
 } from './api';
-import { createTagSelector, type TagSelectorAPI } from './tag-selector';
+import { createTagSelector, type TagSelectorAPI } from './components/tag-selector';
 import { filterFileList } from './upload-form';
 import { invalidateSearchIndex } from './search-state';
 import { t } from './i18n';

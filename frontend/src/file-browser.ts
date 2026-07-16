@@ -1,8 +1,8 @@
 import type { FileTreeManifest, FileTreeEntry } from 'shared/types';
 import JSZip from 'jszip';
-import { createBreadcrumbNav, generateBreadcrumbs } from './breadcrumb-nav';
-import { createCodeViewer } from './code-viewer';
-import { createDirectoryListing } from './directory-listing';
+import { createBreadcrumbNav, generateBreadcrumbs } from './components/breadcrumb-nav';
+import { createCodeViewer } from './components/code-viewer';
+import { createDirectoryListing } from './components/directory-listing';
 import { marked, renderReadmeSection } from './shared-markdown';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

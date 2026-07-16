@@ -169,7 +169,7 @@ describe('Bug Condition: searchIndexLoaded reset after mutations', () => {
       await new Promise(r => setTimeout(r, 50));
 
       // Import and trigger delete dialog
-      const { showDeleteDialog } = await import('./delete-dialog');
+      const { showDeleteDialog } = await import('./components/delete-dialog');
       showDeleteDialog('test-project');
       await new Promise(r => setTimeout(r, 50));
 
@@ -472,7 +472,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
             window.location.hash = '#/project/test-project';
             await settle();
             try {
-              const { showDeleteDialog } = await import('./delete-dialog');
+              const { showDeleteDialog } = await import('./components/delete-dialog');
               showDeleteDialog('test-project');
               await settle();
               const input = document.querySelector('.delete-dialog-input') as HTMLInputElement;

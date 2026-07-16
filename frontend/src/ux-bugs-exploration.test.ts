@@ -35,7 +35,7 @@ describe('Bug Condition 1a: Date typo in chatbot-rag-agentcore metadata', () => 
 
 describe('Bug Condition 1b: Exact date not visible in card grid item text', () => {
   it('card date textContent should show relative date with ISO date accessible via title attribute', async () => {
-    const { renderCardGrid } = await import('./card-grid');
+    const { renderCardGrid } = await import('./components/card-grid');
 
     const container = document.createElement('div');
     const testItem = {
@@ -64,7 +64,7 @@ describe('Bug Condition 1b: Exact date not visible in card grid item text', () =
 
 describe('Bug Condition 1c: Card grid CSS enforces truncation', () => {
   it('.card-grid-item should NOT have aspect-ratio: 1 and name should NOT have white-space: nowrap (will FAIL — truncation CSS exists)', async () => {
-    const { renderCardGrid } = await import('./card-grid');
+    const { renderCardGrid } = await import('./components/card-grid');
 
     const container = document.createElement('div');
     renderCardGrid(
