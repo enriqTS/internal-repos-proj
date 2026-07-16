@@ -641,3 +641,194 @@ export async function uploadMetadataAssets(
 
   return result;
 }
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+
+/**
+ * Main CLI entry point and orchestration pipeline.
+ * Coordinates the full differential upload workflow:
+ * walk → hash → fetch manifest → diff → upload changed → delete removed →
+ * generate file-tree → upload metadata → generate artifact.zip → upload manifest
+ *
+ * Usage: npx tsx .github/scripts/differential-upload.ts <name> <source-dir> [prefix]
+ * Environment: BUCKET_NAME (required)
+ *
+ * Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 3.2, 3.5, 3.7, 3.8, 1.4, 6.1, 6.2, 6.7
+ */
+async function main(): Promise<void> {
+  // 1. Parse CLI args
+  const [name, sourceDir, prefix = 'templates'] = process.argv.slice(2);
+  if (!name || !sourceDir) {
+    console.error('Usage: npx tsx .github/scripts/differential-upload.ts <name> <source-dir> [prefix]');
+    process.exit(1);
+  }
+
+  // 2. Validate environment
+  const bucketName = process.env.BUCKET_NAME;
+  if (!bucketName) {
+    console.error('Error: BUCKET_NAME environment variable is required.');
+    process.exit(1);
+  }
+
+  // 3. Walk directory
+  const files = await walkDirectory(sourceDir);
+  if (files.length === 0) {
+    console.error(`Error: No files found in source directory "${sourceDir}".`);
+    process.exit(1);
+  }
+
+  console.log(`[${name}] Found ${files.length} files in "${sourceDir}".`);
+
+  // 4. Compute hashes
+  const hashResults = await computeFileHashes(files);
+
+  // Build a Map<string, HashResult> keyed by relativePath for quick lookup
+  const localHashesMap = new Map<string, HashResult>();
+  for (const h of hashResults) {
+    localHashesMap.set(h.relativePath, h);
+  }
+
+  // Build the local HashManifest
+  const localManifest: HashManifest = {
+    version: MANIFEST_VERSION,
+    generatedAt: new Date().toISOString(),
+    files: Object.fromEntries(
+      hashResults.map((h) => [h.relativePath, { hash: h.hash, size: h.size }])
+    ),
+  };
+
+  // 5. Fetch remote manifest
+  const manifestKey = `${prefix}/${name}/hash-manifest.json`;
+  const s3 = new S3Client({});
+  const remoteManifest = await fetchRemoteManifest(s3, bucketName, manifestKey);
+
+  // 6. Compute diff
+  const diff = computeDiff(localManifest, remoteManifest);
+  console.log(
+    `[${name}] Added: ${diff.added.length}, Modified: ${diff.modified.length}, Deleted: ${diff.deleted.length}, Unchanged: ${diff.unchanged.length}`
+  );
+
+  // 7. Check if any changes
+  const hasChanges =
+    diff.added.length > 0 || diff.modified.length > 0 || diff.deleted.length > 0;
+
+  if (!hasChanges) {
+    console.log(`[${name}] No changes detected. Skipping all uploads.`);
+    // Upload manifest anyway to update generatedAt
+    await uploadManifest(s3, bucketName, manifestKey, localManifest);
+    console.log(`[${name}] Manifest updated (generatedAt refreshed).`);
+    return;
+  }
+
+  // 8. Upload changed source files (added + modified)
+  let failedOps = 0;
+  const changedPaths = [...diff.added, ...diff.modified];
+
+  for (const filePath of changedPaths) {
+    try {
+      const hashResult = localHashesMap.get(filePath)!;
+      const content = await readFile(hashResult.relativePath.startsWith('/')
+        ? hashResult.relativePath
+        : join(sourceDir, hashResult.relativePath));
+      const key = `${prefix}/${name}/files/${filePath}`;
+      const contentType = getContentType(filePath);
+
+      await uploadWithChecksum(s3, {
+        bucket: bucketName,
+        key,
+        body: content,
+        contentType,
+        checksumSHA256: hashResult.hashBase64,
+      });
+    } catch (err) {
+      console.error(`[${name}] Failed to upload file "${filePath}":`, err);
+      failedOps++;
+    }
+  }
+
+  // 9. Delete removed files
+  for (const filePath of diff.deleted) {
+    try {
+      const key = `${prefix}/${name}/files/${filePath}`;
+      await deleteS3Object(s3, bucketName, key);
+    } catch (err) {
+      console.error(`[${name}] Failed to delete file "${filePath}":`, err);
+      failedOps++;
+    }
+  }
+
+  // 10. Regenerate and upload file-tree.json
+  try {
+    const fileTree = generateFileTree(files);
+    const fileTreeJson = JSON.stringify(fileTree, null, 2);
+    const fileTreeHash = createHash('sha256').update(fileTreeJson).digest();
+    const fileTreeChecksumBase64 = fileTreeHash.toString('base64');
+
+    await uploadWithChecksum(s3, {
+      bucket: bucketName,
+      key: `${prefix}/${name}/file-tree.json`,
+      body: Buffer.from(fileTreeJson),
+      contentType: 'application/json',
+      checksumSHA256: fileTreeChecksumBase64,
+    });
+  } catch (err) {
+    console.error(`[${name}] Failed to upload file-tree.json:`, err);
+    failedOps++;
+  }
+
+  // 11. Upload metadata assets
+  try {
+    const metadataResult = await uploadMetadataAssets(
+      s3, bucketName, name, sourceDir, localHashesMap, remoteManifest
+    );
+    if (metadataResult.metadataUploaded) console.log(`[${name}] Uploaded metadata.json`);
+    if (metadataResult.readmeUploaded) console.log(`[${name}] Uploaded readme.md`);
+    if (metadataResult.architectureUploaded) console.log(`[${name}] Uploaded architecture image`);
+  } catch (err) {
+    console.error(`[${name}] Failed to upload metadata assets:`, err);
+    failedOps++;
+  }
+
+  // 12. Generate and upload artifact.zip if any changes
+  if (hasChanges) {
+    try {
+      const artifactBuffer = await generateArtifactZip(sourceDir);
+      const artifactHash = createHash('sha256').update(artifactBuffer).digest();
+      const artifactChecksumBase64 = artifactHash.toString('base64');
+
+      await uploadWithChecksum(s3, {
+        bucket: bucketName,
+        key: `templates/${name}/artifact.zip`,
+        body: artifactBuffer,
+        contentType: 'application/zip',
+        checksumSHA256: artifactChecksumBase64,
+      });
+      console.log(`[${name}] Uploaded artifact.zip`);
+    } catch (err) {
+      console.error(`[${name}] Failed to generate/upload artifact.zip:`, err);
+      failedOps++;
+    }
+  }
+
+  // 13. Upload new hash manifest
+  try {
+    await uploadManifest(s3, bucketName, manifestKey, localManifest);
+    console.log(`[${name}] Uploaded hash-manifest.json`);
+  } catch (err) {
+    console.error(`[${name}] Failed to upload hash-manifest.json:`, err);
+    failedOps++;
+  }
+
+  // 14. Exit with appropriate code
+  if (failedOps > 0) {
+    console.error(`[${name}] Completed with ${failedOps} failed operation(s).`);
+    process.exit(1);
+  }
+
+  console.log(`[${name}] Differential upload complete.`);
+}
+
+main().catch((err) => {
+  console.error('Unhandled error:', err);
+  process.exit(1);
+});
