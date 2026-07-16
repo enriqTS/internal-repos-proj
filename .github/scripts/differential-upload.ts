@@ -204,3 +204,48 @@ export async function computeFileHashes(files: LocalFile[]): Promise<HashResult[
 
   return results;
 }
+
+// ─── Diff Engine ─────────────────────────────────────────────────────────────
+
+/**
+ * Computes the differential between a local manifest and a remote manifest.
+ * Pure function — compares `files` maps by hash value.
+ *
+ * If `remote` is null (first deploy), all local files are classified as "added".
+ *
+ * Requirements: 3.1, 3.4, 3.6
+ */
+export function computeDiff(local: HashManifest, remote: HashManifest | null): DiffResult {
+  const added: string[] = [];
+  const modified: string[] = [];
+  const deleted: string[] = [];
+  const unchanged: string[] = [];
+
+  // If no remote manifest, all local files are new additions
+  if (remote === null) {
+    for (const path of Object.keys(local.files)) {
+      added.push(path);
+    }
+    return { added, modified, deleted, unchanged };
+  }
+
+  // Classify local files against remote
+  for (const path of Object.keys(local.files)) {
+    if (!(path in remote.files)) {
+      added.push(path);
+    } else if (local.files[path].hash !== remote.files[path].hash) {
+      modified.push(path);
+    } else {
+      unchanged.push(path);
+    }
+  }
+
+  // Find deleted files (present remotely but not locally)
+  for (const path of Object.keys(remote.files)) {
+    if (!(path in local.files)) {
+      deleted.push(path);
+    }
+  }
+
+  return { added, modified, deleted, unchanged };
+}
