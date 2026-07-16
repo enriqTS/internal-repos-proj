@@ -291,10 +291,6 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
     wrapper.className = 'file-browser-browsing flex flex-col gap-4';
     wrapper.dataset.path = currentPath;
 
-    // Header area: breadcrumb + download folder button
-    const header = document.createElement('div');
-    header.className = 'flex items-center justify-between gap-2 flex-wrap';
-
     // Breadcrumb navigation
     const pathSegments = currentPath
       ? currentPath.replace(/\/$/, '').split('/')
@@ -308,33 +304,13 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
       },
       rootLabel: 'root',
     });
-    header.appendChild(breadcrumbNav);
+    wrapper.appendChild(breadcrumbNav);
 
-    // "Download Folder" button + progress indicator
-    const dlArea = document.createElement('div');
-    dlArea.className = 'flex items-center gap-2';
-
-    const dlStatus = document.createElement('span');
-    dlStatus.className = 'text-xs font-mono text-text-muted';
-
-    const dlBtn = document.createElement('button');
-    dlBtn.type = 'button';
-    dlBtn.className =
-      'px-3 py-1.5 text-xs font-mono font-semibold text-accent bg-surface border border-accent rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent';
-    dlBtn.textContent = '\u2B07 Download Folder';
-    dlBtn.addEventListener('click', () => {
-      if (!manifest) return;
-      dlBtn.disabled = true;
-      downloadFolderAsZip(currentPath || '', manifest.entries, basePath, dlStatus).finally(() => {
-        dlBtn.disabled = false;
-      });
-    });
-
-    dlArea.appendChild(dlStatus);
-    dlArea.appendChild(dlBtn);
-    header.appendChild(dlArea);
-
-    wrapper.appendChild(header);
+    // Hidden status element for folder zip downloads (shown only during download)
+    const dlStatus = document.createElement('div');
+    dlStatus.className = 'text-xs font-mono text-text-muted hidden';
+    dlStatus.setAttribute('aria-live', 'polite');
+    wrapper.appendChild(dlStatus);
 
     // Directory listing
     if (manifest) {
@@ -364,10 +340,11 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
             a.click();
             document.body.removeChild(a);
           } else if (manifest) {
-            // Folder zip download
-            dlBtn.disabled = true;
+            // Folder zip download — show inline status
+            dlStatus.classList.remove('hidden');
             downloadFolderAsZip(entry.path, manifest.entries, basePath, dlStatus).finally(() => {
-              dlBtn.disabled = false;
+              dlStatus.classList.add('hidden');
+              dlStatus.textContent = '';
             });
           }
         },
