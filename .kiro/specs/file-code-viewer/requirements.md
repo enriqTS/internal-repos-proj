@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This feature adds a GitHub-style file/code viewer to the project detail and template detail pages. Users can browse the file tree and view individual file contents with syntax highlighting. The approach uses a pre-exploded files architecture: at upload time, the Lambda explodes zip contents into individual S3 objects and generates a `file-tree.json` manifest; at browse time, the frontend fetches only the lightweight manifest for tree rendering and loads individual files on demand. For templates, file expansion happens at CI/CD deploy time. The existing `artifact.zip` is preserved for the download button. highlight.js (already used for README rendering) provides syntax coloring. No client-side zip extraction is needed.
+This feature adds a GitHub-style file/code viewer to the project detail and template detail pages. Users can browse the file tree and view individual file contents with syntax highlighting. The approach uses a pre-exploded files architecture with a dual-path upload pipeline: the frontend accepts both folder uploads (individual files staged directly to S3, no client-side zipping) and `.zip` file uploads (staged as-is). In both cases, the Lambda produces the same output — individual S3 objects under `files/`, a `file-tree.json` manifest, and an `artifact.zip` for the download button. At browse time, the frontend fetches only the lightweight manifest for tree rendering and loads individual files on demand. For templates, file expansion happens at CI/CD deploy time. highlight.js (already used for README rendering) provides syntax coloring. No client-side zip extraction is needed.
 
 ## Glossary
 
@@ -10,26 +10,52 @@ This feature adds a GitHub-style file/code viewer to the project detail and temp
 - **File_Tree**: A collapsible, hierarchical tree view representing the directory structure derived from the file-tree.json manifest.
 - **Code_Viewer**: The panel that displays the contents of a selected file with syntax highlighting, line numbers, and a copy action.
 - **File_Tree_Manifest**: The `file-tree.json` file stored in S3, containing a structured representation of all files and directories with metadata (path, size, type).
-- **File_Expander**: The server-side logic (Lambda for projects, CI/CD script for templates) that explodes a zip into individual S3 objects and generates the File_Tree_Manifest.
+- **File_Expander**: The server-side logic (Lambda for projects, CI/CD script for templates) that processes staged uploads (either individual files or a zip), explodes them into individual S3 objects, generates the File_Tree_Manifest, and produces the Artifact_Zip.
+- **Drop_Zone**: The frontend UI component that accepts both folder drops/selections (via webkitdirectory) and `.zip` file drops/selections, auto-detecting the upload mode.
 - **Language_Mapper**: The module that maps file extensions and special filenames to highlight.js language identifiers for syntax highlighting.
 - **Detail_Page**: Either the project detail page or the template detail page where the File_Browser is rendered.
-- **Artifact_Zip**: The `artifact.zip` file stored in S3 and served via CloudFront, preserved for direct download functionality.
+- **Artifact_Zip**: The `artifact.zip` file stored in S3 and served via CloudFront, preserved for direct download functionality. For folder uploads, the Lambda generates this server-side; for zip uploads, the original zip is used.
 
 ## Requirements
 
-### Requirement 1: File Expansion at Upload Time (Projects)
+### Requirement 1: Dual-Path Upload and File Expansion at Upload Time (Projects)
 
-**User Story:** As a system operator, I want project files to be individually stored in S3 at upload time, so that the frontend can fetch files on demand without client-side zip extraction.
+**User Story:** As a system operator, I want the upload pipeline to accept both folder uploads (individual files) and zip uploads, storing project files individually in S3 and producing a consistent output structure, so that the frontend can fetch files on demand without client-side zip extraction.
 
 #### Acceptance Criteria
 
-1. WHEN the process Lambda creates a project artifact, THE File_Expander SHALL write each file from the filtered zip as an individual S3 object under `projects/{name}/files/{filePath}`.
-2. WHEN the process Lambda creates a project artifact, THE File_Expander SHALL generate a File_Tree_Manifest at `projects/{name}/file-tree.json` containing the hierarchical structure of all exploded files.
-3. THE File_Tree_Manifest SHALL include for each entry: the relative path, a type indicator (file or directory), and the file size in bytes for file entries.
-4. THE File_Expander SHALL preserve the original file content encoding (UTF-8 for text, binary for binary files) when writing individual S3 objects.
-5. THE File_Expander SHALL set appropriate `Content-Type` headers on individual S3 objects based on file extension (e.g., `text/plain` for `.txt`, `application/javascript` for `.js`, `image/png` for `.png`).
-6. WHEN the process Lambda creates a project artifact, THE File_Expander SHALL continue to generate the Artifact_Zip at `projects/{name}/artifact.zip` for the download button.
-7. IF the File_Expander encounters an error writing individual files, THEN THE File_Expander SHALL log the error and continue processing remaining files, recording failures in the Lambda response warning field.
+##### Input Detection
+
+1. WHEN the process Lambda receives a finalize request, THE File_Expander SHALL inspect the staging area to determine whether the upload is a zip upload (single `upload.zip` object present) or a folder upload (multiple individual file objects present under `staging/{sessionId}/files/`).
+2. THE File_Expander SHALL use the upload mode indicator stored in the session metadata (`mode: "zip"` or `mode: "folder"`) to differentiate between the two input paths.
+
+##### Folder Upload Path (Individual Files)
+
+3. WHEN the upload mode is "folder", THE File_Expander SHALL read each individual file from `staging/{sessionId}/files/{filePath}` in the staging bucket.
+4. WHEN the upload mode is "folder", THE File_Expander SHALL apply server-side filtering to the staged files using the same deny-list rules as the zip path.
+5. WHEN the upload mode is "folder", THE File_Expander SHALL write each filtered file as an individual S3 object under `projects/{name}/files/{filePath}` in the frontend bucket.
+6. WHEN the upload mode is "folder", THE File_Expander SHALL generate the Artifact_Zip at `projects/{name}/artifact.zip` from the filtered files for the download button.
+
+##### Zip Upload Path
+
+7. WHEN the upload mode is "zip", THE File_Expander SHALL download the staged zip from `staging/{sessionId}/upload.zip`, extract its contents, and apply server-side filtering.
+8. WHEN the upload mode is "zip", THE File_Expander SHALL write each filtered file from the extracted zip as an individual S3 object under `projects/{name}/files/{filePath}`.
+9. WHEN the upload mode is "zip", THE File_Expander SHALL store the original uploaded zip (or a re-generated zip from filtered files) as the Artifact_Zip at `projects/{name}/artifact.zip` for the download button.
+
+##### Common Output (Both Paths)
+
+10. WHEN the process Lambda completes file expansion (regardless of upload mode), THE File_Expander SHALL generate a File_Tree_Manifest at `projects/{name}/file-tree.json` containing the hierarchical structure of all exploded files.
+11. THE File_Tree_Manifest SHALL include for each entry: the relative path, a type indicator (file or directory), and the file size in bytes for file entries.
+12. THE File_Expander SHALL preserve the original file content encoding (UTF-8 for text, binary for binary files) when writing individual S3 objects.
+13. THE File_Expander SHALL set appropriate `Content-Type` headers on individual S3 objects based on file extension (e.g., `text/plain` for `.txt`, `application/javascript` for `.js`, `image/png` for `.png`).
+14. IF the File_Expander encounters an error writing individual files, THEN THE File_Expander SHALL log the error and continue processing remaining files, recording failures in the Lambda response warning field.
+
+##### Frontend Drop Zone (Dual-Mode Acceptance)
+
+15. THE Drop_Zone SHALL accept both folder drops (via `webkitdirectory` directory selection) and single `.zip` file drops or selections.
+16. WHEN the user drops or selects a folder, THE Drop_Zone SHALL detect the folder upload mode and stage each individual file to `staging/{sessionId}/files/{filePath}` via presigned URLs (no client-side zipping).
+17. WHEN the user drops or selects a `.zip` file, THE Drop_Zone SHALL detect the zip upload mode and stage the zip directly to `staging/{sessionId}/upload.zip` via a presigned URL (no client-side extraction or re-zipping).
+18. THE Drop_Zone SHALL auto-detect the upload mode based on the input: if the dropped or selected item is a single file with a `.zip` extension, it is treated as zip mode; otherwise it is treated as folder mode.
 
 ### Requirement 2: File Expansion at Deploy Time (Templates)
 
