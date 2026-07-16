@@ -181,21 +181,17 @@ function renderCodeContent(content: string, filename: string, isLargeFile: boole
 function highlightContent(content: string, filename: string): string {
   const language = detectLanguage(filename);
 
-  if (language && hljs.getLanguage(language)) {
+  if (language) {
     try {
       return hljs.highlight(content, { language }).value;
     } catch {
-      // Fall through to auto-detect
+      // Language not registered or error — fall through to auto-detect
     }
   }
 
-  // Auto-detect fallback
+  // Auto-detect fallback — always try, don't gate on relevance
   try {
     const result = hljs.highlightAuto(content);
-    // If auto-detection has low relevance, return escaped plain text
-    if (result.relevance < 5) {
-      return escapeHtml(content);
-    }
     return result.value;
   } catch {
     return escapeHtml(content);

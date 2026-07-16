@@ -289,6 +289,10 @@ export async function renderTemplateDetail(
   const cdnBaseUrl = getBaseUrl();
   const basePath = `${cdnBaseUrl}/templates/${name}/`;
 
+  // Supplementary content wrapper (architecture + readme) — hidden when viewing a file
+  const supplementaryContent = document.createElement('div');
+  supplementaryContent.className = 'template-supplementary';
+
   const fileBrowser = createFileBrowser({
     container: fileBrowserSection,
     basePath,
@@ -297,6 +301,9 @@ export async function renderTemplateDetail(
     onNavigate: (path: string) => {
       const hash = encodeFilePath('template', name, path);
       window.location.hash = hash;
+      // Hide supplementary content when viewing a file
+      const isViewingFile = path !== '' && !path.endsWith('/');
+      supplementaryContent.style.display = isViewingFile ? 'none' : '';
     },
   });
   fileBrowser.mount();
@@ -312,20 +319,27 @@ export async function renderTemplateDetail(
   // 4. Architecture diagram (if image resolved)
   if (architectureImageUrl) {
     const architectureSection = renderArchitectureSection(architectureImageUrl, name);
-    detailWrapper.appendChild(architectureSection);
+    supplementaryContent.appendChild(architectureSection);
   }
 
   // 5. Readme section
   if (readmeResult.ok) {
     const readmeHtml = await marked.parse(readmeResult.data);
     const readmeSection = renderReadmeSection(readmeHtml, 'template-readme');
-    detailWrapper.appendChild(readmeSection);
+    supplementaryContent.appendChild(readmeSection);
   } else {
     const readmeErrorEl = renderReadmeError(t('templateDetail.docUnavailable'));
     const readmeWrapper = document.createElement('section');
     readmeWrapper.className = 'template-readme';
     readmeWrapper.appendChild(readmeErrorEl);
-    detailWrapper.appendChild(readmeWrapper);
+    supplementaryContent.appendChild(readmeWrapper);
+  }
+
+  detailWrapper.appendChild(supplementaryContent);
+
+  // If initial path is a file, hide supplementary content immediately
+  if (initialFilePath && initialFilePath !== '' && !initialFilePath.endsWith('/')) {
+    supplementaryContent.style.display = 'none';
   }
 
   wrapper.appendChild(detailWrapper);
