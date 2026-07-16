@@ -301,6 +301,19 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
   it('for all non-mutation interactions, index loading behavior is unchanged (property-based)', async () => {
     // Property: for any sequence of non-mutation navigations (home, search, project detail),
     // fetchSearchIndex is called exactly once (on the first home page render)
+
+    /**
+     * Flush microtask queue — allows all pending Promise resolutions to settle.
+     * This is more reliable than fixed setTimeout delays for testing async code
+     * because it doesn't depend on wall-clock timing.
+     */
+    async function flushMicrotasks(): Promise<void> {
+      // Multiple ticks to handle chained .then() / await sequences
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
     await fc.assert(
       fc.asyncProperty(
         // Generate sequences of non-mutation navigation actions
@@ -338,7 +351,10 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // Initialize app with projects route
           window.location.hash = '#/projects';
           await import('./main');
-          await new Promise(r => setTimeout(r, 100));
+
+          // Flush all pending async work from the initial render (fetchSearchIndex resolution,
+          // then initializeSearch + markSearchIndexLoaded, then setupSearch + event binding)
+          await flushMicrotasks();
 
           const callCountAfterInit = mockedFetch.mock.calls.length;
           // Initial projects load should fetch
@@ -353,7 +369,8 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
             } else if (nav === 'project-detail') {
               window.location.hash = '#/project/proj';
             }
-            await new Promise(r => setTimeout(r, 30));
+            // Flush async work triggered by each hashchange + route handler
+            await flushMicrotasks();
           }
 
           // After all non-mutation navigations, fetchSearchIndex should NOT have been
@@ -372,6 +389,15 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
   });
 
   it('failed mutations do NOT reset searchIndexLoaded', async () => {
+    /**
+     * Flush microtask queue — allows all pending Promise resolutions to settle.
+     */
+    async function flushMicrotasks(): Promise<void> {
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
     await fc.assert(
       fc.asyncProperty(
         fc.oneof(
@@ -401,7 +427,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // Initialize app — performs initial index load
           window.location.hash = '#/projects';
           await import('./main');
-          await new Promise(r => setTimeout(r, 50));
+          await flushMicrotasks();
 
           const callCountAfterInit = mockedFetch.mock.calls.length;
           expect(callCountAfterInit).toBeGreaterThanOrEqual(1);
@@ -409,45 +435,45 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // Attempt a failing mutation
           if (failureType === 'failed-upload') {
             window.location.hash = '#/upload';
-            await new Promise(r => setTimeout(r, 50));
+            await flushMicrotasks();
             const form = document.querySelector('form');
             if (form) {
               const nameInput = document.querySelector('#project-name') as HTMLInputElement;
               if (nameInput) nameInput.value = 'test';
               form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-              await new Promise(r => setTimeout(r, 100));
+              await flushMicrotasks();
             }
           } else if (failureType === 'failed-delete') {
             window.location.hash = '#/project/test-project';
-            await new Promise(r => setTimeout(r, 50));
+            await flushMicrotasks();
             try {
               const { showDeleteDialog } = await import('./delete-dialog');
               showDeleteDialog('test-project');
-              await new Promise(r => setTimeout(r, 50));
+              await flushMicrotasks();
               const input = document.querySelector('.delete-dialog-input') as HTMLInputElement;
               const confirmBtn = document.querySelector('.delete-dialog-confirm') as HTMLButtonElement;
               if (input && confirmBtn) {
                 input.value = 'test-project';
                 input.dispatchEvent(new Event('input'));
                 confirmBtn.click();
-                await new Promise(r => setTimeout(r, 100));
+                await flushMicrotasks();
               }
             } catch {
               // Delete dialog may not render without project detail
             }
           } else if (failureType === 'failed-edit') {
             window.location.hash = '#/project/test-project/edit';
-            await new Promise(r => setTimeout(r, 100));
+            await flushMicrotasks();
             const form = document.querySelector('form');
             if (form) {
               form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-              await new Promise(r => setTimeout(r, 100));
+              await flushMicrotasks();
             }
           }
 
           // Navigate back to projects
           window.location.hash = '#/projects';
-          await new Promise(r => setTimeout(r, 50));
+          await flushMicrotasks();
 
           // Failed mutations should NOT reset searchIndexLoaded,
           // so fetchSearchIndex should NOT be called again
