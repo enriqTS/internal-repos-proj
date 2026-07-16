@@ -12,7 +12,7 @@ import { createPaginator, type PaginatorAPI } from './paginator';
 import { t } from './i18n';
 import { container, heading, button, input as createInput } from './ui';
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 9;
 
 const fuseOptions: IFuseOptions<TemplateIndexEntry> = {
   keys: ['name', 'description', 'tags'],
@@ -102,29 +102,48 @@ function renderFullPage(rootContainer: HTMLElement, index: TemplateIndex): void 
   const fuseInstance = new Fuse(index, fuseOptions);
 
   // Page wrapper
-  const pageWrapper = container('py-8');
+  const pageWrapper = container('py-6');
 
   // Heading
   const headingEl = heading(t('templates.heading'), 2);
+  headingEl.className = 'font-body text-xl sm:text-2xl font-semibold text-text tracking-tight mb-5';
   pageWrapper.appendChild(headingEl);
 
-  // Search input
+  // Search input with inline icon
+  const searchWrapper = document.createElement('div');
+  searchWrapper.className = 'relative';
+
+  const searchIcon = document.createElement('div');
+  searchIcon.className = 'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none';
+  searchIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+  searchWrapper.appendChild(searchIcon);
+
   const inputEl = createInput({
     type: 'text',
     placeholder: t('templates.placeholder'),
   });
   inputEl.setAttribute('aria-label', 'Search templates');
-  inputEl.className += ' mt-4';
-  pageWrapper.appendChild(inputEl);
+  inputEl.className = 'w-full pl-10 pr-4 py-3 font-mono text-sm border border-border rounded-lg bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm';
+  searchWrapper.appendChild(inputEl);
 
-  // Tag filter container
+  pageWrapper.appendChild(searchWrapper);
+
+  // Filter + results count row
+  const controlsRow = document.createElement('div');
+  controlsRow.className = 'flex items-center justify-between mt-3 gap-4';
+
   const filterContainer = document.createElement('div');
-  filterContainer.className = 'mt-4';
-  pageWrapper.appendChild(filterContainer);
+  controlsRow.appendChild(filterContainer);
+
+  const resultsCountEl = document.createElement('span');
+  resultsCountEl.className = 'font-mono text-xs text-text-muted whitespace-nowrap';
+  controlsRow.appendChild(resultsCountEl);
+
+  pageWrapper.appendChild(controlsRow);
 
   // Card grid container
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'mt-6';
+  gridContainer.className = 'mt-5';
   pageWrapper.appendChild(gridContainer);
 
   // Paginator container
@@ -182,6 +201,15 @@ function renderFullPage(rootContainer: HTMLElement, index: TemplateIndex): void 
     }
 
     filteredResults = results;
+
+    // Update results count
+    if (filteredResults.length > 0) {
+      resultsCountEl.textContent = `${filteredResults.length} template${filteredResults.length !== 1 ? 's' : ''}`;
+    } else if (query.length > 0) {
+      resultsCountEl.textContent = '';
+    } else {
+      resultsCountEl.textContent = '';
+    }
 
     // Reset paginator to page 1
     paginator.update(filteredResults.length, 1);

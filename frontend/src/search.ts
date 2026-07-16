@@ -132,11 +132,13 @@ export function renderResults(results: SearchResult[], container: HTMLElement): 
  * @param inputElement - The search input element
  * @param resultsContainer - The container element for rendering results
  * @param filterContainer - Optional container element for the tag filter component
+ * @param onResultsCount - Optional callback fired with the total filtered result count on each search
  */
 export function setupSearch(
   inputElement: HTMLInputElement,
   resultsContainer: HTMLElement,
   filterContainer?: HTMLElement,
+  onResultsCount?: (count: number) => void,
 ): void {
   let activeFilterTags: string[] = [];
   let tagFilter: TagFilterAPI | null = null;
@@ -149,7 +151,7 @@ export function setupSearch(
 
   const paginator: PaginatorAPI = createPaginator({
     container: paginatorContainer,
-    pageSize: 8,
+    pageSize: 9,
     onPageChange: (_page: number) => {
       // Re-render results for the new page
       const { start, end } = paginator.getSliceRange();
@@ -182,6 +184,11 @@ export function setupSearch(
 
     // Reset paginator to page 1 on query/filter change
     paginator.update(filteredResults.length, 1);
+
+    // Notify caller of result count
+    if (onResultsCount) {
+      onResultsCount(filteredResults.length);
+    }
 
     // Slice results for the current page
     const { start, end } = paginator.getSliceRange();

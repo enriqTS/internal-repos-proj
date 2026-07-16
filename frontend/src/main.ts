@@ -29,56 +29,84 @@ export { invalidateSearchIndex };
 
 async function renderSearchView(_params: Record<string, string>, container: HTMLElement): Promise<void> {
   // Wrap content in a responsive container
-  const wrapper = createContainer();
+  const wrapper = createContainer('py-6');
   container.appendChild(wrapper);
 
-  // Create search UI structure
-  const headingRow = document.createElement('div');
-  headingRow.className = 'flex items-center justify-between mb-4';
+  // Page header with title and action
+  const headerRow = document.createElement('div');
+  headerRow.className = 'flex items-center justify-between mb-5';
 
   const heading = document.createElement('h2');
-  heading.className = 'font-body text-2xl font-semibold text-text tracking-tight';
+  heading.className = 'font-body text-xl sm:text-2xl font-semibold text-text tracking-tight';
   heading.textContent = t('search.heading');
-
-  headingRow.appendChild(heading);
-
-  const input = createInput({ type: 'text', placeholder: t('search.placeholder') });
-  input.setAttribute('aria-label', t('search.placeholder'));
-  input.className += ' flex-1';
+  headerRow.appendChild(heading);
 
   const newBtn = document.createElement('a');
   newBtn.href = '#/upload';
-  newBtn.className = 'px-4 py-2 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline whitespace-nowrap';
-  newBtn.textContent = 'Novo';
+  newBtn.className = 'px-4 py-2 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-md cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline whitespace-nowrap inline-flex items-center gap-1.5';
+  newBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo`;
+  headerRow.appendChild(newBtn);
 
-  const searchRow = document.createElement('div');
-  searchRow.className = 'flex items-center gap-4';
-  searchRow.appendChild(input);
-  searchRow.appendChild(newBtn);
+  wrapper.appendChild(headerRow);
 
-  const resultsContainer = document.createElement('div');
-  resultsContainer.className = 'mt-6';
+  // Search bar with inline icon
+  const searchWrapper = document.createElement('div');
+  searchWrapper.className = 'relative';
+
+  const searchIcon = document.createElement('div');
+  searchIcon.className = 'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none';
+  searchIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+  searchWrapper.appendChild(searchIcon);
+
+  const input = createInput({ type: 'text', placeholder: t('search.placeholder') });
+  input.setAttribute('aria-label', t('search.placeholder'));
+  input.className = 'w-full pl-10 pr-4 py-3 font-mono text-sm border border-border rounded-lg bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm';
+  searchWrapper.appendChild(input);
+
+  wrapper.appendChild(searchWrapper);
+
+  // Filter + results count row
+  const controlsRow = document.createElement('div');
+  controlsRow.className = 'flex items-center justify-between mt-3 gap-4';
 
   const filterContainer = document.createElement('div');
-  filterContainer.className = 'mt-3';
+  controlsRow.appendChild(filterContainer);
 
-  wrapper.appendChild(headingRow);
-  wrapper.appendChild(searchRow);
-  wrapper.appendChild(filterContainer);
+  const resultsCountEl = document.createElement('span');
+  resultsCountEl.className = 'font-mono text-xs text-text-muted whitespace-nowrap';
+  controlsRow.appendChild(resultsCountEl);
+
+  wrapper.appendChild(controlsRow);
+
+  // Results container
+  const resultsContainer = document.createElement('div');
+  resultsContainer.className = 'mt-5';
   wrapper.appendChild(resultsContainer);
 
   if (!searchIndexLoaded) {
-    // Show loading state
-    resultsContainer.innerHTML = `<p class="text-center text-text-muted py-12 text-sm">${t('search.loading')}</p>`;
+    // Show loading skeleton
+    resultsContainer.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        ${Array.from({ length: 6 }).map(() => `
+          <div class="bg-surface border border-border rounded-lg p-5 animate-pulse">
+            <div class="h-4 bg-border rounded w-3/4 mb-3"></div>
+            <div class="h-3 bg-border rounded w-full mb-2"></div>
+            <div class="h-3 bg-border rounded w-1/2 mb-4"></div>
+            <div class="flex gap-1.5"><div class="h-5 bg-border rounded w-12"></div><div class="h-5 bg-border rounded w-16"></div></div>
+          </div>
+        `).join('')}
+      </div>
+    `;
 
     const result = await fetchSearchIndex();
     if (!result.ok) {
       resultsContainer.innerHTML = '';
       const errorEl = document.createElement('div');
-      errorEl.className = 'text-center p-8 text-error';
+      errorEl.className = 'text-center py-12 px-4';
       errorEl.innerHTML = `
-        <p>${t('search.error')}</p>
-        <button class="mt-3 px-5 py-2 font-mono text-xs font-medium bg-surface border border-border-strong rounded-sm cursor-pointer transition-all duration-180 hover:border-accent hover:text-accent">${t('search.retry')}</button>
+        <div class="text-error opacity-60 mb-3"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <p class="text-error text-sm font-medium mb-3">${t('search.error')}</p>
+        <button class="px-5 py-2 font-mono text-xs font-medium bg-surface border border-border-strong rounded-md cursor-pointer transition-all duration-180 hover:border-accent hover:text-accent">${t('search.retry')}</button>
       `;
       resultsContainer.appendChild(errorEl);
 
@@ -94,8 +122,16 @@ async function renderSearchView(_params: Record<string, string>, container: HTML
     markSearchIndexLoaded();
   }
 
-  // Wire search input to the search module
-  setupSearch(input, resultsContainer, filterContainer);
+  // Wire search input to the search module with results count callback
+  setupSearch(input, resultsContainer, filterContainer, (count: number) => {
+    if (count === 0 && input.value.trim().length > 0) {
+      resultsCountEl.textContent = '';
+    } else if (count > 0) {
+      resultsCountEl.textContent = `${count} projeto${count !== 1 ? 's' : ''}`;
+    } else {
+      resultsCountEl.textContent = '';
+    }
+  });
 
   // Make result items navigable to project detail
   resultsContainer.addEventListener('click', (e) => {
@@ -236,20 +272,71 @@ export function getActiveNavSection(path: string): 'projects' | 'templates' | nu
 /**
  * Update the active navigation link based on the current hash.
  * Applies active styling classes to the correct nav link and removes them from others.
+ * Works across both desktop and mobile navigation.
  */
 export function updateNavActive(): void {
   const hash = window.location.hash.slice(1) || '/'; // remove '#', default to '/'
   const activeSection = getActiveNavSection(hash);
-  const navLinks = document.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Main navigation"] a[data-nav]');
+  const navLinks = document.querySelectorAll<HTMLAnchorElement>('a[data-nav]');
 
   navLinks.forEach((link) => {
-    link.classList.remove('text-accent', 'font-semibold');
+    link.classList.remove('text-accent', 'font-semibold', 'bg-accent-subtle');
 
     const navId = link.getAttribute('data-nav');
     if (navId && navId === activeSection) {
-      link.classList.add('text-accent', 'font-semibold');
+      link.classList.add('text-accent', 'font-semibold', 'bg-accent-subtle');
     }
   });
+}
+
+/**
+ * Initialize the mobile menu toggle behavior.
+ * Manages open/close state, icon switching, and auto-close on navigation.
+ */
+function initMobileMenu(): void {
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  if (!menuBtn || !mobileMenu) return;
+
+  const hamburgerIcon = menuBtn.querySelector('.hamburger-icon');
+  const closeIcon = menuBtn.querySelector('.close-icon');
+
+  function toggleMenu(): void {
+    const isOpen = !mobileMenu!.classList.contains('hidden');
+    if (isOpen) {
+      mobileMenu!.classList.add('hidden');
+      menuBtn!.setAttribute('aria-expanded', 'false');
+      menuBtn!.setAttribute('aria-label', 'Abrir menu');
+      hamburgerIcon?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+    } else {
+      mobileMenu!.classList.remove('hidden');
+      menuBtn!.setAttribute('aria-expanded', 'true');
+      menuBtn!.setAttribute('aria-label', 'Fechar menu');
+      hamburgerIcon?.classList.add('hidden');
+      closeIcon?.classList.remove('hidden');
+    }
+  }
+
+  function closeMenu(): void {
+    mobileMenu!.classList.add('hidden');
+    menuBtn!.setAttribute('aria-expanded', 'false');
+    menuBtn!.setAttribute('aria-label', 'Abrir menu');
+    hamburgerIcon?.classList.remove('hidden');
+    closeIcon?.classList.add('hidden');
+  }
+
+  menuBtn.addEventListener('click', toggleMenu);
+
+  // Close mobile menu on navigation
+  mobileMenu.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).tagName === 'A') {
+      closeMenu();
+    }
+  });
+
+  // Close on route change
+  window.addEventListener('hashchange', closeMenu);
 }
 
 /**
@@ -261,14 +348,17 @@ function init(): void {
     throw new Error('Missing #app container element');
   }
 
-  // Initialize theme manager and inject toggle button into the nav
+  // Initialize theme manager and inject toggle button into the desktop nav
   const themeManager = createThemeManager();
   const themeToggle = createThemeToggle(themeManager);
-  const nav = document.querySelector('header nav');
-  if (nav) {
-    nav.appendChild(themeToggle);
+  const desktopNav = document.querySelector('header nav[aria-label="Main navigation"]');
+  if (desktopNav) {
+    desktopNav.appendChild(themeToggle);
   }
   themeManager.startListening();
+
+  // Initialize mobile menu
+  initMobileMenu();
 
   // Set initial active nav state and listen for route changes
   updateNavActive();

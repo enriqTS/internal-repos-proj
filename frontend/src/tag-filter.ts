@@ -52,7 +52,7 @@ export function createTagFilter(options: TagFilterOptions): TagFilterAPI {
 
     // Toggle button
     toggleBtn = document.createElement('button');
-    toggleBtn.className = 'font-mono text-xs font-medium bg-tag-bg text-tag-text px-2 py-0.5 rounded-sm tracking-wide cursor-pointer border-none transition-all duration-180 hover:bg-accent-subtle';
+    toggleBtn.className = 'font-mono text-xs font-medium bg-tag-bg text-tag-text px-3 py-1.5 rounded-md tracking-wide cursor-pointer border-none transition-all duration-180 hover:bg-accent-subtle hover:text-accent';
     toggleBtn.setAttribute('aria-expanded', 'false');
     toggleBtn.textContent = getToggleText();
     toggleBtn.addEventListener('click', handleToggleClick);
@@ -60,7 +60,7 @@ export function createTagFilter(options: TagFilterOptions): TagFilterAPI {
 
     // Panel (hidden by default)
     panelEl = document.createElement('div');
-    panelEl.className = 'absolute top-full left-0 mt-1 bg-surface border border-border rounded-md shadow-md z-50 min-w-[200px] max-h-[240px] overflow-y-auto p-2';
+    panelEl.className = 'absolute top-full left-0 mt-1 bg-surface border border-border rounded-lg shadow-md z-50 min-w-[200px] max-h-[240px] overflow-y-auto p-2';
     panelEl.setAttribute('hidden', '');
     panelEl.addEventListener('focusout', handlePanelBlur);
 

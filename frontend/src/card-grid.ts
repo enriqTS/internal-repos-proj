@@ -34,18 +34,28 @@ export function renderCardGrid(items: CardItem[], options: CardGridOptions): voi
   container.innerHTML = '';
 
   if (items.length === 0) {
-    const emptyMsg = document.createElement('p');
-    emptyMsg.className = 'text-center text-text-muted py-12 px-4 text-sm';
-    emptyMsg.textContent = t('cardGrid.noResults');
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'text-center py-16 px-4';
+
+    const emptyIcon = document.createElement('div');
+    emptyIcon.className = 'text-text-muted opacity-40 mb-3';
+    emptyIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+    emptyMsg.appendChild(emptyIcon);
+
+    const emptyText = document.createElement('p');
+    emptyText.className = 'text-text-muted text-sm';
+    emptyText.textContent = t('cardGrid.noResults');
+    emptyMsg.appendChild(emptyText);
+
     container.appendChild(emptyMsg);
     return;
   }
 
   const grid = document.createElement('div');
-  grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
+  grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
 
   for (const item of items) {
-    const cardEl = card({ hoverable: true });
+    const cardEl = card({ hoverable: true, className: 'h-full justify-between' });
     cardEl.setAttribute('tabindex', '0');
     cardEl.setAttribute('role', 'link');
     cardEl.setAttribute('aria-label', `${ariaLabelPrefix} ${item.name}`);
@@ -61,29 +71,50 @@ export function renderCardGrid(items: CardItem[], options: CardGridOptions): voi
       }
     });
 
+    // Top content group (name + description)
+    const topGroup = document.createElement('div');
+    topGroup.className = 'flex flex-col gap-1.5';
+
     const nameEl = document.createElement('h3');
-    nameEl.className = 'font-mono text-sm font-semibold text-text line-clamp-3';
+    nameEl.className = 'font-mono text-sm font-semibold text-text line-clamp-2 leading-snug';
     nameEl.textContent = item.name;
+    topGroup.appendChild(nameEl);
 
     const descEl = document.createElement('p');
-    descEl.className = 'text-xs text-text-muted leading-snug line-clamp-2';
+    descEl.className = 'text-xs text-text-muted leading-relaxed line-clamp-2';
     descEl.textContent = item.description;
+    topGroup.appendChild(descEl);
 
-    const tagsEl = document.createElement('div');
-    tagsEl.className = 'flex flex-wrap gap-1 flex-1 content-start overflow-hidden';
-    for (const tag of item.tags) {
-      tagsEl.appendChild(badge(tag));
+    cardEl.appendChild(topGroup);
+
+    // Bottom content group (tags + date) — pushed to bottom via justify-between
+    const bottomGroup = document.createElement('div');
+    bottomGroup.className = 'flex flex-col gap-2 mt-3';
+
+    if (item.tags.length > 0) {
+      const tagsEl = document.createElement('div');
+      tagsEl.className = 'flex flex-wrap gap-1.5 overflow-hidden max-h-[52px]';
+      const visibleTags = item.tags.slice(0, 4);
+      for (const tag of visibleTags) {
+        tagsEl.appendChild(badge(tag));
+      }
+      if (item.tags.length > 4) {
+        const moreEl = document.createElement('span');
+        moreEl.className = 'font-mono text-xs text-text-muted opacity-70';
+        moreEl.textContent = `+${item.tags.length - 4}`;
+        tagsEl.appendChild(moreEl);
+      }
+      bottomGroup.appendChild(tagsEl);
     }
 
     const dateEl = document.createElement('time');
-    dateEl.className = 'font-mono text-xs text-text-muted opacity-80 mt-auto';
-    dateEl.textContent = `${formatRelativeDate(item.date)} · ${item.date}`;
+    dateEl.className = 'font-mono text-xs text-text-muted opacity-70';
+    dateEl.textContent = formatRelativeDate(item.date);
     dateEl.setAttribute('datetime', item.date);
+    dateEl.setAttribute('title', item.date);
+    bottomGroup.appendChild(dateEl);
 
-    cardEl.appendChild(nameEl);
-    cardEl.appendChild(descEl);
-    cardEl.appendChild(tagsEl);
-    cardEl.appendChild(dateEl);
+    cardEl.appendChild(bottomGroup);
     grid.appendChild(cardEl);
   }
 

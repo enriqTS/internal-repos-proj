@@ -85,7 +85,7 @@ function isImageContentType(res: Response): boolean {
 export function renderDownloadButton(name: string): HTMLElement {
   const baseUrl = getBaseUrl();
   const link = document.createElement('a');
-  link.className = 'download-link px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] inline-block no-underline text-center';
+  link.className = 'download-link px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-md cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] inline-block no-underline text-center';
   link.href = `${baseUrl}/templates/${name}/artifact.zip`;
   link.setAttribute('download', `${name}.zip`);
   link.setAttribute('aria-label', `Download ${name} template zip archive`);

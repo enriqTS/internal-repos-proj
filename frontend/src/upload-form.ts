@@ -360,54 +360,70 @@ export function renderUploadForm(container: HTMLElement): void {
   container.innerHTML = '';
 
   const wrapper = document.createElement('div');
-  wrapper.className = 'max-w-2xl mx-auto px-4 py-8';
+  wrapper.className = 'max-w-2xl mx-auto px-4 py-6 sm:py-8';
 
   const headingEl = heading(t('upload.heading'), 2);
+  headingEl.className = 'font-body text-xl sm:text-2xl font-semibold text-text tracking-tight mb-6';
   wrapper.appendChild(headingEl);
 
   const form = document.createElement('form');
-  form.className = 'flex flex-col gap-6';
+  form.className = 'flex flex-col gap-8';
   form.noValidate = true;
 
-  // --- 1. Drop Zone (first element) ---
+  // --- Section: Files ---
+  const filesSection = document.createElement('fieldset');
+  filesSection.className = 'flex flex-col gap-3 border-none p-0 m-0';
+
+  const filesSectionLabel = document.createElement('legend');
+  filesSectionLabel.className = 'font-body text-sm font-semibold text-text mb-2';
+  filesSectionLabel.textContent = 'Arquivos do projeto';
+  filesSection.appendChild(filesSectionLabel);
+
   const dropZoneContainer = document.createElement('div');
   dropZoneContainer.className = 'flex flex-col gap-2';
-  form.appendChild(dropZoneContainer);
+  filesSection.appendChild(dropZoneContainer);
 
-  // Files error element (shown on validation failure)
   const filesErrorEl = document.createElement('span');
   filesErrorEl.className = 'field-error text-xs text-error mt-1';
   filesErrorEl.setAttribute('aria-live', 'polite');
   dropZoneContainer.appendChild(filesErrorEl);
 
-  // Track selected files
+  form.appendChild(filesSection);
+
   let selectedFiles: FileList | null = null;
 
-  // --- 2. Project Name field ---
+  // --- Section: Metadata ---
+  const metaSection = document.createElement('fieldset');
+  metaSection.className = 'flex flex-col gap-5 border-none p-0 m-0';
+
+  const metaSectionLabel = document.createElement('legend');
+  metaSectionLabel.className = 'font-body text-sm font-semibold text-text mb-2';
+  metaSectionLabel.textContent = 'Informações do projeto';
+  metaSection.appendChild(metaSectionLabel);
+
   const nameGroup = createFieldGroup('project-name', t('upload.nameLabel'), 'text', {
     maxLength: MAX_PROJECT_NAME_LENGTH,
     placeholder: t('upload.namePlaceholder'),
     required: true,
   });
-  form.appendChild(nameGroup.wrapper);
+  metaSection.appendChild(nameGroup.wrapper);
 
-  // --- 2.5. Repository URL field ---
   const repoGroup = createFieldGroup('project-repository-url', t('upload.repoLabel'), 'url', {
     maxLength: 2048,
     placeholder: t('upload.repoPlaceholder'),
   });
-  form.appendChild(repoGroup.wrapper);
+  metaSection.appendChild(repoGroup.wrapper);
 
-  // --- 3. Tags field — Tag Selector component ---
+  // Tags
   const tagsGroupWrapper = document.createElement('div');
   tagsGroupWrapper.className = 'flex flex-col gap-2';
 
   const tagsLabel = document.createElement('label');
+  tagsLabel.className = 'font-body text-sm font-medium text-text';
   tagsLabel.textContent = t('upload.tagsLabel');
   tagsGroupWrapper.appendChild(tagsLabel);
 
   const tagSelectorContainer = document.createElement('div');
-  tagSelectorContainer.className = 'mt-1';
   tagsGroupWrapper.appendChild(tagSelectorContainer);
 
   const tagWarningEl = document.createElement('span');
@@ -415,7 +431,9 @@ export function renderUploadForm(container: HTMLElement): void {
   tagWarningEl.setAttribute('aria-live', 'polite');
   tagsGroupWrapper.appendChild(tagWarningEl);
 
-  form.appendChild(tagsGroupWrapper);
+  metaSection.appendChild(tagsGroupWrapper);
+
+  form.appendChild(metaSection);
 
   // Create the Tag Selector component
   let tagSelector: TagSelectorAPI | null = null;
@@ -430,28 +448,24 @@ export function renderUploadForm(container: HTMLElement): void {
     if (result.ok) {
       tagSelector!.setAvailableTags(result.data);
     } else {
-      // Non-404 error — show warning in the tag selector area
       tagWarningEl.textContent = t('upload.tagsWarning');
     }
   });
 
-  // --- 4. Submit button ---
-  const submitBtn = button(t('upload.submit'), 'primary');
-  submitBtn.type = 'submit';
-  form.appendChild(submitBtn);
+  // --- Section: Documentation ---
+  const docSection = document.createElement('fieldset');
+  docSection.className = 'flex flex-col gap-3 border-none p-0 m-0';
 
-  // --- 5. Status message area ---
-  const statusEl = document.createElement('div');
-  statusEl.className = 'text-sm mt-2 text-text-muted';
-  statusEl.setAttribute('role', 'alert');
-  statusEl.setAttribute('aria-live', 'polite');
-  form.appendChild(statusEl);
+  const docSectionLabel = document.createElement('legend');
+  docSectionLabel.className = 'font-body text-sm font-semibold text-text mb-2';
+  docSectionLabel.textContent = 'Documentação';
+  docSection.appendChild(docSectionLabel);
 
-  // --- 6. Readme (with preview toggle) ---
   const readmeGroupWrapper = document.createElement('div');
   readmeGroupWrapper.className = 'flex flex-col gap-2';
 
   const readmeLabel = document.createElement('label');
+  readmeLabel.className = 'font-body text-sm font-medium text-text';
   readmeLabel.textContent = t('upload.readmeLabel');
   readmeGroupWrapper.appendChild(readmeLabel);
 
@@ -463,7 +477,15 @@ export function renderUploadForm(container: HTMLElement): void {
   readmeErrorEl.setAttribute('aria-live', 'polite');
   readmeGroupWrapper.appendChild(readmeErrorEl);
 
-  form.appendChild(readmeGroupWrapper);
+  docSection.appendChild(readmeGroupWrapper);
+
+  // Readme notice container
+  const readmeNoticeContainer = document.createElement('div');
+  readmeNoticeContainer.className = 'flex flex-col gap-1';
+  readmeNoticeContainer.setAttribute('aria-live', 'polite');
+  docSection.appendChild(readmeNoticeContainer);
+
+  form.appendChild(docSection);
 
   // Create the Readme Preview component
   const readmePreview: ReadmePreviewAPI = createReadmePreview({
@@ -474,11 +496,21 @@ export function renderUploadForm(container: HTMLElement): void {
     rows: 12,
   });
 
-  // --- 7. Readme notice container ---
-  const readmeNoticeContainer = document.createElement('div');
-  readmeNoticeContainer.className = 'flex flex-col gap-1 mt-2';
-  readmeNoticeContainer.setAttribute('aria-live', 'polite');
-  form.appendChild(readmeNoticeContainer);
+  // --- Action bar ---
+  const actionBar = document.createElement('div');
+  actionBar.className = 'flex items-center gap-4 pt-2 border-t border-border mt-2';
+
+  const submitBtn = button(t('upload.submit'), 'primary');
+  submitBtn.type = 'submit';
+  actionBar.appendChild(submitBtn);
+
+  const statusEl = document.createElement('div');
+  statusEl.className = 'text-sm text-text-muted flex-1';
+  statusEl.setAttribute('role', 'alert');
+  statusEl.setAttribute('aria-live', 'polite');
+  actionBar.appendChild(statusEl);
+
+  form.appendChild(actionBar);
 
   // --- Tag suggestion logic ---
   let suggestionTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -571,7 +603,7 @@ export function renderUploadForm(container: HTMLElement): void {
 
     // Clear previous status and field errors
     statusEl.textContent = '';
-    statusEl.className = 'text-sm mt-2 text-text-muted';
+    statusEl.className = 'text-sm text-text-muted flex-1';
     clearFieldErrors(form);
 
     const name = nameGroup.input.value;
@@ -596,7 +628,7 @@ export function renderUploadForm(container: HTMLElement): void {
     // If no tags selected and README is available, attempt to get AI suggestions as fallback
     if (selectedTags.length === 0 && readme.length >= 50) {
       statusEl.textContent = t('upload.suggestingTags');
-      statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
+      statusEl.className = 'text-sm text-text-muted flex-1 animate-pulse';
       const suggestResult = await suggestTags(readme);
       if (suggestResult.ok) {
         if (suggestResult.data.tags.length > 0) {
@@ -619,7 +651,7 @@ export function renderUploadForm(container: HTMLElement): void {
     const filteredFiles = uploadMode === 'folder' ? filterFileList(files!) : [];
     if (uploadMode === 'folder' && filteredFiles.length === 0) {
       statusEl.textContent = t('upload.noFilesAfterFilter');
-      statusEl.className = 'text-sm mt-2 text-error';
+      statusEl.className = 'text-sm text-error flex-1';
       return;
     }
 
@@ -634,7 +666,7 @@ export function renderUploadForm(container: HTMLElement): void {
       // Check size
       if (zipFile.size > MAX_CLIENT_ZIP_SIZE) {
         statusEl.textContent = t('upload.tooLarge');
-        statusEl.className = 'text-sm mt-2 text-error';
+        statusEl.className = 'text-sm text-error flex-1';
         submitBtn.disabled = false;
         submitBtn.textContent = t('upload.submit');
         return;
@@ -642,7 +674,7 @@ export function renderUploadForm(container: HTMLElement): void {
 
       // Initiate upload with zip mode
       statusEl.textContent = t('upload.initiating');
-      statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
+      statusEl.className = 'text-sm text-text-muted flex-1 animate-pulse';
 
       const repoUrl = repoGroup.input.value.trim();
       const initiateResult = await initiateUpload({
@@ -654,7 +686,7 @@ export function renderUploadForm(container: HTMLElement): void {
       });
       if (!initiateResult.ok) {
         statusEl.textContent = initiateResult.error;
-        statusEl.className = 'text-sm mt-2 text-error';
+        statusEl.className = 'text-sm text-error flex-1';
         submitBtn.disabled = false;
         submitBtn.textContent = t('upload.submit');
         return;
@@ -668,7 +700,7 @@ export function renderUploadForm(container: HTMLElement): void {
         });
       } catch (err) {
         statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
-        statusEl.className = 'text-sm mt-2 text-error';
+        statusEl.className = 'text-sm text-error flex-1';
         submitBtn.disabled = false;
         submitBtn.textContent = t('upload.submit');
         return;
@@ -679,7 +711,7 @@ export function renderUploadForm(container: HTMLElement): void {
       const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
       if (!finalizeResult.ok) {
         statusEl.textContent = finalizeResult.error;
-        statusEl.className = 'text-sm mt-2 text-error';
+        statusEl.className = 'text-sm text-error flex-1';
         submitBtn.disabled = false;
         submitBtn.textContent = t('upload.submit');
         return;
@@ -696,7 +728,7 @@ export function renderUploadForm(container: HTMLElement): void {
 
       // Initiate upload with folder mode
       statusEl.textContent = t('upload.initiating');
-      statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
+      statusEl.className = 'text-sm text-text-muted flex-1 animate-pulse';
 
       const repoUrl = repoGroup.input.value.trim();
       const initiateResult = await initiateUpload({
@@ -709,7 +741,7 @@ export function renderUploadForm(container: HTMLElement): void {
       });
       if (!initiateResult.ok) {
         statusEl.textContent = initiateResult.error;
-        statusEl.className = 'text-sm mt-2 text-error';
+        statusEl.className = 'text-sm text-error flex-1';
         submitBtn.disabled = false;
         submitBtn.textContent = t('upload.submit');
         return;
@@ -727,7 +759,7 @@ export function renderUploadForm(container: HTMLElement): void {
         );
       } catch (err) {
         statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
-        statusEl.className = 'text-sm mt-2 text-error';
+        statusEl.className = 'text-sm text-error flex-1';
         submitBtn.disabled = false;
         submitBtn.textContent = t('upload.submit');
         return;
@@ -738,7 +770,7 @@ export function renderUploadForm(container: HTMLElement): void {
       const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
       if (!finalizeResult.ok) {
         statusEl.textContent = finalizeResult.error;
-        statusEl.className = 'text-sm mt-2 text-error';
+        statusEl.className = 'text-sm text-error flex-1';
         submitBtn.disabled = false;
         submitBtn.textContent = t('upload.submit');
         return;
@@ -781,10 +813,11 @@ function createFieldGroup(
   options: { maxLength?: number; placeholder?: string; required?: boolean } = {},
 ): FieldGroup {
   const wrapper = document.createElement('div');
-  wrapper.className = 'flex flex-col gap-2';
+  wrapper.className = 'flex flex-col gap-1.5';
 
   const label = document.createElement('label');
   label.htmlFor = id;
+  label.className = 'font-body text-sm font-medium text-text';
   label.textContent = labelText;
   wrapper.appendChild(label);
 
@@ -799,7 +832,7 @@ function createFieldGroup(
   wrapper.appendChild(inputEl);
 
   const errorEl = document.createElement('span');
-  errorEl.className = 'field-error text-xs text-error mt-1';
+  errorEl.className = 'field-error text-xs text-error';
   errorEl.setAttribute('aria-live', 'polite');
   wrapper.appendChild(errorEl);
 

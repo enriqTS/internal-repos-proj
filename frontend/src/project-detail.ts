@@ -53,7 +53,7 @@ export async function renderProjectDetail(
   // Back navigation link — rendered before fetch so it's always visible
   const backLink = document.createElement('a');
   backLink.href = '#/projects';
-  backLink.className = 'inline-flex items-center gap-1 text-sm text-accent font-mono hover:text-accent-hover transition-colors duration-180 mb-4';
+  backLink.className = 'inline-flex items-center gap-1.5 text-sm text-accent font-mono hover:text-accent-hover transition-colors duration-180 mb-5';
   backLink.textContent = t('projectDetail.back');
   container.appendChild(backLink);
 
@@ -193,7 +193,7 @@ function renderMetadata(metadata: ProjectMetadata): HTMLElement {
   actionsEl.className = 'flex items-center gap-3 mt-2';
 
   const editBtn = document.createElement('a');
-  editBtn.className = 'px-4 py-2 font-mono text-sm font-semibold text-accent bg-surface border border-accent rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent inline-flex items-center';
+  editBtn.className = 'px-4 py-2 font-mono text-sm font-semibold text-accent bg-surface border border-accent rounded-md cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent inline-flex items-center';
   editBtn.href = `#/project/${encodeURIComponent(metadata.name)}/edit`;
   editBtn.textContent = t('projectDetail.edit');
   actionsEl.appendChild(editBtn);
@@ -224,7 +224,7 @@ function renderDownloadSection(projectPath: string, available: boolean, projectN
 
   if (available) {
     const link = document.createElement('a');
-    link.className = 'inline-flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline';
+    link.className = 'inline-flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-md cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline';
     link.href = `${getBaseUrl()}/${projectPath}artifact.zip`;
     link.textContent = t('projectDetail.download');
     link.setAttribute('download', `${projectName}.zip`);
@@ -232,7 +232,7 @@ function renderDownloadSection(projectPath: string, available: boolean, projectN
     section.appendChild(link);
   } else {
     const disabledLink = document.createElement('span');
-    disabledLink.className = 'inline-flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-semibold text-text-muted bg-surface border border-border rounded-sm opacity-60 cursor-not-allowed';
+    disabledLink.className = 'inline-flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-semibold text-text-muted bg-surface border border-border rounded-md opacity-60 cursor-not-allowed';
     disabledLink.textContent = t('projectDetail.downloadDisabled');
     disabledLink.setAttribute('aria-disabled', 'true');
     section.appendChild(disabledLink);

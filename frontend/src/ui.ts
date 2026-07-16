@@ -12,8 +12,8 @@ export function card(opts?: { hoverable?: boolean; className?: string }): HTMLDi
   const hoverable = opts?.hoverable ?? true;
   const el = document.createElement('div');
 
-  const base = 'bg-surface border border-border rounded-md p-4 transition-all duration-180 flex flex-col gap-1.5';
-  const hoverClasses = 'cursor-pointer hover:border-border-strong hover:shadow-md hover:-translate-y-px active:translate-y-0 active:shadow-sm focus:outline-2 focus:outline-accent focus:outline-offset-2';
+  const base = 'bg-surface border border-border rounded-lg p-5 transition-all duration-180 flex flex-col gap-2';
+  const hoverClasses = 'cursor-pointer hover:border-border-strong hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm focus:outline-2 focus:outline-accent focus:outline-offset-2';
 
   let classes = base;
   if (hoverable) {
@@ -32,7 +32,7 @@ export function card(opts?: { hoverable?: boolean; className?: string }): HTMLDi
  */
 export function badge(text: string): HTMLSpanElement {
   const el = document.createElement('span');
-  el.className = 'font-mono text-xs font-medium bg-tag-bg text-tag-text px-2 py-0.5 rounded-sm tracking-wide';
+  el.className = 'font-mono text-xs font-medium bg-tag-bg text-tag-text px-2 py-0.5 rounded-md tracking-wide';
   el.textContent = text;
   return el;
 }
@@ -47,9 +47,9 @@ export function button(text: string, variant?: 'primary' | 'secondary' | 'danger
   const v = variant ?? 'primary';
 
   const variants: Record<string, string> = {
-    primary: 'px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed',
-    secondary: 'px-4 py-2 font-mono text-sm font-semibold text-accent bg-surface border border-accent rounded-sm cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent',
-    danger: 'px-4 py-2 font-mono text-sm font-semibold text-error bg-surface border border-error rounded-sm cursor-pointer transition-all duration-180 hover:bg-error hover:text-on-accent',
+    primary: 'px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-md cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed',
+    secondary: 'px-4 py-2 font-mono text-sm font-semibold text-accent bg-surface border border-accent rounded-md cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent',
+    danger: 'px-4 py-2 font-mono text-sm font-semibold text-error bg-surface border border-error rounded-md cursor-pointer transition-all duration-180 hover:bg-error hover:text-on-accent',
   };
 
   el.className = variants[v];
@@ -90,7 +90,7 @@ export function input(opts?: {
   maxLength?: number;
 }): HTMLInputElement {
   const el = document.createElement('input');
-  el.className = 'w-full px-3 py-2.5 font-mono text-sm border border-border rounded-sm bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm';
+  el.className = 'w-full px-3 py-2.5 font-mono text-sm border border-border rounded-lg bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm placeholder:text-text-muted placeholder:opacity-60';
   el.type = opts?.type ?? 'text';
   if (opts?.placeholder) el.placeholder = opts.placeholder;
   if (opts?.id) el.id = opts.id;
@@ -108,7 +108,7 @@ export function textarea(opts?: {
   maxLength?: number;
 }): HTMLTextAreaElement {
   const el = document.createElement('textarea');
-  el.className = 'w-full px-3 py-2.5 font-mono text-sm border border-border rounded-sm bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm resize-y min-h-[180px] leading-relaxed';
+  el.className = 'w-full px-3 py-2.5 font-mono text-sm border border-border rounded-lg bg-surface text-text transition-all duration-180 outline-none focus:border-accent focus:ring-3 focus:ring-accent-subtle shadow-sm resize-y min-h-[180px] leading-relaxed placeholder:text-text-muted placeholder:opacity-60';
   el.rows = opts?.rows ?? 6;
   if (opts?.placeholder) el.placeholder = opts.placeholder;
   if (opts?.id) el.id = opts.id;
@@ -122,7 +122,7 @@ export function textarea(opts?: {
  */
 export function container(className?: string): HTMLDivElement {
   const el = document.createElement('div');
-  let classes = 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 animate-[fadeIn_300ms_ease]';
+  let classes = 'max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 animate-[fadeIn_300ms_ease]';
   if (className) {
     classes += ' ' + className;
   }
@@ -146,7 +146,7 @@ export function overlay(): HTMLDivElement {
  */
 export function iconButton(opts?: { ariaLabel?: string; className?: string }): HTMLButtonElement {
   const el = document.createElement('button');
-  let classes = 'inline-flex items-center justify-center w-9 h-9 p-0 bg-transparent border-none rounded-sm text-text-muted cursor-pointer transition-all duration-180 hover:text-text focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 active:scale-[0.92]';
+  let classes = 'inline-flex items-center justify-center w-9 h-9 p-0 bg-transparent border-none rounded-md text-text-muted cursor-pointer transition-all duration-180 hover:text-text hover:bg-accent-subtle focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 active:scale-[0.92]';
   if (opts?.className) {
     classes += ' ' + opts.className;
   }

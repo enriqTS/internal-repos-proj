@@ -118,7 +118,7 @@ export function createPaginator(options: PaginatorOptions): PaginatorAPI {
         wrapper.appendChild(ellipsis);
       } else {
         const pageBtn = document.createElement('button');
-        const baseClasses = 'px-3 py-1.5 font-mono text-sm border border-border rounded-sm cursor-pointer transition-all duration-180 hover:border-accent hover:text-accent';
+        const baseClasses = 'px-3 py-1.5 font-mono text-sm border border-border rounded-md cursor-pointer transition-all duration-180 hover:border-accent hover:text-accent';
         if (item === currentPage) {
           pageBtn.className = baseClasses + ' bg-accent text-on-accent border-accent';
           pageBtn.setAttribute('aria-current', 'page');

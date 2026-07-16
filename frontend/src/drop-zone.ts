@@ -65,7 +65,7 @@ export function createDropZone(options: DropZoneOptions): DropZoneAPI {
 
   // --- Build DOM structure ---
   const zone = document.createElement('div');
-  zone.className = 'drop-zone border-2 border-dashed border-border rounded-md p-8 text-center cursor-pointer transition-all duration-180 hover:border-accent hover:bg-accent-subtle';
+  zone.className = 'drop-zone border-2 border-dashed border-border rounded-lg p-10 text-center cursor-pointer transition-all duration-180 hover:border-accent hover:bg-accent-subtle';
 
   const content = document.createElement('div');
   content.className = 'flex flex-col items-center gap-2';

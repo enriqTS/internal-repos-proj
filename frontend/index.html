@@ -38,15 +38,34 @@
 
   </head>
   <body>
-    <header class="fixed top-0 left-0 right-0 z-50 bg-header-bg backdrop-blur-sm border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between">
-      <h1 class="font-mono text-base font-bold tracking-tight"><a href="#/" class="no-underline text-text flex items-center gap-2">Repos Internos</a></h1>
-      <nav aria-label="Main navigation" class="flex items-center gap-1">
-        <a href="#/projects" data-nav="projects" class="font-mono text-sm text-text-muted hover:text-accent transition-colors duration-180 px-3 py-1.5 rounded-sm no-underline">Projetos</a>
-        <a href="#/templates" data-nav="templates" class="font-mono text-sm text-text-muted hover:text-accent transition-colors duration-180 px-3 py-1.5 rounded-sm no-underline">Templates</a>
-        <a href="#/upload" class="font-mono text-sm text-text-muted hover:text-accent transition-colors duration-180 px-3 py-1.5 rounded-sm no-underline">Upload</a>
+    <header class="fixed top-0 left-0 right-0 z-50 bg-header-bg backdrop-blur-md border-b border-border px-4 sm:px-6 py-3">
+      <div class="max-w-5xl mx-auto flex items-center justify-between">
+        <h1 class="font-mono text-base font-bold tracking-tight"><a href="#/" class="no-underline text-text flex items-center gap-2"><span class="inline-flex items-center justify-center w-7 h-7 rounded-md bg-accent text-on-accent text-xs font-bold">RI</span>Repos Internos</a></h1>
+
+        <!-- Desktop nav -->
+        <nav aria-label="Main navigation" class="hidden sm:flex items-center gap-1">
+          <a href="#/projects" data-nav="projects" class="font-mono text-sm text-text-muted hover:text-accent hover:bg-accent-subtle transition-all duration-180 px-3 py-1.5 rounded-md no-underline">Projetos</a>
+          <a href="#/templates" data-nav="templates" class="font-mono text-sm text-text-muted hover:text-accent hover:bg-accent-subtle transition-all duration-180 px-3 py-1.5 rounded-md no-underline">Templates</a>
+          <a href="#/upload" class="font-mono text-sm text-text-muted hover:text-accent hover:bg-accent-subtle transition-all duration-180 px-3 py-1.5 rounded-md no-underline">Upload</a>
+        </nav>
+
+        <!-- Mobile hamburger button -->
+        <button id="mobile-menu-btn" type="button" class="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-md text-text-muted hover:text-text hover:bg-accent-subtle transition-all duration-180 border-none bg-transparent cursor-pointer" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobile-menu">
+          <svg class="hamburger-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <svg class="close-icon w-5 h-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Mobile nav panel -->
+      <nav id="mobile-menu" aria-label="Mobile navigation" class="hidden sm:hidden mt-3 pb-2 border-t border-border pt-3">
+        <div class="flex flex-col gap-1">
+          <a href="#/projects" data-nav="projects" class="font-mono text-sm text-text-muted hover:text-accent hover:bg-accent-subtle transition-all duration-180 px-3 py-2.5 rounded-md no-underline">Projetos</a>
+          <a href="#/templates" data-nav="templates" class="font-mono text-sm text-text-muted hover:text-accent hover:bg-accent-subtle transition-all duration-180 px-3 py-2.5 rounded-md no-underline">Templates</a>
+          <a href="#/upload" class="font-mono text-sm text-text-muted hover:text-accent hover:bg-accent-subtle transition-all duration-180 px-3 py-2.5 rounded-md no-underline">Upload</a>
+        </div>
       </nav>
     </header>
-    <main id="app" class="max-w-4xl mx-auto mt-20 px-4 sm:px-6 lg:px-8 animate-[fadeIn_300ms_ease]"></main>
+    <main id="app" class="max-w-5xl mx-auto mt-16 sm:mt-20 px-4 sm:px-6 lg:px-8 pt-2"></main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
