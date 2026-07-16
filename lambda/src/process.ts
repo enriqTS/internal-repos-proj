@@ -1,8 +1,9 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { S3Client, GetObjectCommand, DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, DeleteObjectCommand, PutObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import JSZip from 'jszip';
 import { filterFiles, AllFilesFilteredError } from './filter';
 import { createArtifactZip, ArtifactTooLargeError } from './archiver-wrapper';
+import { expandFiles } from './file-expander';
 import { writeProject, ProjectExistsError } from './s3-writer';
 import { regenerateIndex } from './index-generator';
 import { addTagsToRegistry } from './tag-registry';
@@ -167,41 +168,49 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw err;
     }
 
-    // 3. Download upload.zip from staging bucket
-    const zipKey = `staging/${sessionId}/upload.zip`;
-    let zipBuffer: Buffer;
-    try {
-      const zipResponse = await s3Client.send(
-        new GetObjectCommand({ Bucket: stagingBucket, Key: zipKey })
-      );
-      const zipBytes = await zipResponse.Body?.transformToByteArray();
-      if (!zipBytes) {
-        return {
-          statusCode: 404,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-          body: JSON.stringify({ error: 'Upload zip not found or has expired' }),
-        };
-      }
-      zipBuffer = Buffer.from(zipBytes);
-    } catch (err: unknown) {
-      if (err instanceof Error && (err.name === 'NoSuchKey' || (err as any).$metadata?.httpStatusCode === 404)) {
-        return {
-          statusCode: 404,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-          body: JSON.stringify({ error: 'Upload zip not found or has expired' }),
-        };
-      }
-      throw err;
-    }
+    // 3. Load files based on upload mode (zip or folder)
+    let files: FileEntry[];
 
-    // 4. Extract zip contents into FileEntry[]
-    const zip = await JSZip.loadAsync(zipBuffer);
-    const files: FileEntry[] = [];
-    const entries = Object.entries(zip.files);
-    for (const [path, entry] of entries) {
-      if (!entry.dir) {
-        const content = await entry.async('nodebuffer');
-        files.push({ path, content });
+    if (sessionMeta.uploadType === 'folder') {
+      // Folder mode: read individual files from staging/{sessionId}/files/
+      files = await loadStagedFolderFiles(stagingBucket, sessionId, sessionMeta.filePaths);
+    } else {
+      // Zip mode (default): download and extract upload.zip
+      const zipKey = `staging/${sessionId}/upload.zip`;
+      let zipBuffer: Buffer;
+      try {
+        const zipResponse = await s3Client.send(
+          new GetObjectCommand({ Bucket: stagingBucket, Key: zipKey })
+        );
+        const zipBytes = await zipResponse.Body?.transformToByteArray();
+        if (!zipBytes) {
+          return {
+            statusCode: 404,
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+            body: JSON.stringify({ error: 'Upload zip not found or has expired' }),
+          };
+        }
+        zipBuffer = Buffer.from(zipBytes);
+      } catch (err: unknown) {
+        if (err instanceof Error && (err.name === 'NoSuchKey' || (err as any).$metadata?.httpStatusCode === 404)) {
+          return {
+            statusCode: 404,
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+            body: JSON.stringify({ error: 'Upload zip not found or has expired' }),
+          };
+        }
+        throw err;
+      }
+
+      // 4. Extract zip contents into FileEntry[]
+      const zip = await JSZip.loadAsync(zipBuffer);
+      files = [];
+      const entries = Object.entries(zip.files);
+      for (const [path, entry] of entries) {
+        if (!entry.dir) {
+          const content = await entry.async('nodebuffer');
+          files.push({ path, content });
+        }
       }
     }
 
@@ -224,6 +233,27 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // 5. Apply server-side filtering
     const filterResult = filterFiles(files);
+
+    // 5.5: Expand files to individual S3 objects and generate manifest
+    const frontendBucket = process.env.BUCKET_NAME!;
+    let expansionWarning: string | undefined;
+    try {
+      const expandResult = await expandFiles(filterResult.files, sessionMeta.name, frontendBucket);
+      // Upload file-tree.json manifest
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: frontendBucket,
+          Key: `projects/${sessionMeta.name}/file-tree.json`,
+          Body: JSON.stringify(expandResult.manifest),
+          ContentType: 'application/json',
+        })
+      );
+      if (expandResult.warnings.length > 0) {
+        expansionWarning = expandResult.warnings.join('; ');
+      }
+    } catch {
+      expansionWarning = 'File expansion encountered errors';
+    }
 
     // 6. Persist new tags to the registry (best-effort)
     let registryWarning: string | undefined;
@@ -270,7 +300,6 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const artifact = await createArtifactZip(filterResult.files);
 
     // 8. Write project to frontend bucket (behavior depends on mode)
-    const frontendBucket = process.env.BUCKET_NAME!;
 
     if (sessionMeta.mode === 'replace') {
       // Replace mode: overwrite only artifact.zip, preserve metadata.json and readme.md
@@ -310,7 +339,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     await cleanupStagedFiles(stagingBucket, sessionId);
 
     // 11. Return success response
-    const warnings = [filterResult.warning, registryWarning, readmeWarning, tagWarning].filter(Boolean).join('; ');
+    const warnings = [filterResult.warning, expansionWarning, registryWarning, readmeWarning, tagWarning].filter(Boolean).join('; ');
     const response: FinalizeResponse = {
       message: 'Project uploaded successfully',
       path: `projects/${sessionMeta.name}/`,
@@ -364,11 +393,87 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 }
 
 /**
- * Delete staged metadata.json and upload.zip from the staging bucket.
+ * Delete staged files from the staging bucket.
+ * Handles both zip mode (metadata.json + upload.zip) and folder mode (metadata.json + files/*).
  */
 async function cleanupStagedFiles(bucket: string, sessionId: string): Promise<void> {
-  await Promise.all([
+  // Always delete metadata.json
+  const deletePromises: Promise<any>[] = [
     s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: `staging/${sessionId}/metadata.json` })),
-    s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: `staging/${sessionId}/upload.zip` })),
-  ]);
+  ];
+
+  // Try to delete upload.zip (zip mode) — ignore if doesn't exist
+  deletePromises.push(
+    s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: `staging/${sessionId}/upload.zip` })).catch(() => {}),
+  );
+
+  // List and delete any files under staging/{sessionId}/files/ (folder mode)
+  try {
+    const listResponse = await s3Client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: `staging/${sessionId}/files/`,
+      })
+    );
+    if (listResponse.Contents && listResponse.Contents.length > 0) {
+      const fileDeletePromises = listResponse.Contents.map((obj) =>
+        s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: obj.Key! }))
+      );
+      deletePromises.push(...fileDeletePromises);
+    }
+  } catch {
+    // Ignore list/delete errors for folder files — lifecycle policy will handle cleanup
+  }
+
+  await Promise.all(deletePromises);
+}
+
+/**
+ * Load individual staged files from S3 for folder mode uploads.
+ * Reads each file from `staging/{sessionId}/files/{filePath}`.
+ *
+ * @param bucket - The staging S3 bucket name
+ * @param sessionId - The upload session ID
+ * @param filePaths - Array of file paths stored in session metadata
+ * @returns Array of FileEntry objects with path and content
+ */
+async function loadStagedFolderFiles(
+  bucket: string,
+  sessionId: string,
+  filePaths: string[] | undefined,
+): Promise<FileEntry[]> {
+  if (!filePaths || filePaths.length === 0) {
+    // Fall back to listing objects if filePaths not in metadata
+    const listResponse = await s3Client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: `staging/${sessionId}/files/`,
+      })
+    );
+    if (!listResponse.Contents || listResponse.Contents.length === 0) {
+      return [];
+    }
+    filePaths = listResponse.Contents
+      .map((obj) => obj.Key!.replace(`staging/${sessionId}/files/`, ''))
+      .filter((p) => p.length > 0);
+  }
+
+  const files: FileEntry[] = [];
+  const downloadPromises = filePaths.map(async (filePath) => {
+    const key = `staging/${sessionId}/files/${filePath}`;
+    try {
+      const response = await s3Client.send(
+        new GetObjectCommand({ Bucket: bucket, Key: key })
+      );
+      const bytes = await response.Body?.transformToByteArray();
+      if (bytes) {
+        files.push({ path: filePath, content: Buffer.from(bytes) });
+      }
+    } catch {
+      // Skip files that can't be read — they may have expired
+    }
+  });
+
+  await Promise.all(downloadPromises);
+  return files;
 }

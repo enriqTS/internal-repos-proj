@@ -12,6 +12,7 @@ vi.mock('@aws-sdk/client-s3', () => ({
   GetObjectCommand: vi.fn(),
   DeleteObjectCommand: vi.fn(),
   PutObjectCommand: vi.fn(),
+  ListObjectsV2Command: vi.fn(),
 }));
 
 vi.mock('./filter', () => ({
@@ -22,6 +23,14 @@ vi.mock('./filter', () => ({
 vi.mock('./archiver-wrapper', () => ({
   createArtifactZip: vi.fn(() => Promise.resolve(Buffer.from('fake-zip'))),
   ArtifactTooLargeError: class ArtifactTooLargeError extends Error { constructor() { super('Artifact too large'); } },
+}));
+
+vi.mock('./file-expander', () => ({
+  expandFiles: vi.fn(() => Promise.resolve({
+    filesWritten: 1,
+    manifest: { version: 1, totalFiles: 1, totalSize: 5, entries: [{ path: 'index.ts', type: 'file', size: 5 }] },
+    warnings: [],
+  })),
 }));
 
 vi.mock('./s3-writer', () => ({
