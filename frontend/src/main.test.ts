@@ -24,8 +24,9 @@ vi.mock('./api', () => ({
   fetchTagRegistry: vi.fn(() => Promise.resolve({ ok: true, data: ['tag1'] })),
   computePatchBody: vi.fn(() => null),
   updateProject: vi.fn(() => Promise.resolve({ ok: true, data: {} })),
-  initiateUpload: vi.fn(() => Promise.resolve({ ok: true, data: { sessionId: 'sess-1', uploadUrl: 'https://s3.example.com/url', mode: 'zip', expiresAt: '2025-01-01T00:00:00Z' } })),
+  initiateUpload: vi.fn(() => Promise.resolve({ ok: true, data: { sessionId: 'sess-1', uploadUrl: 'https://s3.example.com/url', uploadUrls: { 'main.ts': 'https://s3.example.com/main.ts' }, mode: 'folder', expiresAt: '2025-01-01T00:00:00Z' } })),
   uploadToS3: vi.fn(() => Promise.resolve(undefined)),
+  uploadFilesToS3: vi.fn(() => Promise.resolve(undefined)),
   finalizeUpload: vi.fn(() => Promise.resolve({ ok: true, data: { message: 'Success', path: 'projects/test/' } })),
   deleteProject: vi.fn(() => Promise.resolve({ ok: true })),
   suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: { tags: [], newTags: [] } })),
@@ -46,6 +47,7 @@ vi.mock('./tag-selector', () => {
   const mockTagSelector = {
     setAvailableTags: vi.fn(),
     applySuggestions: vi.fn(),
+    applyNewSuggestions: vi.fn(),
     getSelectedTags: vi.fn(() => ['tag1']),
     getNewTags: vi.fn(() => []),
     hasUserInteracted: vi.fn(() => false),
@@ -319,6 +321,16 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           document.body.appendChild(freshContainer);
           vi.clearAllMocks();
 
+          // Track hashchange listeners for cleanup to prevent accumulation across iterations
+          const hashChangeListeners: EventListenerOrEventListenerObject[] = [];
+          const originalAddEventListener = window.addEventListener;
+          vi.spyOn(window, 'addEventListener').mockImplementation(((type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
+            if (type === 'hashchange') {
+              hashChangeListeners.push(listener);
+            }
+            originalAddEventListener.call(window, type, listener, options);
+          }) as typeof window.addEventListener);
+
           const { fetchSearchIndex } = await import('./api');
           const mockedFetch = vi.mocked(fetchSearchIndex);
           mockedFetch.mockResolvedValue({ ok: true, data: [{ name: 'proj', description: 'desc', tags: ['t'], date: '2024-01-01', path: 'projects/proj/' }] });
@@ -347,6 +359,12 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // After all non-mutation navigations, fetchSearchIndex should NOT have been
           // called again (searchIndexLoaded stays true after successful initial load)
           expect(mockedFetch.mock.calls.length).toBe(callCountAfterInit);
+
+          // Cleanup: remove all hashchange listeners added during this iteration
+          for (const listener of hashChangeListeners) {
+            window.removeEventListener('hashchange', listener);
+          }
+          vi.mocked(window.addEventListener).mockRestore();
         },
       ),
       { numRuns: 15 },
