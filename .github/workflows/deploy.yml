@@ -228,6 +228,21 @@ jobs:
             echo "  Template '$TEMPLATE' deployed."
           done
 
+      - name: Expand template files for file browser
+        env:
+          BUCKET_NAME: ${{ steps.tf_outputs.outputs.templates_bucket }}
+        run: |
+          # Expand each template's files individually to S3 for the file browser
+          for TEMPLATE_DIR in templates/chatbot-rag-*/; do
+            if [ ! -d "$TEMPLATE_DIR" ]; then
+              continue
+            fi
+
+            TEMPLATE=$(basename "$TEMPLATE_DIR")
+            echo "Expanding template files: $TEMPLATE"
+            npx tsx .github/scripts/expand-template-files.ts "$TEMPLATE" "$TEMPLATE_DIR"
+          done
+
       - name: Regenerate templates index
         run: |
           S3_BUCKET="${{ steps.tf_outputs.outputs.templates_bucket }}"

@@ -84,6 +84,17 @@ jobs:
 
           echo "All project directories validated successfully."
 
+      - name: Set up Node.js
+        if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
+        run: npm ci
+
       - name: Deploy project files to S3
         if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
         run: |
@@ -98,6 +109,19 @@ jobs:
           done
 
           echo "All projects deployed successfully."
+
+      - name: Expand project files for file browser
+        if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
+        env:
+          BUCKET_NAME: ${{ env.S3_BUCKET }}
+        run: |
+          PROJECTS='${{ steps.changed-projects.outputs.projects }}'
+
+          for PROJECT in $(echo "$PROJECTS" | jq -r '.[]'); do
+            PROJECT_DIR="projects/$PROJECT"
+            echo "Expanding project files: $PROJECT"
+            npx tsx .github/scripts/expand-template-files.ts "$PROJECT" "$PROJECT_DIR" "projects"
+          done
 
       - name: Regenerate search index
         if: steps.changed-projects.outputs.projects != '' && steps.changed-projects.outputs.projects != '[]'
