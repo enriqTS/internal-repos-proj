@@ -6,6 +6,8 @@
  * Supported routes:
  *   #/           → Search/home view
  *   #/project/:name → Project detail view
+ *   #/project/:name/files/:path? → Project file browsing
+ *   #/template/:name/files/:path? → Template file browsing
  *   #/upload     → Upload form view
  */
 
@@ -86,4 +88,49 @@ export function createRouter(
   }
 
   return { navigate, start, destroy };
+}
+
+
+// ─── Deep Linking Helpers ─────────────────────────────────────────────────────
+
+/**
+ * Encode a file/directory path into a URL hash fragment for deep linking.
+ *
+ * @param type - 'project' or 'template'
+ * @param name - The project or template name
+ * @param path - The file or directory path within the manifest (e.g. "src/main.ts" or "src/")
+ * @returns A hash string like "#/project/my-project/files/src/main.ts"
+ */
+export function encodeFilePath(type: 'project' | 'template', name: string, path: string): string {
+  const encodedName = encodeURIComponent(name);
+  // Don't encode slashes in the path — they're structural
+  const encodedPath = path
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+  return `#/${type}/${encodedName}/files/${encodedPath}`;
+}
+
+/**
+ * Decode a URL hash fragment back into its constituent parts.
+ *
+ * @param hash - The full hash string (e.g. "#/project/my-project/files/src/main.ts")
+ * @returns Parsed components or null if the hash doesn't match a file browsing route
+ */
+export function decodeFilePath(hash: string): { type: 'project' | 'template'; name: string; path: string } | null {
+  // Strip leading '#' if present
+  const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+
+  const match = raw.match(/^\/(project|template)\/([^/]+)\/files(?:\/(.*))?$/);
+  if (!match) return null;
+
+  const type = match[1] as 'project' | 'template';
+  const name = decodeURIComponent(match[2]);
+  const pathSegments = match[3] || '';
+  const path = pathSegments
+    .split('/')
+    .map((segment) => decodeURIComponent(segment))
+    .join('/');
+
+  return { type, name, path };
 }

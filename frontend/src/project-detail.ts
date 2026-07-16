@@ -1,9 +1,11 @@
 import type { ProjectMetadata } from 'shared/types';
 import { fetchProjectReadme, fetchProjectMetadata } from './api';
 import { showDeleteDialog } from './delete-dialog';
+import { createFileBrowser } from './file-browser';
 import { t } from './i18n';
 import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
 import { heading, badge, button } from './ui';
+import { encodeFilePath } from './router';
 
 /**
  * Get the base URL for constructing artifact download links.
@@ -39,10 +41,12 @@ async function checkArtifactAvailability(projectPath: string): Promise<boolean> 
  *
  * @param projectPath - The project path prefix, e.g. "projects/my-project/"
  * @param container - The DOM element to render into
+ * @param initialFilePath - Optional file path for deep link restoration (from URL hash)
  */
 export async function renderProjectDetail(
   projectPath: string,
   container: HTMLElement,
+  initialFilePath?: string,
 ): Promise<void> {
   container.innerHTML = '';
 
@@ -79,6 +83,27 @@ export async function renderProjectDetail(
 
   const downloadSection = renderDownloadSection(projectPath, artifactAvailable, metadata.name);
   detailWrapper.appendChild(downloadSection);
+
+  // File Browser section — shows "Browse Files" button initially (minimal vertical space)
+  const fileBrowserSection = document.createElement('section');
+  fileBrowserSection.className = 'file-browser-section';
+
+  const baseUrl = getBaseUrl();
+  const basePath = `${baseUrl}/${projectPath}`;
+  const projectName = metadata.name;
+
+  const fileBrowser = createFileBrowser({
+    container: fileBrowserSection,
+    basePath,
+    initialPath: initialFilePath,
+    onNavigate: (path: string) => {
+      const hash = encodeFilePath('project', projectName, path);
+      window.location.hash = hash;
+    },
+  });
+  fileBrowser.mount();
+
+  detailWrapper.appendChild(fileBrowserSection);
 
   // Render readme or readme error
   if (!readmeResult.ok) {

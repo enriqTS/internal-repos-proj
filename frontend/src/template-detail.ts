@@ -1,7 +1,9 @@
 import type { TemplateMetadata } from 'shared/types';
 import { fetchTemplateMetadata, fetchTemplateReadme } from './api';
+import { createFileBrowser } from './file-browser';
 import { t } from './i18n';
 import { formatRelativeDate } from './relative-date';
+import { encodeFilePath } from './router';
 import { marked, renderReadmeSection, renderReadmeError } from './shared-markdown';
 import { container, heading, badge, button } from './ui';
 
@@ -190,10 +192,12 @@ export function renderArchitectureSection(imageUrl: string, name: string): HTMLE
  *
  * @param params - Route params object with `name` key from the regex named group
  * @param container - The DOM element to render into
+ * @param initialFilePath - Optional file path for deep link restoration (from URL hash)
  */
 export async function renderTemplateDetail(
   params: Record<string, string>,
   containerEl: HTMLElement,
+  initialFilePath?: string,
 ): Promise<void> {
   containerEl.innerHTML = '';
 
@@ -277,6 +281,26 @@ export async function renderTemplateDetail(
   // 2. Download button
   const downloadButton = renderDownloadButton(name);
   detailWrapper.appendChild(downloadButton);
+
+  // 2.5 File Browser section — shows "Browse Files" button initially (minimal vertical space)
+  const fileBrowserSection = document.createElement('section');
+  fileBrowserSection.className = 'file-browser-section';
+
+  const cdnBaseUrl = getBaseUrl();
+  const basePath = `${cdnBaseUrl}/templates/${name}/`;
+
+  const fileBrowser = createFileBrowser({
+    container: fileBrowserSection,
+    basePath,
+    initialPath: initialFilePath,
+    onNavigate: (path: string) => {
+      const hash = encodeFilePath('template', name, path);
+      window.location.hash = hash;
+    },
+  });
+  fileBrowser.mount();
+
+  detailWrapper.appendChild(fileBrowserSection);
 
   // 3. Fetch readme and resolve architecture image in parallel for performance
   const [architectureImageUrl, readmeResult] = await Promise.all([

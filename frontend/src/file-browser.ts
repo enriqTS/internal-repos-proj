@@ -396,6 +396,7 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
   /**
    * Navigate to a specific path within the manifest.
    * Determines whether the path is a directory or file and sets state accordingly.
+   * If the path is not found in the manifest, falls back to root with a notice.
    */
   function navigateToPath(path: string): void {
     if (!manifest) return;
@@ -417,10 +418,11 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
         setState('BROWSING');
         onNavigate?.(asDir);
       } else {
-        // Path not found — fall back to root
+        // Path not found — fall back to root and show notice
         currentPath = '';
         setState('BROWSING');
         onNavigate?.('');
+        showPathNotFoundNotice(normalizedPath);
       }
       return;
     }
@@ -490,6 +492,30 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
     wrapper.appendChild(retryBtn);
 
     container.appendChild(wrapper);
+  }
+
+  /**
+   * Show a temporary notice when a deep link path is not found in the manifest.
+   * The notice disappears after 5 seconds.
+   */
+  function showPathNotFoundNotice(path: string): void {
+    const notice = document.createElement('div');
+    notice.className =
+      'file-browser-notice px-4 py-2 mb-3 text-sm font-mono bg-surface border border-border rounded-sm text-text-muted';
+    notice.setAttribute('role', 'alert');
+    notice.textContent = `Path "${path}" was not found. Showing root directory.`;
+
+    // Insert at the beginning of the container
+    if (container.firstChild) {
+      container.insertBefore(notice, container.firstChild);
+    } else {
+      container.appendChild(notice);
+    }
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      notice.remove();
+    }, 5000);
   }
 
   // ─── Public API ───────────────────────────────────────────────────────────────

@@ -145,7 +145,39 @@ async function renderEditView(params: Record<string, string>, container: HTMLEle
 }
 
 /**
+ * Render the project detail view with File Browser initialized at a specific file path.
+ * Used for deep links like #/project/{name}/files/{path}
+ */
+async function renderProjectFilesView(params: Record<string, string>, container: HTMLElement): Promise<void> {
+  const projectName = decodeURIComponent(params.name || '');
+  if (!projectName) {
+    container.innerHTML = '<p class="text-center p-8 text-error font-medium">No project specified</p>';
+    return;
+  }
+
+  const filePath = params.path || '';
+  const projectPath = `projects/${projectName}/`;
+  await renderProjectDetail(projectPath, container, filePath);
+}
+
+/**
+ * Render the template detail view with File Browser initialized at a specific file path.
+ * Used for deep links like #/template/{name}/files/{path}
+ */
+async function renderTemplateFilesView(params: Record<string, string>, container: HTMLElement): Promise<void> {
+  const templateName = decodeURIComponent(params.name || '');
+  if (!templateName) {
+    container.innerHTML = '<p class="text-center p-8 text-error font-medium">No template specified</p>';
+    return;
+  }
+
+  await renderTemplateDetail({ name: params.name }, container, params.path || '');
+}
+
+/**
  * Define application routes.
+ * Note: More specific routes (e.g., /project/:name/files/:path) must come before
+ * generic routes (e.g., /project/:name) to ensure correct matching.
  */
 const routes: Route[] = [
   {
@@ -161,12 +193,20 @@ const routes: Route[] = [
     handler: renderEditView,
   },
   {
+    pattern: /^\/project\/(?<name>[^/]+)\/files(?:\/(?<path>.*))?$/,
+    handler: renderProjectFilesView,
+  },
+  {
     pattern: /^\/project\/(?<name>[^/]+)$/,
     handler: renderDetailView,
   },
   {
     pattern: /^\/templates$/,
     handler: renderTemplatesPage,
+  },
+  {
+    pattern: /^\/template\/(?<name>[^/]+)\/files(?:\/(?<path>.*))?$/,
+    handler: renderTemplateFilesView,
   },
   {
     pattern: /^\/template\/(?<name>[^/]+)$/,
