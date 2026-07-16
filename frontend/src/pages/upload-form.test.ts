@@ -121,7 +121,7 @@ describe('validateForm', () => {
   });
 });
 
-vi.mock('../api', () => ({
+vi.mock('../utils/api', () => ({
   initiateUpload: vi.fn(),
   uploadToS3: vi.fn(),
   uploadFileToS3: vi.fn(),
@@ -146,7 +146,7 @@ vi.mock('../components/tag-selector', () => {
   };
 });
 
-vi.mock('../search-state', () => ({
+vi.mock('../utils/search-state', () => ({
   invalidateSearchIndex: vi.fn(),
   searchIndexLoaded: false,
   markSearchIndexLoaded: vi.fn(),
@@ -336,8 +336,8 @@ describe('renderUploadForm', () => {
   });
 
   it('redirects to project list on successful upload (initiate → S3 → finalize)', async () => {
-    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('../api');
-    const { invalidateSearchIndex } = await import('../search-state');
+    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('../utils/api');
+    const { invalidateSearchIndex } = await import('../utils/search-state');
     const mockedInitiate = vi.mocked(initiateUpload);
     const mockedUploadFilesToS3 = vi.mocked(uploadFilesToS3);
     const mockedFinalize = vi.mocked(finalizeUpload);
@@ -398,7 +398,7 @@ describe('renderUploadForm', () => {
   });
 
   it('shows error message when initiate fails', async () => {
-    const { initiateUpload } = await import('../api');
+    const { initiateUpload } = await import('../utils/api');
     const mockedInitiate = vi.mocked(initiateUpload);
 
     mockedInitiate.mockResolvedValueOnce({
@@ -431,7 +431,7 @@ describe('renderUploadForm', () => {
   });
 
   it('disables submit button during upload', async () => {
-    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('../api');
+    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('../utils/api');
     const mockedInitiate = vi.mocked(initiateUpload);
     const mockedUploadFilesToS3 = vi.mocked(uploadFilesToS3);
     const mockedFinalize = vi.mocked(finalizeUpload);
@@ -509,7 +509,7 @@ describe('renderUploadForm', () => {
   });
 
   it('shows error when S3 upload fails', async () => {
-    const { initiateUpload, uploadFilesToS3 } = await import('../api');
+    const { initiateUpload, uploadFilesToS3 } = await import('../utils/api');
     const mockedInitiate = vi.mocked(initiateUpload);
     const mockedUploadFilesToS3 = vi.mocked(uploadFilesToS3);
 
@@ -548,7 +548,7 @@ describe('renderUploadForm', () => {
   });
 
   it('shows error when finalize fails', async () => {
-    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('../api');
+    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('../utils/api');
     const mockedInitiate = vi.mocked(initiateUpload);
     const mockedUploadFilesToS3 = vi.mocked(uploadFilesToS3);
     const mockedFinalize = vi.mocked(finalizeUpload);
@@ -613,7 +613,7 @@ describe('renderUploadForm', () => {
     expect(statusEl!.classList.contains('text-error')).toBe(true);
 
     // initiateUpload should NOT have been called
-    const { initiateUpload } = await import('../api');
+    const { initiateUpload } = await import('../utils/api');
     expect(initiateUpload).not.toHaveBeenCalled();
   });
 });

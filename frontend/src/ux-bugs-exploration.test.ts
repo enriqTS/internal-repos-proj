@@ -86,7 +86,7 @@ describe('Bug Condition 1c: Card grid CSS enforces truncation', () => {
 
 // ─── Test 1d: Missing upload button on projects page ──────────────────────────
 
-vi.mock('./api', () => ({
+vi.mock('./utils/api', () => ({
   fetchSearchIndex: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
   fetchProjectMetadata: vi.fn(() => Promise.resolve({ ok: true, data: { name: 'test', description: 'desc', tags: ['t'], date: '2024-01-01' } })),
   fetchProjectReadme: vi.fn(() => Promise.resolve({ ok: true, data: '# Test' })),
@@ -100,14 +100,14 @@ vi.mock('./api', () => ({
   suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: { tags: [], newTags: [] } })),
 }));
 
-vi.mock('./search', () => ({
+vi.mock('./pages/search', () => ({
   initializeSearch: vi.fn(),
   setupSearch: vi.fn(),
   search: vi.fn(() => []),
   renderResults: vi.fn(),
 }));
 
-vi.mock('./theme-manager', () => {
+vi.mock('./utils/theme-manager', () => {
   const mockManager = {
     getTheme: vi.fn(() => 'light'),
     toggle: vi.fn(() => 'dark'),
@@ -121,17 +121,17 @@ vi.mock('./theme-manager', () => {
   };
 });
 
-vi.mock('./landing-page', () => ({
+vi.mock('./pages/landing-page', () => ({
   renderLandingPage: vi.fn((_params: Record<string, string>, container: HTMLElement) => {
     container.innerHTML = '<div class="landing-page"><h1>Landing</h1></div>';
   }),
 }));
 
-vi.mock('./project-detail', () => ({
+vi.mock('./pages/project-detail', () => ({
   renderProjectDetail: vi.fn(),
 }));
 
-vi.mock('./tag-selector', () => {
+vi.mock('./components/tag-selector', () => {
   const mockTagSelector = {
     setAvailableTags: vi.fn(),
     applySuggestions: vi.fn(),
@@ -168,7 +168,7 @@ describe('Bug Condition 1d: No upload button on projects page', () => {
   });
 
   it('projects page should have an upload button/link to #/upload (will FAIL — no upload affordance exists)', async () => {
-    const { fetchSearchIndex } = await import('./api');
+    const { fetchSearchIndex } = await import('./utils/api');
     vi.mocked(fetchSearchIndex).mockResolvedValue({ ok: true, data: [] });
 
     window.location.hash = '#/projects';

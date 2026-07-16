@@ -2,8 +2,8 @@
  * Paginator component for the search page.
  * Slices a result set into pages and renders page navigation controls.
  */
-import { t } from '../i18n';
-import { iconButton } from '../ui';
+import { t } from '../utils/i18n';
+import { iconButton } from '../utils/ui';
 
 export interface PaginatorOptions {
   /** Container element to render into */

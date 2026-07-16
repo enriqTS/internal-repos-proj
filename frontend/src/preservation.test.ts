@@ -21,7 +21,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fc from 'fast-check';
 import { renderCardGrid, type CardItem } from './components/card-grid';
-import { formatRelativeDate } from './relative-date';
+import { formatRelativeDate } from './utils/relative-date';
 import { renderArchitectureSection } from './pages/template-detail';
 
 /**
@@ -217,7 +217,7 @@ describe('Preservation: fetchTagRegistry calls CDN URL', () => {
     });
 
     // Dynamic import to pick up env stub
-    const { fetchTagRegistry } = await import('./api');
+    const { fetchTagRegistry } = await import('./utils/api');
     const result = await fetchTagRegistry();
 
     expect(mockFetch).toHaveBeenCalledWith('https://cdn.example.com/tags.json');
@@ -233,7 +233,7 @@ describe('Preservation: fetchTagRegistry calls CDN URL', () => {
       status: 404,
     });
 
-    const { fetchTagRegistry } = await import('./api');
+    const { fetchTagRegistry } = await import('./utils/api');
     const result = await fetchTagRegistry();
 
     expect(result.ok).toBe(true);
@@ -250,7 +250,7 @@ describe('Preservation: fetchTagRegistry calls CDN URL', () => {
       text: () => Promise.resolve('<!DOCTYPE html><html>...'),
     });
 
-    const { fetchTagRegistry } = await import('./api');
+    const { fetchTagRegistry } = await import('./utils/api');
     const result = await fetchTagRegistry();
 
     expect(result.ok).toBe(true);

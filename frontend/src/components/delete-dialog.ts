@@ -1,7 +1,7 @@
-import { deleteProject } from '../api';
-import { t } from '../i18n';
-import { invalidateSearchIndex } from '../search-state';
-import { overlay as createOverlay, button, heading } from '../ui';
+import { deleteProject } from '../utils/api';
+import { t } from '../utils/i18n';
+import { invalidateSearchIndex } from '../utils/search-state';
+import { overlay as createOverlay, button, heading } from '../utils/ui';
 
 /**
  * Show a delete confirmation dialog as a modal overlay.

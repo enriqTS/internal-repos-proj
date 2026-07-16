@@ -17,7 +17,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fc from 'fast-check';
 
 // Mock all external dependencies before importing modules
-vi.mock('./api', () => ({
+vi.mock('./utils/api', () => ({
   fetchSearchIndex: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
   fetchProjectMetadata: vi.fn(() => Promise.resolve({ ok: true, data: { name: 'test', description: 'desc', tags: ['t'], date: '2024-01-01' } })),
   fetchProjectReadme: vi.fn(() => Promise.resolve({ ok: true, data: '# Test' })),
@@ -43,7 +43,7 @@ vi.mock('./pages/project-detail', () => ({
   renderProjectDetail: vi.fn(),
 }));
 
-vi.mock('./tag-selector', () => {
+vi.mock('./components/tag-selector', () => {
   const mockTagSelector = {
     setAvailableTags: vi.fn(),
     applySuggestions: vi.fn(),
@@ -67,7 +67,7 @@ vi.mock('jszip', () => {
   };
 });
 
-vi.mock('./theme-manager', () => {
+vi.mock('./utils/theme-manager', () => {
   const mockManager = {
     getTheme: vi.fn(() => 'light'),
     toggle: vi.fn(() => 'dark'),
@@ -81,7 +81,7 @@ vi.mock('./theme-manager', () => {
   };
 });
 
-vi.mock('./landing-page', () => ({
+vi.mock('./pages/landing-page', () => ({
   renderLandingPage: vi.fn((_params: Record<string, string>, container: HTMLElement) => {
     container.innerHTML = '<div class="landing-page"><h1>Landing</h1></div>';
   }),
@@ -111,7 +111,7 @@ describe('Bug Condition: searchIndexLoaded reset after mutations', () => {
     mutationType: 'upload' | 'edit' | 'delete',
   ): Promise<{ fetchCallCountAfterMutation: number }> {
     // Fresh import to get a clean module state
-    const { fetchSearchIndex } = await import('./api');
+    const { fetchSearchIndex } = await import('./utils/api');
     const mockedFetch = vi.mocked(fetchSearchIndex);
     mockedFetch.mockResolvedValue({ ok: true, data: [] });
 
@@ -264,7 +264,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
   });
 
   it('on first page load, fetchSearchIndex is called (searchIndexLoaded starts false)', async () => {
-    const { fetchSearchIndex } = await import('./api');
+    const { fetchSearchIndex } = await import('./utils/api');
     const mockedFetch = vi.mocked(fetchSearchIndex);
     mockedFetch.mockResolvedValue({ ok: true, data: [] });
 
@@ -277,7 +277,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
   });
 
   it('after initial load succeeds, subsequent home navigations skip re-fetch', async () => {
-    const { fetchSearchIndex } = await import('./api');
+    const { fetchSearchIndex } = await import('./utils/api');
     const mockedFetch = vi.mocked(fetchSearchIndex);
     mockedFetch.mockResolvedValue({ ok: true, data: [] });
 
@@ -354,7 +354,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // Set hash to #/projects for the router to match on start
           window.location.hash = '#/projects';
 
-          const { fetchSearchIndex } = await import('./api');
+          const { fetchSearchIndex } = await import('./utils/api');
           const mockedFetch = vi.mocked(fetchSearchIndex);
           mockedFetch.mockResolvedValue({ ok: true, data: [{ name: 'proj', description: 'desc', tags: ['t'], date: '2024-01-01', path: 'projects/proj/' }] });
 
@@ -437,7 +437,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // Set hash to #/projects for the router to match on start
           window.location.hash = '#/projects';
 
-          const apiModule = await import('./api');
+          const apiModule = await import('./utils/api');
           const mockedFetch = vi.mocked(apiModule.fetchSearchIndex);
           mockedFetch.mockResolvedValue({ ok: true, data: [] });
 

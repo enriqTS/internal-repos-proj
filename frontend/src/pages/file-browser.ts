@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import { createBreadcrumbNav, generateBreadcrumbs } from '../components/breadcrumb-nav';
 import { createCodeViewer } from '../components/code-viewer';
 import { createDirectoryListing } from '../components/directory-listing';
-import { marked, renderReadmeSection } from '../shared-markdown';
+import { marked, renderReadmeSection } from '../utils/shared-markdown';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

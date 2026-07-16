@@ -1,6 +1,6 @@
-import { marked } from '../shared-markdown';
-import { t } from '../i18n';
-import { textarea as createTextarea } from '../ui';
+import { marked } from '../utils/shared-markdown';
+import { t } from '../utils/i18n';
+import { textarea as createTextarea } from '../utils/ui';
 
 /**
  * Options for creating a ReadmePreview component.

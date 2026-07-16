@@ -3,20 +3,20 @@
  * Wires the router with search, project detail, and upload views.
  */
 import './styles.css';
-import { createRouter, type Route } from './router';
-import { fetchSearchIndex } from './api';
+import { createRouter, type Route } from './utils/router';
+import { fetchSearchIndex } from './utils/api';
 import { initializeSearch, setupSearch, search, renderResults } from './pages/search';
 import { renderProjectDetail } from './pages/project-detail';
 import { renderUploadForm } from './pages/upload-form';
 import { renderEditForm } from './pages/edit-form';
-import { createThemeManager, createThemeToggle } from './theme-manager';
+import { createThemeManager, createThemeToggle } from './utils/theme-manager';
 import { renderTemplatesPage } from './pages/templates-page';
 import { renderTemplateDetail } from './pages/template-detail';
 import { renderLandingPage } from './pages/landing-page';
-import { t } from './i18n';
-import { container as createContainer, input as createInput } from './ui';
+import { t } from './utils/i18n';
+import { container as createContainer, input as createInput } from './utils/ui';
 
-import { searchIndexLoaded, markSearchIndexLoaded, invalidateSearchIndex } from './search-state';
+import { searchIndexLoaded, markSearchIndexLoaded, invalidateSearchIndex } from './utils/search-state';
 
 // Re-export for backward compatibility with modules that import from './main'
 export { invalidateSearchIndex };

@@ -3,7 +3,7 @@
  * Renders a styled interactive region that accepts files and provides visual feedback.
  * Supports both folder (webkitdirectory) and .zip file upload modes.
  */
-import { t } from '../i18n';
+import { t } from '../utils/i18n';
 
 export type UploadMode = 'zip' | 'folder';
 

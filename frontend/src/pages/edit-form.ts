@@ -14,12 +14,12 @@ import {
   initiateUpload,
   uploadToS3,
   finalizeUpload,
-} from '../api';
+} from '../utils/api';
 import { createTagSelector, type TagSelectorAPI } from '../components/tag-selector';
 import { filterFileList } from './upload-form';
-import { invalidateSearchIndex } from '../search-state';
-import { t } from '../i18n';
-import { button, input, textarea, heading } from '../ui';
+import { invalidateSearchIndex } from '../utils/search-state';
+import { t } from '../utils/i18n';
+import { button, input, textarea, heading } from '../utils/ui';
 import JSZip from 'jszip';
 
 /**
