@@ -124,6 +124,8 @@ describe('validateForm', () => {
 vi.mock('./api', () => ({
   initiateUpload: vi.fn(),
   uploadToS3: vi.fn(),
+  uploadFileToS3: vi.fn(),
+  uploadFilesToS3: vi.fn(),
   finalizeUpload: vi.fn(),
   fetchTagRegistry: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
   suggestTags: vi.fn(() => Promise.resolve({ ok: true, data: { tags: [], newTags: [] } })),
@@ -168,9 +170,17 @@ vi.mock('./drop-zone', () => ({
     capturedOnFiles = opts.onFiles;
     return {
       getFiles: vi.fn(() => null),
+      getUploadMode: vi.fn(() => null),
       reset: vi.fn(),
       destroy: vi.fn(),
     };
+  }),
+  detectUploadMode: vi.fn((files: FileList) => {
+    // If exactly one file ending in .zip, return 'zip'; otherwise 'folder'
+    if (files.length === 1 && files[0].name.toLowerCase().endsWith('.zip')) {
+      return 'zip';
+    }
+    return 'folder';
   }),
 }));
 
@@ -325,17 +335,17 @@ describe('renderUploadForm', () => {
   });
 
   it('redirects to project list on successful upload (initiate → S3 → finalize)', async () => {
-    const { initiateUpload, uploadToS3, finalizeUpload } = await import('./api');
+    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('./api');
     const { invalidateSearchIndex } = await import('./search-state');
     const mockedInitiate = vi.mocked(initiateUpload);
-    const mockedUploadToS3 = vi.mocked(uploadToS3);
+    const mockedUploadFilesToS3 = vi.mocked(uploadFilesToS3);
     const mockedFinalize = vi.mocked(finalizeUpload);
 
     mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { sessionId: 'sess-123', uploadUrl: 'https://s3.example.com/presigned', mode: 'zip', expiresAt: '2025-01-01T00:15:00Z' },
+      data: { sessionId: 'sess-123', uploadUrls: { 'src/main.ts': 'https://s3.example.com/presigned/src/main.ts' }, mode: 'folder', expiresAt: '2025-01-01T00:15:00Z' },
     });
-    mockedUploadToS3.mockResolvedValueOnce(undefined);
+    mockedUploadFilesToS3.mockResolvedValueOnce(undefined);
     mockedFinalize.mockResolvedValueOnce({
       ok: true,
       data: { message: 'Project uploaded successfully!', path: 'projects/test-project/' },
@@ -360,9 +370,19 @@ describe('renderUploadForm', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Verify the full sequence was called
-    expect(mockedInitiate).toHaveBeenCalledWith({ name: 'test-project', tags: [], readme: '# Test Project' });
-    expect(mockedUploadToS3).toHaveBeenCalledWith('https://s3.example.com/presigned', expect.any(Blob), expect.any(Function));
+    // Verify the full sequence was called (folder mode)
+    expect(mockedInitiate).toHaveBeenCalledWith({
+      name: 'test-project',
+      tags: [],
+      readme: '# Test Project',
+      uploadType: 'folder',
+      filePaths: ['src/main.ts'],
+    });
+    expect(mockedUploadFilesToS3).toHaveBeenCalledWith(
+      { 'src/main.ts': 'https://s3.example.com/presigned/src/main.ts' },
+      expect.any(Array),
+      expect.any(Function),
+    );
     expect(mockedFinalize).toHaveBeenCalledWith('sess-123');
 
     // Verify redirect to project list
@@ -393,7 +413,7 @@ describe('renderUploadForm', () => {
     nameInput.value = 'existing-project';
     readmeArea.value = '# Readme';
 
-    // Simulate file selection via drop zone
+    // Simulate file selection via drop zone (folder mode — multiple files)
     const mockFiles = createMockFileList([
       createMockFile('file.ts', 'my-project/file.ts'),
     ]);
@@ -410,19 +430,19 @@ describe('renderUploadForm', () => {
   });
 
   it('disables submit button during upload', async () => {
-    const { initiateUpload, uploadToS3, finalizeUpload } = await import('./api');
+    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('./api');
     const mockedInitiate = vi.mocked(initiateUpload);
-    const mockedUploadToS3 = vi.mocked(uploadToS3);
+    const mockedUploadFilesToS3 = vi.mocked(uploadFilesToS3);
     const mockedFinalize = vi.mocked(finalizeUpload);
 
-    let resolveS3!: () => void;
-    const s3Promise = new Promise<void>((resolve) => { resolveS3 = resolve; });
+    let resolveFiles!: () => void;
+    const filesPromise = new Promise<void>((resolve) => { resolveFiles = resolve; });
 
     mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { sessionId: 'sess-456', uploadUrl: 'https://s3.example.com/put', mode: 'zip', expiresAt: '2025-01-01T00:15:00Z' },
+      data: { sessionId: 'sess-456', uploadUrls: { 'index.ts': 'https://s3.example.com/put/index.ts' }, mode: 'folder', expiresAt: '2025-01-01T00:15:00Z' },
     });
-    mockedUploadToS3.mockReturnValueOnce(s3Promise);
+    mockedUploadFilesToS3.mockReturnValueOnce(filesPromise);
     mockedFinalize.mockResolvedValueOnce({
       ok: true,
       data: { message: 'Success', path: 'projects/my-project/' },
@@ -437,7 +457,7 @@ describe('renderUploadForm', () => {
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
-    // Simulate file selection via drop zone
+    // Simulate file selection via drop zone (folder mode)
     const mockFiles = createMockFileList([
       createMockFile('index.ts', 'my-project/index.ts'),
     ]);
@@ -452,8 +472,8 @@ describe('renderUploadForm', () => {
     expect(submitBtn.disabled).toBe(true);
     expect(submitBtn.textContent).toBe('Enviando...');
 
-    // Resolve the S3 upload
-    resolveS3();
+    // Resolve the file uploads
+    resolveFiles();
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // After successful upload, page redirects — button state doesn't matter
@@ -488,15 +508,15 @@ describe('renderUploadForm', () => {
   });
 
   it('shows error when S3 upload fails', async () => {
-    const { initiateUpload, uploadToS3 } = await import('./api');
+    const { initiateUpload, uploadFilesToS3 } = await import('./api');
     const mockedInitiate = vi.mocked(initiateUpload);
-    const mockedUploadToS3 = vi.mocked(uploadToS3);
+    const mockedUploadFilesToS3 = vi.mocked(uploadFilesToS3);
 
     mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { sessionId: 'sess-789', uploadUrl: 'https://s3.example.com/put', mode: 'zip', expiresAt: '2025-01-01T00:15:00Z' },
+      data: { sessionId: 'sess-789', uploadUrls: { 'app.ts': 'https://s3.example.com/put/app.ts' }, mode: 'folder', expiresAt: '2025-01-01T00:15:00Z' },
     });
-    mockedUploadToS3.mockRejectedValueOnce(new Error('S3 upload failed (HTTP 403)'));
+    mockedUploadFilesToS3.mockRejectedValueOnce(new Error('S3 upload failed for app.ts (HTTP 403)'));
 
     renderUploadForm(container);
 
@@ -506,7 +526,7 @@ describe('renderUploadForm', () => {
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
-    // Simulate file selection via drop zone
+    // Simulate file selection via drop zone (folder mode)
     const mockFiles = createMockFileList([
       createMockFile('app.ts', 'my-project/app.ts'),
     ]);
@@ -527,16 +547,16 @@ describe('renderUploadForm', () => {
   });
 
   it('shows error when finalize fails', async () => {
-    const { initiateUpload, uploadToS3, finalizeUpload } = await import('./api');
+    const { initiateUpload, uploadFilesToS3, finalizeUpload } = await import('./api');
     const mockedInitiate = vi.mocked(initiateUpload);
-    const mockedUploadToS3 = vi.mocked(uploadToS3);
+    const mockedUploadFilesToS3 = vi.mocked(uploadFilesToS3);
     const mockedFinalize = vi.mocked(finalizeUpload);
 
     mockedInitiate.mockResolvedValueOnce({
       ok: true,
-      data: { sessionId: 'sess-abc', uploadUrl: 'https://s3.example.com/put', mode: 'zip', expiresAt: '2025-01-01T00:15:00Z' },
+      data: { sessionId: 'sess-abc', uploadUrls: { 'app.ts': 'https://s3.example.com/put/app.ts' }, mode: 'folder', expiresAt: '2025-01-01T00:15:00Z' },
     });
-    mockedUploadToS3.mockResolvedValueOnce(undefined);
+    mockedUploadFilesToS3.mockResolvedValueOnce(undefined);
     mockedFinalize.mockResolvedValueOnce({
       ok: false,
       error: 'Upload finalization failed (HTTP 500)',
@@ -550,7 +570,7 @@ describe('renderUploadForm', () => {
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
-    // Simulate file selection via drop zone
+    // Simulate file selection via drop zone (folder mode)
     const mockFiles = createMockFileList([
       createMockFile('app.ts', 'my-project/app.ts'),
     ]);
@@ -567,13 +587,6 @@ describe('renderUploadForm', () => {
   });
 
   it('shows error when zip exceeds MAX_CLIENT_ZIP_SIZE', async () => {
-    // Override the JSZip mock to return a blob that exceeds size limit
-    const JSZip = (await import('jszip')).default;
-    const mockInstance = new JSZip();
-    // 500 MB + 1 byte
-    const oversizedBlob = new Blob([new ArrayBuffer(500 * 1024 * 1024 + 1)]);
-    vi.mocked(mockInstance.generateAsync).mockResolvedValueOnce(oversizedBlob);
-
     renderUploadForm(container);
 
     const nameInput = container.querySelector('#project-name') as HTMLInputElement;
@@ -582,10 +595,11 @@ describe('renderUploadForm', () => {
     nameInput.value = 'my-project';
     readmeArea.value = '# Test';
 
-    // Simulate file selection via drop zone
-    const mockFiles = createMockFileList([
-      createMockFile('big-file.bin', 'my-project/big-file.bin'),
-    ]);
+    // Simulate file selection via drop zone — a single .zip file (triggers zip mode)
+    // Create a file object that appears to be > 500MB
+    const oversizedContent = new ArrayBuffer(500 * 1024 * 1024 + 1);
+    const bigZipFile = new File([oversizedContent], 'project.zip', { type: 'application/zip' });
+    const mockFiles = createMockFileList([bigZipFile]);
     capturedOnFiles!(mockFiles);
 
     const form = container.querySelector('form')!;

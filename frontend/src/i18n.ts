@@ -63,6 +63,7 @@ const strings = {
   'upload.readmePlaceholder': '# Meu Projeto\n\nDescreva seu projeto aqui...',
   'upload.submit': 'Enviar Projeto',
   'upload.submitting': 'Enviando...',
+  'upload.uploadingFiles': 'Enviando arquivos... {completed}/{total}',
   'upload.zipping': 'Compactando arquivos...',
   'upload.initiating': 'Iniciando upload...',
   'upload.processing': 'Processando...',

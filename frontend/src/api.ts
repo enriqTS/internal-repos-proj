@@ -226,6 +226,75 @@ export function uploadToS3(url: string, blob: Blob, onProgress?: (pct: number) =
 }
 
 /**
+ * Upload a single file to S3 using a presigned PUT URL.
+ * Uses fetch for simplicity (no progress tracking needed per-file).
+ *
+ * @param url - Presigned S3 PUT URL
+ * @param file - The File object to upload
+ */
+export async function uploadFileToS3(url: string, file: File): Promise<void> {
+  const response = await fetch(url, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': file.type || 'application/octet-stream',
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`S3 upload failed for ${file.name} (HTTP ${response.status})`);
+  }
+}
+
+/**
+ * Upload multiple files to S3 in parallel with concurrency control.
+ * Calls onProgress after each file completes with (completed, total) counts.
+ *
+ * @param uploadUrls - Map of relative file path → presigned S3 PUT URL
+ * @param files - Array of File objects to upload
+ * @param onProgress - Optional callback receiving (filesCompleted, totalFiles)
+ * @param concurrency - Maximum parallel uploads (default: 5)
+ */
+export async function uploadFilesToS3(
+  uploadUrls: Record<string, string>,
+  files: File[],
+  onProgress?: (completed: number, total: number) => void,
+  concurrency = 5,
+): Promise<void> {
+  const total = files.length;
+  let completed = 0;
+
+  // Build a queue of upload tasks
+  const queue = files.map((file) => {
+    const relativePath = file.webkitRelativePath || file.name;
+    const parts = relativePath.split('/');
+    const pathWithinProject = parts.length > 1 ? parts.slice(1).join('/') : relativePath;
+    const url = uploadUrls[pathWithinProject];
+    if (!url) {
+      throw new Error(`No presigned URL for file: ${pathWithinProject}`);
+    }
+    return { file, url };
+  });
+
+  // Process queue with concurrency limit
+  let index = 0;
+
+  async function processNext(): Promise<void> {
+    while (index < queue.length) {
+      const current = index++;
+      const { file, url } = queue[current];
+      await uploadFileToS3(url, file);
+      completed++;
+      if (onProgress) {
+        onProgress(completed, total);
+      }
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, () => processNext());
+  await Promise.all(workers);
+}
+
+/**
  * Fetch the tag registry (tags.json) from CDN.
  * Returns the parsed tag list on success, an empty array on 404 (registry not yet created),
  * or an error message on other failures.

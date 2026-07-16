@@ -6,9 +6,9 @@ import {
   DENY_LIST,
 } from 'shared/constants';
 import type { TagInput } from 'shared/types';
-import { initiateUpload, uploadToS3, finalizeUpload, fetchTagRegistry, suggestTags } from './api';
+import { initiateUpload, uploadToS3, uploadFilesToS3, finalizeUpload, fetchTagRegistry, suggestTags } from './api';
 import { createTagSelector, type TagSelectorAPI } from './tag-selector';
-import { createDropZone } from './drop-zone';
+import { createDropZone, detectUploadMode } from './drop-zone';
 import { createReadmePreview, type ReadmePreviewAPI } from './readme-preview';
 import { invalidateSearchIndex } from './search-state';
 import { t } from './i18n';
@@ -615,8 +615,9 @@ export function renderUploadForm(container: HTMLElement): void {
     }));
 
     // 1. Filter files client-side
-    const filteredFiles = filterFileList(files!);
-    if (filteredFiles.length === 0) {
+    const uploadMode = detectUploadMode(files!);
+    const filteredFiles = uploadMode === 'folder' ? filterFileList(files!) : [];
+    if (uploadMode === 'folder' && filteredFiles.length === 0) {
       statusEl.textContent = t('upload.noFilesAfterFilter');
       statusEl.className = 'text-sm mt-2 text-error';
       return;
@@ -626,64 +627,122 @@ export function renderUploadForm(container: HTMLElement): void {
     submitBtn.disabled = true;
     submitBtn.textContent = t('upload.submitting');
 
-    // 2. Create zip client-side
-    statusEl.textContent = t('upload.zipping');
-    statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
-    const zip = new JSZip();
-    for (const file of filteredFiles) {
-      const relativePath = file.webkitRelativePath || file.name;
-      const parts = relativePath.split('/');
-      const pathWithinProject = parts.length > 1 ? parts.slice(1).join('/') : relativePath;
-      zip.file(pathWithinProject, file);
-    }
-    const blob = await zip.generateAsync({ type: 'blob' });
+    if (uploadMode === 'zip') {
+      // --- ZIP MODE: Upload the .zip file directly (no client-side zipping needed) ---
+      const zipFile = files![0];
 
-    // 3. Check size
-    if (blob.size > MAX_CLIENT_ZIP_SIZE) {
-      statusEl.textContent = t('upload.tooLarge');
-      statusEl.className = 'text-sm mt-2 text-error';
-      submitBtn.disabled = false;
-      submitBtn.textContent = t('upload.submit');
-      return;
-    }
+      // Check size
+      if (zipFile.size > MAX_CLIENT_ZIP_SIZE) {
+        statusEl.textContent = t('upload.tooLarge');
+        statusEl.className = 'text-sm mt-2 text-error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('upload.submit');
+        return;
+      }
 
-    // 4. Initiate upload with structured tags
-    statusEl.textContent = t('upload.initiating');
+      // Initiate upload with zip mode
+      statusEl.textContent = t('upload.initiating');
+      statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
 
-    // Use the repo URL from the form field (may have been auto-filled from .git/config or entered manually)
-    const repoUrl = repoGroup.input.value.trim();
-    const initiateResult = await initiateUpload({ name: name.trim(), tags: tagInputs, readme, ...(repoUrl && { repositoryUrl: repoUrl }) });
-    if (!initiateResult.ok) {
-      statusEl.textContent = initiateResult.error;
-      statusEl.className = 'text-sm mt-2 text-error';
-      submitBtn.disabled = false;
-      submitBtn.textContent = t('upload.submit');
-      return;
-    }
-
-    // 5. Upload to S3 with progress
-    statusEl.textContent = t('upload.submitting');
-    try {
-      await uploadToS3(initiateResult.data.uploadUrl!, blob, (pct) => {
-        statusEl.textContent = `${t('upload.submitting')} ${pct}%`;
+      const repoUrl = repoGroup.input.value.trim();
+      const initiateResult = await initiateUpload({
+        name: name.trim(),
+        tags: tagInputs,
+        readme,
+        uploadType: 'zip',
+        ...(repoUrl && { repositoryUrl: repoUrl }),
       });
-    } catch (err) {
-      statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
-      statusEl.className = 'text-sm mt-2 text-error';
-      submitBtn.disabled = false;
-      submitBtn.textContent = t('upload.submit');
-      return;
-    }
+      if (!initiateResult.ok) {
+        statusEl.textContent = initiateResult.error;
+        statusEl.className = 'text-sm mt-2 text-error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('upload.submit');
+        return;
+      }
 
-    // 6. Finalize
-    statusEl.textContent = t('upload.processing');
-    const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
-    if (!finalizeResult.ok) {
-      statusEl.textContent = finalizeResult.error;
-      statusEl.className = 'text-sm mt-2 text-error';
-      submitBtn.disabled = false;
-      submitBtn.textContent = t('upload.submit');
-      return;
+      // Upload zip to S3 with progress
+      statusEl.textContent = t('upload.submitting');
+      try {
+        await uploadToS3(initiateResult.data.uploadUrl!, zipFile, (pct) => {
+          statusEl.textContent = `${t('upload.submitting')} ${pct}%`;
+        });
+      } catch (err) {
+        statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
+        statusEl.className = 'text-sm mt-2 text-error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('upload.submit');
+        return;
+      }
+
+      // Finalize
+      statusEl.textContent = t('upload.processing');
+      const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
+      if (!finalizeResult.ok) {
+        statusEl.textContent = finalizeResult.error;
+        statusEl.className = 'text-sm mt-2 text-error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('upload.submit');
+        return;
+      }
+    } else {
+      // --- FOLDER MODE: Upload each file individually via presigned URLs ---
+
+      // Collect relative file paths for the initiate request
+      const filePaths = filteredFiles.map((file) => {
+        const relativePath = file.webkitRelativePath || file.name;
+        const parts = relativePath.split('/');
+        return parts.length > 1 ? parts.slice(1).join('/') : relativePath;
+      });
+
+      // Initiate upload with folder mode
+      statusEl.textContent = t('upload.initiating');
+      statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
+
+      const repoUrl = repoGroup.input.value.trim();
+      const initiateResult = await initiateUpload({
+        name: name.trim(),
+        tags: tagInputs,
+        readme,
+        uploadType: 'folder',
+        filePaths,
+        ...(repoUrl && { repositoryUrl: repoUrl }),
+      });
+      if (!initiateResult.ok) {
+        statusEl.textContent = initiateResult.error;
+        statusEl.className = 'text-sm mt-2 text-error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('upload.submit');
+        return;
+      }
+
+      // Upload each file individually to its presigned URL
+      statusEl.textContent = t('upload.uploadingFiles', { completed: 0, total: filteredFiles.length });
+      try {
+        await uploadFilesToS3(
+          initiateResult.data.uploadUrls!,
+          filteredFiles,
+          (completed, total) => {
+            statusEl.textContent = t('upload.uploadingFiles', { completed, total });
+          },
+        );
+      } catch (err) {
+        statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
+        statusEl.className = 'text-sm mt-2 text-error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('upload.submit');
+        return;
+      }
+
+      // Finalize
+      statusEl.textContent = t('upload.processing');
+      const finalizeResult = await finalizeUpload(initiateResult.data.sessionId);
+      if (!finalizeResult.ok) {
+        statusEl.textContent = finalizeResult.error;
+        statusEl.className = 'text-sm mt-2 text-error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('upload.submit');
+        return;
+      }
     }
 
     // 7. Success — redirect to project list
