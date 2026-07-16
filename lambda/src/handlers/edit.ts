@@ -9,9 +9,9 @@ import {
 } from '@aws-sdk/client-s3';
 import type { ProjectMetadata, EditRequest, EditResponse } from 'shared';
 import { PROJECT_NAME_REGEX, MAX_PROJECT_NAME_LENGTH } from 'shared';
-import { validateEditRequest } from './validate';
-import { regenerateIndex } from './index-generator';
-import { addTagsToRegistry, getTagRegistry } from './tag-registry';
+import { validateEditRequest } from '../validate';
+import { regenerateIndex } from '../index-generator';
+import { addTagsToRegistry, getTagRegistry } from '../tag-registry';
 
 const s3Client = new S3Client({});
 

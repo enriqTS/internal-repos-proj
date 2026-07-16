@@ -14,7 +14,7 @@ vi.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: vi.fn(() => Promise.resolve('https://presigned-url.example.com')),
 }));
 
-vi.mock('./tag-registry', () => ({
+vi.mock('../tag-registry', () => ({
   getTagRegistry: vi.fn(() => Promise.resolve(['web', 'api', 'frontend', 'backend'])),
 }));
 
