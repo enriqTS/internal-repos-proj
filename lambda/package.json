@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/initiate.ts src/process.ts src/suggest-tags.ts src/delete.ts src/edit.ts --bundle --platform=node --target=node22 --format=cjs --outdir=dist --external:@aws-sdk"
+    "build": "esbuild src/handlers/initiate.ts src/handlers/process.ts src/handlers/suggest-tags.ts src/handlers/delete.ts src/handlers/edit.ts --bundle --platform=node --target=node22 --format=cjs --outdir=dist --external:@aws-sdk"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.500.0",
