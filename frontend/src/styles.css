@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@import "highlight.js/styles/github-dark.min.css";
+
+/* Override hljs background — we manage our own via Tailwind/custom properties */
+.hljs {
+  background: transparent !important;
+}
 
 /* Custom dark variant using data-theme attribute */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));

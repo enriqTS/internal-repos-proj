@@ -130,7 +130,7 @@ function renderCodeContent(content: string, filename: string, isLargeFile: boole
 
   // Scrollable code area
   const scrollContainer = document.createElement('div');
-  scrollContainer.className = 'overflow-x-auto';
+  scrollContainer.className = 'hljs overflow-x-auto';
 
   // Table layout for line numbers + code
   const table = document.createElement('table');
