@@ -20,6 +20,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -248,4 +249,117 @@ export function computeDiff(local: HashManifest, remote: HashManifest | null): D
   }
 
   return { added, modified, deleted, unchanged };
+}
+
+// ─── Manifest Management ─────────────────────────────────────────────────────
+
+/**
+ * Validates a parsed JSON object as a valid HashManifest.
+ * Returns the object cast as HashManifest if valid, or null if invalid.
+ * On unknown/invalid version, logs a warning.
+ *
+ * Requirements: 8.1, 8.2, 8.3, 8.4, 8.5
+ */
+export function validateManifest(parsed: unknown): HashManifest | null {
+  if (parsed === null || typeof parsed !== 'object') return null;
+
+  const obj = parsed as Record<string, unknown>;
+
+  // Check version field
+  if (!('version' in obj)) return null;
+  if (typeof obj.version !== 'number' || !Number.isInteger(obj.version)) {
+    console.warn(`[manifest] Invalid version type: expected integer, got ${typeof obj.version} (${obj.version})`);
+    return null;
+  }
+  if (obj.version !== 1) {
+    console.warn(`[manifest] Unrecognized manifest version: ${obj.version}. Triggering full upload.`);
+    return null;
+  }
+
+  // Check generatedAt field
+  if (!('generatedAt' in obj) || typeof obj.generatedAt !== 'string') return null;
+
+  // Check files field
+  if (!('files' in obj) || obj.files === null || typeof obj.files !== 'object') return null;
+
+  return parsed as HashManifest;
+}
+
+/**
+ * Fetches the remote hash manifest from S3.
+ * Returns null if the manifest does not exist (404/NoSuchKey).
+ * Throws on transient errors (5xx, network timeout, access denied).
+ *
+ * Requirements: 2.2, 2.3, 2.4
+ */
+export async function fetchRemoteManifest(
+  s3: S3Client,
+  bucket: string,
+  key: string
+): Promise<HashManifest | null> {
+  try {
+    const response = await s3.send(
+      new GetObjectCommand({ Bucket: bucket, Key: key })
+    );
+    const bodyStr = await response.Body?.transformToString('utf-8');
+    if (!bodyStr) {
+      console.warn('[manifest] Empty response body from S3. Triggering full upload.');
+      return null;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(bodyStr);
+    } catch {
+      console.warn('[manifest] Failed to parse remote manifest as JSON. Triggering full upload.');
+      return null;
+    }
+
+    return validateManifest(parsed);
+  } catch (err: unknown) {
+    const error = err as { name?: string; Code?: string; $metadata?: { httpStatusCode?: number } };
+
+    // 404 / NoSuchKey → manifest does not exist yet
+    if (
+      error.name === 'NoSuchKey' ||
+      error.Code === 'NotFound' ||
+      error.$metadata?.httpStatusCode === 404
+    ) {
+      return null;
+    }
+
+    // All other errors (5xx, network timeout, access denied) → throw
+    throw err;
+  }
+}
+
+/**
+ * Uploads the hash manifest to S3. Validates serialized size before upload.
+ * Throws if the manifest exceeds MAX_MANIFEST_SIZE (5 MB).
+ *
+ * Requirements: 2.1, 2.5, 8.7
+ */
+export async function uploadManifest(
+  s3: S3Client,
+  bucket: string,
+  key: string,
+  manifest: HashManifest
+): Promise<void> {
+  const body = JSON.stringify(manifest, null, 2);
+
+  if (body.length > MAX_MANIFEST_SIZE) {
+    throw new Error(
+      `Manifest size (${body.length} bytes) exceeds maximum allowed size (${MAX_MANIFEST_SIZE} bytes)`
+    );
+  }
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: 'application/json',
+      ChecksumAlgorithm: 'SHA256',
+    })
+  );
 }
