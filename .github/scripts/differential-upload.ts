@@ -18,7 +18,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { access, readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
@@ -48,6 +48,12 @@ export interface DiffResult {
   modified: string[]; // present in both, different hash
   deleted: string[];  // present remotely but not locally
   unchanged: string[];
+}
+
+export interface MetadataUploadResult {
+  metadataUploaded: boolean;
+  readmeUploaded: boolean;
+  architectureUploaded: boolean;
 }
 
 export interface FileTreeEntry {
@@ -524,4 +530,114 @@ export async function deleteS3Object(s3: S3Client, bucket: string, key: string):
       Key: key,
     })
   );
+}
+
+// ─── Metadata Upload ─────────────────────────────────────────────────────────
+
+/**
+ * Looks for an architecture image in the `docs/arquitetura/` directory.
+ * Prefers SVG over PNG. Returns null if neither exists.
+ *
+ * Requirements: 6.5, 6.6
+ */
+export async function findArchitectureImage(
+  sourceDir: string
+): Promise<{ path: string; ext: string } | null> {
+  const svgPath = join(sourceDir, 'docs', 'arquitetura', 'architecture.svg');
+  try {
+    await access(svgPath);
+    return { path: svgPath, ext: 'svg' };
+  } catch {
+    // SVG not found, try PNG
+  }
+
+  const pngPath = join(sourceDir, 'docs', 'arquitetura', 'architecture.png');
+  try {
+    await access(pngPath);
+    return { path: pngPath, ext: 'png' };
+  } catch {
+    // PNG not found either
+  }
+
+  return null;
+}
+
+/**
+ * Conditionally uploads metadata assets (metadata.json, README.md, architecture image)
+ * by comparing their hashes against the remote manifest. Only uploads if changed or new.
+ * Skips assets that don't exist in the template directory without error.
+ *
+ * Requirements: 5.1, 5.2, 5.3, 5.6, 6.3, 6.4, 6.5, 6.6, 6.8
+ */
+export async function uploadMetadataAssets(
+  s3: S3Client,
+  bucket: string,
+  name: string,
+  sourceDir: string,
+  localHashes: Map<string, HashResult>,
+  remoteManifest: HashManifest | null
+): Promise<MetadataUploadResult> {
+  const result: MetadataUploadResult = {
+    metadataUploaded: false,
+    readmeUploaded: false,
+    architectureUploaded: false,
+  };
+
+  // --- metadata.json ---
+  const metadataHash = localHashes.get('metadata.json');
+  if (metadataHash) {
+    const remoteHash = remoteManifest?.files['metadata.json']?.hash;
+    if (!remoteHash || remoteHash !== metadataHash.hash) {
+      const content = await readFile(join(sourceDir, 'metadata.json'));
+      await uploadWithChecksum(s3, {
+        bucket,
+        key: `templates/${name}/metadata.json`,
+        body: content,
+        contentType: 'application/json',
+        checksumSHA256: metadataHash.hashBase64,
+      });
+      result.metadataUploaded = true;
+    }
+  }
+
+  // --- README.md ---
+  const readmeHash = localHashes.get('README.md');
+  if (readmeHash) {
+    const remoteHash = remoteManifest?.files['README.md']?.hash;
+    if (!remoteHash || remoteHash !== readmeHash.hash) {
+      const content = await readFile(join(sourceDir, 'README.md'));
+      await uploadWithChecksum(s3, {
+        bucket,
+        key: `templates/${name}/readme.md`,
+        body: content,
+        contentType: 'text/markdown',
+        checksumSHA256: readmeHash.hashBase64,
+      });
+      result.readmeUploaded = true;
+    }
+  }
+
+  // --- Architecture image ---
+  const archImage = await findArchitectureImage(sourceDir);
+  if (archImage) {
+    const archRelativePath = `docs/arquitetura/architecture.${archImage.ext}`;
+    const archHash = localHashes.get(archRelativePath);
+    if (archHash) {
+      const remoteHash = remoteManifest?.files[archRelativePath]?.hash;
+      if (!remoteHash || remoteHash !== archHash.hash) {
+        const content = await readFile(archImage.path);
+        const contentType = archImage.ext === 'svg' ? 'image/svg+xml' : 'image/png';
+        await uploadWithChecksum(s3, {
+          bucket,
+          key: `templates/${name}/architecture.${archImage.ext}`,
+          body: content,
+          contentType,
+          checksumSHA256: archHash.hashBase64,
+        });
+        result.architectureUploaded = true;
+      }
+    }
+  }
+
+  return result;
 }
