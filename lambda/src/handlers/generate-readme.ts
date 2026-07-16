@@ -1,6 +1,6 @@
 import { FileEntry } from 'shared/types';
 import { MAX_README_LENGTH } from 'shared/constants';
-import { getAIClient, MODEL_ID } from '../ai-client';
+import { getAIClient, MODEL_ID } from '../utils/ai-client';
 
 // ─── Module-local constants ───────────────────────────────────────────────────
 

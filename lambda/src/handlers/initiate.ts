@@ -2,8 +2,8 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
-import { validateMetadata, validateTagInputs } from '../validate';
-import { getTagRegistry } from '../tag-registry';
+import { validateMetadata, validateTagInputs } from '../utils/validate';
+import { getTagRegistry } from '../utils/tag-registry';
 import { PRESIGNED_URL_EXPIRY, MAX_TAGS_COUNT, serializeTags } from 'shared';
 import type { InitiateRequest, InitiateResponse, SessionMetadata } from 'shared';
 

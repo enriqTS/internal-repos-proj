@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { getAIClient, MODEL_ID } from '../ai-client';
-import { getTagRegistry } from '../tag-registry';
+import { getAIClient, MODEL_ID } from '../utils/ai-client';
+import { getTagRegistry } from '../utils/tag-registry';
 import type { SuggestTagsRequest, SuggestTagsResponse } from 'shared';
 import { MAX_AI_SUGGESTED_TAGS, TAG_PATTERN, MAX_TAG_LENGTH } from 'shared';
 

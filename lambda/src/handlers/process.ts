@@ -1,12 +1,12 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { S3Client, GetObjectCommand, DeleteObjectCommand, PutObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import JSZip from 'jszip';
-import { filterFiles, AllFilesFilteredError } from '../filter';
-import { createArtifactZip, ArtifactTooLargeError } from '../archiver-wrapper';
-import { expandFiles } from '../file-expander';
-import { writeProject, ProjectExistsError } from '../s3-writer';
-import { regenerateIndex } from '../index-generator';
-import { addTagsToRegistry } from '../tag-registry';
+import { filterFiles, AllFilesFilteredError } from '../utils/filter';
+import { createArtifactZip, ArtifactTooLargeError } from '../utils/archiver-wrapper';
+import { expandFiles } from '../utils/file-expander';
+import { writeProject, ProjectExistsError } from '../utils/s3-writer';
+import { regenerateIndex } from '../utils/index-generator';
+import { addTagsToRegistry } from '../utils/tag-registry';
 import { generateReadme } from './generate-readme';
 import { suggestTagsFromReadme } from './suggest-tags';
 import type { FinalizeRequest, FinalizeResponse, SessionMetadata, FileEntry, ProjectMetadata } from 'shared';

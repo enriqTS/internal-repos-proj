@@ -15,17 +15,17 @@ vi.mock('@aws-sdk/client-s3', () => ({
   ListObjectsV2Command: vi.fn(),
 }));
 
-vi.mock('../filter', () => ({
+vi.mock('../utils/filter', () => ({
   filterFiles: vi.fn(() => ({ files: [{ path: 'index.ts', content: Buffer.from('hello') }] })),
   AllFilesFilteredError: class AllFilesFilteredError extends Error { constructor() { super('No files remain after filtering'); } },
 }));
 
-vi.mock('../archiver-wrapper', () => ({
+vi.mock('../utils/archiver-wrapper', () => ({
   createArtifactZip: vi.fn(() => Promise.resolve(Buffer.from('fake-zip'))),
   ArtifactTooLargeError: class ArtifactTooLargeError extends Error { constructor() { super('Artifact too large'); } },
 }));
 
-vi.mock('../file-expander', () => ({
+vi.mock('../utils/file-expander', () => ({
   expandFiles: vi.fn(() => Promise.resolve({
     filesWritten: 1,
     manifest: { version: 1, totalFiles: 1, totalSize: 5, entries: [{ path: 'index.ts', type: 'file', size: 5 }] },
@@ -33,12 +33,12 @@ vi.mock('../file-expander', () => ({
   })),
 }));
 
-vi.mock('../s3-writer', () => ({
+vi.mock('../utils/s3-writer', () => ({
   writeProject: vi.fn(() => Promise.resolve()),
   ProjectExistsError: class ProjectExistsError extends Error { constructor(name: string) { super(`Project name already taken: ${name}`); } },
 }));
 
-vi.mock('../index-generator', () => ({
+vi.mock('../utils/index-generator', () => ({
   regenerateIndex: vi.fn(() => Promise.resolve()),
 }));
 
@@ -50,13 +50,13 @@ vi.mock('./suggest-tags', () => ({
   suggestTagsFromReadme: mockSuggestTagsFromReadme,
 }));
 
-vi.mock('../tag-registry', () => ({
+vi.mock('../utils/tag-registry', () => ({
   addTagsToRegistry: mockAddTagsToRegistry,
   getTagRegistry: vi.fn(() => Promise.resolve(['react', 'typescript', 'node'])),
 }));
 
 import { handler } from './process';
-import { writeProject } from '../s3-writer';
+import { writeProject } from '../utils/s3-writer';
 
 function makeEvent(body: object, method = 'POST'): any {
   return {

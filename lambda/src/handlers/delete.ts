@@ -2,7 +2,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { S3Client, HeadObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { PROJECT_NAME_REGEX, MAX_PROJECT_NAME_LENGTH } from 'shared';
 import type { DeleteResponse } from 'shared';
-import { regenerateIndex } from '../index-generator';
+import { regenerateIndex } from '../utils/index-generator';
 
 const s3Client = new S3Client({});
 

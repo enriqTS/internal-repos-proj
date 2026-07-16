@@ -25,14 +25,14 @@ vi.mock('@aws-sdk/client-s3', () => ({
 
 // Mock the tag-registry module
 const mockGetTagRegistry = vi.fn();
-vi.mock('../tag-registry', () => ({
+vi.mock('../utils/tag-registry', () => ({
   getTagRegistry: () => mockGetTagRegistry(),
   addTagsToRegistry: vi.fn(),
 }));
 
 // Mock AI client
 const mockCreate = vi.fn();
-vi.mock('../ai-client', () => ({
+vi.mock('../utils/ai-client', () => ({
   getAIClient: () => ({
     chat: {
       completions: {
