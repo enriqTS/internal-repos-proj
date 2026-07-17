@@ -92,6 +92,10 @@ const strings = {
   'edit.architectureRemove': 'Remover diagrama de arquitetura',
   'edit.architectureUploading': 'Enviando diagrama de arquitetura...',
   'edit.architectureUploadFailed': 'Falha ao enviar diagrama de arquitetura. Tente novamente.',
+  'edit.architectureChoose': 'Escolher arquivo',
+  'edit.filesChoose': 'Escolher arquivos',
+  'edit.noFileChosen': 'Nenhum arquivo escolhido',
+  'edit.filesSelected': '{count} arquivo(s) selecionado(s)',
 
   // Delete Dialog
   'delete.title': 'Excluir Projeto',

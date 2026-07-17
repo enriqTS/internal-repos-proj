@@ -262,7 +262,7 @@ function renderDownloadSection(projectPath: string, available: boolean, projectN
 
   if (available) {
     const link = document.createElement('a');
-    link.className = 'inline-flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-md cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline';
+    link.className = 'inline-flex items-center justify-center gap-2 px-5 py-2.5 font-mono text-sm font-semibold text-on-accent bg-accent border-none rounded-md cursor-pointer transition-all duration-180 hover:bg-accent-hover hover:shadow-md active:scale-[0.98] no-underline text-center';
     link.href = `${getBaseUrl()}/${projectPath}artifact.zip`;
     link.textContent = t('projectDetail.download');
     link.setAttribute('download', `${projectName}.zip`);

@@ -277,7 +277,25 @@ export async function renderEditForm(
   archInput.id = 'edit-architecture-image';
   archInput.name = 'edit-architecture-image';
   archInput.accept = '.png,.svg';
-  archGroup.appendChild(archInput);
+  archInput.className = 'hidden';
+
+  const archButton = document.createElement('button');
+  archButton.type = 'button';
+  archButton.className = 'px-4 py-2 font-mono text-sm font-semibold text-accent bg-surface border border-accent rounded-md cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent inline-flex items-center gap-2';
+  archButton.textContent = t('edit.architectureChoose');
+
+  const archFileName = document.createElement('span');
+  archFileName.className = 'text-sm text-text-muted font-mono';
+  archFileName.textContent = t('edit.noFileChosen');
+
+  archButton.addEventListener('click', () => archInput.click());
+
+  const archInputRow = document.createElement('div');
+  archInputRow.className = 'flex items-center gap-3';
+  archInputRow.appendChild(archButton);
+  archInputRow.appendChild(archFileName);
+  archInputRow.appendChild(archInput);
+  archGroup.appendChild(archInputRow);
 
   const archHint = document.createElement('span');
   archHint.className = 'text-xs text-text-muted';
@@ -293,12 +311,14 @@ export async function renderEditForm(
   archInput.addEventListener('change', () => {
     archErrorEl.textContent = '';
     const file = archInput.files?.[0];
+    archFileName.textContent = file ? file.name : t('edit.noFileChosen');
     if (!file) return;
 
     const validation = validateArchitectureImage(file);
     if (!validation.valid) {
       archErrorEl.textContent = validation.error!;
       archInput.value = '';
+      archFileName.textContent = t('edit.noFileChosen');
     }
     // If a new file is selected, uncheck the remove checkbox
     if (removeArchCheckbox && validation.valid) {
@@ -324,7 +344,29 @@ export async function renderEditForm(
   filesInput.setAttribute('webkitdirectory', '');
   filesInput.setAttribute('directory', '');
   filesInput.multiple = true;
-  filesGroup.appendChild(filesInput);
+  filesInput.className = 'hidden';
+
+  const filesButton = document.createElement('button');
+  filesButton.type = 'button';
+  filesButton.className = 'px-4 py-2 font-mono text-sm font-semibold text-accent bg-surface border border-accent rounded-md cursor-pointer transition-all duration-180 hover:bg-accent hover:text-on-accent inline-flex items-center gap-2';
+  filesButton.textContent = t('edit.filesChoose');
+
+  const filesFileName = document.createElement('span');
+  filesFileName.className = 'text-sm text-text-muted font-mono';
+  filesFileName.textContent = t('edit.noFileChosen');
+
+  filesButton.addEventListener('click', () => filesInput.click());
+  filesInput.addEventListener('change', () => {
+    const count = filesInput.files?.length ?? 0;
+    filesFileName.textContent = count > 0 ? t('edit.filesSelected', { count }) : t('edit.noFileChosen');
+  });
+
+  const filesInputRow = document.createElement('div');
+  filesInputRow.className = 'flex items-center gap-3';
+  filesInputRow.appendChild(filesButton);
+  filesInputRow.appendChild(filesFileName);
+  filesInputRow.appendChild(filesInput);
+  filesGroup.appendChild(filesInputRow);
 
   const filesErrorEl = document.createElement('span');
   filesErrorEl.className = 'field-error text-xs text-error mt-1';

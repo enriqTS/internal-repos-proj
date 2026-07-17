@@ -174,7 +174,7 @@ function renderCodeContent(content: string, filename: string, isLargeFile: boole
 
     // Code content cell
     const codeTd = document.createElement('td');
-    codeTd.className = 'pl-4 pr-4 align-top whitespace-pre';
+    codeTd.className = 'pl-4 pr-4 align-top whitespace-pre-wrap break-all';
     codeTd.innerHTML = highlightedLines[i] ?? '';
     tr.appendChild(codeTd);
 
