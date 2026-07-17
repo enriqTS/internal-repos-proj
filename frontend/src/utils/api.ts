@@ -377,12 +377,47 @@ export async function suggestTags(readme: string): Promise<ApiResult<SuggestTags
 
 
 /**
+ * Request a presigned PUT URL for uploading an architecture image during project edit.
+ * POST to /projects/{name}/architecture-upload-url with the target extension.
+ *
+ * @param name - The project name
+ * @param extension - Target file extension: 'png' or 'svg'
+ */
+export async function requestArchitectureUploadUrl(
+  name: string,
+  extension: 'png' | 'svg'
+): Promise<ApiResult<{ uploadUrl: string; contentType: string; expiresAt: string }>> {
+  const apiUrl = getApiUrl();
+  const apiKey = getApiKey();
+  if (!apiUrl) return { ok: false, error: 'API endpoint is not configured' };
+  if (!apiKey) return { ok: false, error: 'API key is not configured' };
+
+  try {
+    const response = await fetch(`${apiUrl}/projects/${encodeURIComponent(name)}/architecture-upload-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({ extension }),
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      return { ok: false, error: body.error ?? `Architecture upload URL request failed (HTTP ${response.status})` };
+    }
+    return { ok: true, data: body as { uploadUrl: string; contentType: string; expiresAt: string } };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? `Architecture upload URL request failed: ${err.message}` : 'Architecture upload URL request failed' };
+  }
+}
+
+/**
  * Update project metadata via PATCH /projects/{name}.
  * Only sends the fields that need updating.
  */
 export async function updateProject(
   name: string,
-  updates: { name?: string; tags?: string[]; readme?: string }
+  updates: { name?: string; tags?: string[]; readme?: string; architectureImage?: string | null }
 ): Promise<ApiResult<EditResponse>> {
   const apiUrl = getApiUrl();
   const apiKey = getApiKey();
