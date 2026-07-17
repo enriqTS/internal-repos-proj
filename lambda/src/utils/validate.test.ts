@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateMetadata, validateEditRequest } from './validate';
+import { validateMetadata, validateEditRequest, validateArchitectureImage } from './validate';
 
 describe('validateMetadata', () => {
   it('returns null for valid metadata', () => {
@@ -104,7 +104,7 @@ describe('validateEditRequest', () => {
   });
 
   it('returns error when no fields are provided', () => {
-    expect(validateEditRequest({})).toBe('At least one field (name, tags, readme, repositoryUrl) must be provided');
+    expect(validateEditRequest({})).toBe('At least one field (name, tags, readme, repositoryUrl, architectureImage) must be provided');
   });
 
   it('returns error when name is empty string', () => {
@@ -181,5 +181,89 @@ describe('validateEditRequest', () => {
 
   it('accepts tags with hyphens and underscores', () => {
     expect(validateEditRequest({ tags: ['my-tag', 'my_tag'] })).toBeNull();
+  });
+});
+
+describe('validateArchitectureImage', () => {
+  it('returns null when value is undefined (field not provided)', () => {
+    expect(validateArchitectureImage(undefined)).toBeNull();
+  });
+
+  it('accepts "architecture.png"', () => {
+    expect(validateArchitectureImage('architecture.png')).toBeNull();
+  });
+
+  it('accepts "architecture.svg"', () => {
+    expect(validateArchitectureImage('architecture.svg')).toBeNull();
+  });
+
+  it('rejects null when allowNull is false (InitiateRequest context)', () => {
+    expect(validateArchitectureImage(null)).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+  });
+
+  it('accepts null when allowNull is true (EditRequest context)', () => {
+    expect(validateArchitectureImage(null, { allowNull: true })).toBeNull();
+  });
+
+  it('rejects arbitrary string values', () => {
+    expect(validateArchitectureImage('diagram.png')).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+  });
+
+  it('rejects empty string', () => {
+    expect(validateArchitectureImage('')).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+  });
+
+  it('rejects non-string types (number)', () => {
+    expect(validateArchitectureImage(123)).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+  });
+
+  it('rejects non-string types (boolean)', () => {
+    expect(validateArchitectureImage(true)).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+  });
+
+  it('rejects similar but incorrect filenames', () => {
+    expect(validateArchitectureImage('architecture.jpg')).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+    expect(validateArchitectureImage('Architecture.png')).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+    expect(validateArchitectureImage('architecture.PNG')).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+  });
+});
+
+describe('validateEditRequest - architectureImage field', () => {
+  it('returns null for valid architectureImage "architecture.png"', () => {
+    expect(validateEditRequest({ architectureImage: 'architecture.png' })).toBeNull();
+  });
+
+  it('returns null for valid architectureImage "architecture.svg"', () => {
+    expect(validateEditRequest({ architectureImage: 'architecture.svg' })).toBeNull();
+  });
+
+  it('returns null for architectureImage set to null (removal)', () => {
+    expect(validateEditRequest({ architectureImage: null })).toBeNull();
+  });
+
+  it('returns error for invalid architectureImage value', () => {
+    expect(validateEditRequest({ architectureImage: 'invalid.png' as any })).toBe(
+      'architectureImage must be "architecture.png" or "architecture.svg"',
+    );
+  });
+
+  it('counts architectureImage as a valid field (no "at least one field" error)', () => {
+    expect(validateEditRequest({ architectureImage: 'architecture.svg' })).toBeNull();
   });
 });

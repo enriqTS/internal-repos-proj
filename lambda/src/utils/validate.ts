@@ -10,6 +10,41 @@ import {
   EditRequest,
 } from 'shared';
 
+/** Allowed values for the architectureImage field. */
+const VALID_ARCHITECTURE_IMAGE_VALUES = ['architecture.png', 'architecture.svg'] as const;
+
+/**
+ * Validate the architectureImage field value.
+ * For InitiateRequest context (allowNull = false): accepts only 'architecture.png' or 'architecture.svg'.
+ * For EditRequest context (allowNull = true): also accepts null (to remove the image).
+ * Returns an error message string if invalid, or null if valid.
+ */
+export function validateArchitectureImage(
+  value: unknown,
+  { allowNull = false }: { allowNull?: boolean } = {},
+): string | null {
+  if (value === undefined) {
+    return null;
+  }
+
+  if (value === null) {
+    if (allowNull) {
+      return null;
+    }
+    return 'architectureImage must be "architecture.png" or "architecture.svg"';
+  }
+
+  if (typeof value !== 'string') {
+    return 'architectureImage must be "architecture.png" or "architecture.svg"';
+  }
+
+  if (!(VALID_ARCHITECTURE_IMAGE_VALUES as readonly string[]).includes(value)) {
+    return 'architectureImage must be "architecture.png" or "architecture.svg"';
+  }
+
+  return null;
+}
+
 /**
  * Validate project metadata fields (name, tags, readme).
  * Returns an error message string if invalid, or null if valid.
@@ -101,8 +136,16 @@ export function validateTagInputs(tags: TagInput[], registry: string[]): string 
  */
 export function validateEditRequest(data: EditRequest): string | null {
   // At least one updatable field must be present
-  if (data.name === undefined && data.tags === undefined && data.readme === undefined && data.repositoryUrl === undefined) {
-    return 'At least one field (name, tags, readme, repositoryUrl) must be provided';
+  if (data.name === undefined && data.tags === undefined && data.readme === undefined && data.repositoryUrl === undefined && data.architectureImage === undefined) {
+    return 'At least one field (name, tags, readme, repositoryUrl, architectureImage) must be provided';
+  }
+
+  // Validate architectureImage if provided
+  if (data.architectureImage !== undefined) {
+    const archError = validateArchitectureImage(data.architectureImage, { allowNull: true });
+    if (archError) {
+      return archError;
+    }
   }
 
   // Validate name if provided
