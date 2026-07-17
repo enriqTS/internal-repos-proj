@@ -521,6 +521,89 @@ resource "aws_api_gateway_integration_response" "projects_name_options_integrati
 }
 
 # -----------------------------------------------------------------------------
+# API Gateway Resource: /projects/{name}/architecture-upload-url
+# -----------------------------------------------------------------------------
+
+resource "aws_api_gateway_resource" "projects_name_architecture_upload_url" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.projects_name.id
+  path_part   = "architecture-upload-url"
+}
+
+# -----------------------------------------------------------------------------
+# POST /projects/{name}/architecture-upload-url → Edit Lambda
+# -----------------------------------------------------------------------------
+
+resource "aws_api_gateway_method" "architecture_upload_url_post" {
+  rest_api_id      = aws_api_gateway_rest_api.api.id
+  resource_id      = aws_api_gateway_resource.projects_name_architecture_upload_url.id
+  http_method      = "POST"
+  authorization    = "NONE"
+  api_key_required = true
+}
+
+resource "aws_api_gateway_integration" "architecture_upload_url_post_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.projects_name_architecture_upload_url.id
+  http_method             = aws_api_gateway_method.architecture_upload_url_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.edit_lambda.invoke_arn
+}
+
+# -----------------------------------------------------------------------------
+# CORS: OPTIONS on /projects/{name}/architecture-upload-url
+# -----------------------------------------------------------------------------
+
+resource "aws_api_gateway_method" "architecture_upload_url_options" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.projects_name_architecture_upload_url.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "architecture_upload_url_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.projects_name_architecture_upload_url.id
+  http_method = aws_api_gateway_method.architecture_upload_url_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "architecture_upload_url_options_200" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.projects_name_architecture_upload_url.id
+  http_method = aws_api_gateway_method.architecture_upload_url_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "architecture_upload_url_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.projects_name_architecture_upload_url.id
+  http_method = aws_api_gateway_method.architecture_upload_url_options.http_method
+  status_code = aws_api_gateway_method_response.architecture_upload_url_options_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Api-Key,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,POST'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+# -----------------------------------------------------------------------------
 # Lambda Permissions for API Gateway (Edit and Delete)
 # -----------------------------------------------------------------------------
 
@@ -552,7 +635,8 @@ resource "aws_api_gateway_deployment" "api_deployment" {
     aws_api_gateway_integration.finalize_integration,
     aws_api_gateway_integration.suggest_tags_integration,
     aws_api_gateway_integration.projects_name_patch_integration,
-    aws_api_gateway_integration.projects_name_delete_integration
+    aws_api_gateway_integration.projects_name_delete_integration,
+    aws_api_gateway_integration.architecture_upload_url_post_integration
   ]
 
   triggers = {
@@ -586,6 +670,12 @@ resource "aws_api_gateway_deployment" "api_deployment" {
       aws_api_gateway_method.projects_name_options.id,
       aws_api_gateway_integration.projects_name_options_integration.id,
       aws_api_gateway_integration_response.projects_name_options_integration_response.id,
+      aws_api_gateway_resource.projects_name_architecture_upload_url.id,
+      aws_api_gateway_method.architecture_upload_url_post.id,
+      aws_api_gateway_integration.architecture_upload_url_post_integration.id,
+      aws_api_gateway_method.architecture_upload_url_options.id,
+      aws_api_gateway_integration.architecture_upload_url_options_integration.id,
+      aws_api_gateway_integration_response.architecture_upload_url_options_integration_response.id,
     ]))
   }
 
