@@ -14,9 +14,10 @@ import {
   initiateUpload,
   uploadToS3,
   finalizeUpload,
+  requestArchitectureUploadUrl,
 } from '../utils/api';
 import { createTagSelector, type TagSelectorAPI } from '../components/tag-selector';
-import { filterFileList } from './upload-form';
+import { filterFileList, validateArchitectureImage } from './upload-form';
 import { invalidateSearchIndex } from '../utils/search-state';
 import { t } from '../utils/i18n';
 import { button, input, textarea, heading } from '../utils/ui';
@@ -236,6 +237,77 @@ export async function renderEditForm(
 
   form.appendChild(readmeGroup);
 
+  // Architecture image section
+  const archGroup = document.createElement('div');
+  archGroup.className = 'flex flex-col gap-2';
+
+  const archLabel = document.createElement('label');
+  archLabel.htmlFor = 'edit-architecture-image';
+  archLabel.textContent = t('edit.architectureLabel');
+  archGroup.appendChild(archLabel);
+
+  // Show current architecture image status and removal control if one exists
+  let removeArchCheckbox: HTMLInputElement | null = null;
+  if (metadata.architectureImage) {
+    const currentInfo = document.createElement('span');
+    currentInfo.className = 'text-xs text-text-muted';
+    currentInfo.textContent = t('edit.architectureCurrent', { filename: metadata.architectureImage });
+    archGroup.appendChild(currentInfo);
+
+    const removeWrapper = document.createElement('div');
+    removeWrapper.className = 'flex items-center gap-2';
+
+    removeArchCheckbox = document.createElement('input');
+    removeArchCheckbox.type = 'checkbox';
+    removeArchCheckbox.id = 'edit-architecture-remove';
+    removeArchCheckbox.name = 'edit-architecture-remove';
+    removeWrapper.appendChild(removeArchCheckbox);
+
+    const removeLabel = document.createElement('label');
+    removeLabel.htmlFor = 'edit-architecture-remove';
+    removeLabel.className = 'text-sm';
+    removeLabel.textContent = t('edit.architectureRemove');
+    removeWrapper.appendChild(removeLabel);
+
+    archGroup.appendChild(removeWrapper);
+  }
+
+  const archInput = document.createElement('input');
+  archInput.type = 'file';
+  archInput.id = 'edit-architecture-image';
+  archInput.name = 'edit-architecture-image';
+  archInput.accept = '.png,.svg';
+  archGroup.appendChild(archInput);
+
+  const archHint = document.createElement('span');
+  archHint.className = 'text-xs text-text-muted';
+  archHint.textContent = t('upload.architectureAccept');
+  archGroup.appendChild(archHint);
+
+  const archErrorEl = document.createElement('span');
+  archErrorEl.className = 'field-error text-xs text-error mt-1';
+  archErrorEl.setAttribute('aria-live', 'polite');
+  archGroup.appendChild(archErrorEl);
+
+  // Validate architecture image on change
+  archInput.addEventListener('change', () => {
+    archErrorEl.textContent = '';
+    const file = archInput.files?.[0];
+    if (!file) return;
+
+    const validation = validateArchitectureImage(file);
+    if (!validation.valid) {
+      archErrorEl.textContent = validation.error!;
+      archInput.value = '';
+    }
+    // If a new file is selected, uncheck the remove checkbox
+    if (removeArchCheckbox && validation.valid) {
+      removeArchCheckbox.checked = false;
+    }
+  });
+
+  form.appendChild(archGroup);
+
   // Optional folder picker for artifact replacement
   const filesGroup = document.createElement('div');
   filesGroup.className = 'flex flex-col gap-2';
@@ -288,6 +360,16 @@ export async function renderEditForm(
     const files = filesInput.files;
     const hasFiles = files !== null && files.length > 0;
     const repoUrl = repoInput.value.trim();
+
+    // Validate architecture image if a file is selected
+    const archFile = archInput.files?.[0] ?? null;
+    if (archFile) {
+      const archValidation = validateArchitectureImage(archFile);
+      if (!archValidation.valid) {
+        archErrorEl.textContent = archValidation.error!;
+        return;
+      }
+    }
 
     // Client-side validation
     const errors = validateEditForm(readme, files, hasFiles, repoUrl);
@@ -380,16 +462,67 @@ export async function renderEditForm(
         }
       }
 
+      // Now handle architecture image upload (before PATCH)
+      let architectureImageField: string | null | undefined = undefined;
+
+      if (archFile) {
+        // Upload new architecture image via presigned URL
+        const archValidation = validateArchitectureImage(archFile);
+        const ext = archValidation.extension!;
+
+        statusEl.textContent = t('edit.architectureUploading');
+        statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
+
+        const urlResult = await requestArchitectureUploadUrl(projectName, ext);
+        if (!urlResult.ok) {
+          statusEl.textContent = t('edit.architectureUploadFailed');
+          statusEl.className = 'text-sm mt-2 text-error';
+          submitBtn.disabled = false;
+          submitBtn.textContent = t('edit.submit');
+          return;
+        }
+
+        // Upload file to S3 using presigned URL with correct Content-Type
+        try {
+          const contentType = ext === 'png' ? 'image/png' : 'image/svg+xml';
+          const response = await fetch(urlResult.data.uploadUrl, {
+            method: 'PUT',
+            body: archFile,
+            headers: { 'Content-Type': contentType },
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+        } catch {
+          statusEl.textContent = t('edit.architectureUploadFailed');
+          statusEl.className = 'text-sm mt-2 text-error';
+          submitBtn.disabled = false;
+          submitBtn.textContent = t('edit.submit');
+          return;
+        }
+
+        architectureImageField = `architecture.${ext}`;
+      } else if (removeArchCheckbox?.checked) {
+        // User wants to remove the existing architecture image
+        architectureImageField = null;
+      }
+
       // Now handle metadata PATCH
       const patchBody = computePatchBody(
         { name: metadata.name, tags: metadata.tags, readme: currentReadme, repositoryUrl: metadata.repositoryUrl ?? '' },
         { name: metadata.name, tags: selectedTags, readme, repositoryUrl: repoUrl },
       );
 
-      if (patchBody) {
+      // Include architectureImage field in patch body if changed
+      const finalPatchBody: Record<string, unknown> = patchBody ? { ...patchBody } : {};
+      if (architectureImageField !== undefined) {
+        finalPatchBody.architectureImage = architectureImageField;
+      }
+
+      if (Object.keys(finalPatchBody).length > 0) {
         statusEl.textContent = t('edit.updatingMetadata');
         statusEl.className = 'text-sm mt-2 text-text-muted animate-pulse';
-        const updateResult = await updateProject(projectName, patchBody);
+        const updateResult = await updateProject(projectName, finalPatchBody as any);
         if (!updateResult.ok) {
           statusEl.textContent = updateResult.error;
           statusEl.className = 'text-sm mt-2 text-error';

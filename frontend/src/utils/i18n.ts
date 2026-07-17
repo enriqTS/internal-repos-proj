@@ -87,6 +87,11 @@ const strings = {
   'edit.success': 'Projeto atualizado com sucesso!',
   'edit.updatingMetadata': 'Atualizando metadados...',
   'edit.initiatingReplace': 'Iniciando substituição do artefato...',
+  'edit.architectureLabel': 'Diagrama de Arquitetura (opcional)',
+  'edit.architectureCurrent': 'Atual: {filename}',
+  'edit.architectureRemove': 'Remover diagrama de arquitetura',
+  'edit.architectureUploading': 'Enviando diagrama de arquitetura...',
+  'edit.architectureUploadFailed': 'Falha ao enviar diagrama de arquitetura. Tente novamente.',
 
   // Delete Dialog
   'delete.title': 'Excluir Projeto',
