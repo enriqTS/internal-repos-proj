@@ -127,6 +127,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       ...(body.repositoryUrl && { repositoryUrl: body.repositoryUrl }),
       uploadType,
       ...(uploadType === 'folder' && { filePaths }),
+      ...(body.architectureImage && { architectureImage: body.architectureImage }),
     };
 
     await s3Client.send(
@@ -139,6 +140,23 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     );
 
     const expiresAt = new Date(Date.now() + PRESIGNED_URL_EXPIRY * 1000).toISOString();
+
+    // 9.1 Generate presigned URL for architecture image if provided
+    let architectureImageUploadUrl: string | undefined;
+    if (body.architectureImage) {
+      const ext = body.architectureImage === 'architecture.png' ? 'png' : 'svg';
+      const contentType = ext === 'png' ? 'image/png' : 'image/svg+xml';
+      const archPutCommand = new PutObjectCommand({
+        Bucket: stagingBucket,
+        Key: `staging/${sessionId}/architecture.${ext}`,
+        ContentType: contentType,
+      });
+      architectureImageUploadUrl = await getSignedUrl(s3Client, archPutCommand, {
+        expiresIn: PRESIGNED_URL_EXPIRY,
+        signableHeaders: new Set(['content-type', 'content-length']),
+        unhoistableHeaders: new Set(['content-type', 'content-length']),
+      });
+    }
 
     // 10. Generate presigned URL(s) based on upload type
     if (uploadType === 'folder') {
@@ -160,6 +178,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
         uploadUrls,
         mode: 'folder',
         expiresAt,
+        ...(architectureImageUploadUrl && { architectureImageUploadUrl }),
       };
 
       return {
@@ -187,6 +206,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       uploadUrl,
       mode: 'zip',
       expiresAt,
+      ...(architectureImageUploadUrl && { architectureImageUploadUrl }),
     };
 
     return {

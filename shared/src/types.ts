@@ -150,6 +150,8 @@ export interface SessionMetadata {
   uploadType?: 'zip' | 'folder';
   /** File paths for folder mode — used to track staged files */
   filePaths?: string[];
+  /** Optional architecture image filename provided during initiation */
+  architectureImage?: 'architecture.png' | 'architecture.svg';
 }
 
 /**
