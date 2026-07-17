@@ -2,6 +2,7 @@ import type { ProjectMetadata } from 'shared/types';
 import { fetchProjectReadme, fetchProjectMetadata } from '../utils/api';
 import { showDeleteDialog } from '../components/delete-dialog';
 import { createFileBrowser } from './file-browser';
+import { renderArchitectureSection } from './template-detail';
 import { t } from '../utils/i18n';
 import { marked, renderReadmeSection, renderReadmeError } from '../utils/shared-markdown';
 import { heading, badge, button } from '../utils/ui';
@@ -24,6 +25,36 @@ async function checkArtifactAvailability(projectPath: string): Promise<boolean> 
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Resolve the architecture image URL for a project.
+ *
+ * If metadata.architectureImage is set (e.g., 'architecture.png'), constructs
+ * the URL directly and verifies via HEAD request. Returns the URL if available,
+ * null otherwise.
+ *
+ * @param projectPath - The project path prefix, e.g. "projects/my-project/"
+ * @param metadata - The project metadata object
+ */
+async function resolveProjectArchitectureImageUrl(
+  projectPath: string,
+  metadata: ProjectMetadata,
+): Promise<string | null> {
+  if (!metadata.architectureImage) {
+    return null;
+  }
+
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}/${projectPath}${metadata.architectureImage}`;
+
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (response.ok) return url;
+    return null;
+  } catch {
+    return null;
   }
 }
 
@@ -75,10 +106,11 @@ export async function renderProjectDetail(
   const metadataSection = renderMetadata(metadata);
   detailWrapper.appendChild(metadataSection);
 
-  // Render download section (check artifact availability concurrently with readme fetch)
-  const [readmeResult, artifactAvailable] = await Promise.all([
+  // Render download section (check artifact availability concurrently with readme fetch and architecture image)
+  const [readmeResult, artifactAvailable, architectureImageUrl] = await Promise.all([
     fetchProjectReadme(projectPath),
     checkArtifactAvailability(projectPath),
+    resolveProjectArchitectureImageUrl(projectPath, metadata),
   ]);
 
   const downloadSection = renderDownloadSection(projectPath, artifactAvailable, metadata.name);
@@ -112,6 +144,12 @@ export async function renderProjectDetail(
   fileBrowser.mount();
 
   detailWrapper.appendChild(fileBrowserSection);
+
+  // Render architecture section into supplementary content (before readme)
+  if (architectureImageUrl) {
+    const architectureSection = renderArchitectureSection(architectureImageUrl, metadata.name);
+    supplementaryContent.appendChild(architectureSection);
+  }
 
   // Render readme or readme error into supplementary content
   if (!readmeResult.ok) {
