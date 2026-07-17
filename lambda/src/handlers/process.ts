@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { S3Client, GetObjectCommand, DeleteObjectCommand, PutObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, DeleteObjectCommand, PutObjectCommand, ListObjectsV2Command, HeadObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3';
 import JSZip from 'jszip';
 import { filterFiles, AllFilesFilteredError } from '../utils/filter';
 import { createArtifactZip, ArtifactTooLargeError } from '../utils/archiver-wrapper';
@@ -314,6 +314,37 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       // Do NOT regenerate search index in replace mode
     } else {
       // Create mode: write full project (readme, metadata, artifact)
+
+      // 8.5: Check if architecture image exists in staging and copy to production
+      let architectureImage: 'architecture.png' | 'architecture.svg' | undefined;
+      if (sessionMeta.architectureImage) {
+        const stagingImageKey = `staging/${sessionId}/architecture.${sessionMeta.architectureImage === 'architecture.png' ? 'png' : 'svg'}`;
+        try {
+          await s3Client.send(
+            new HeadObjectCommand({ Bucket: stagingBucket, Key: stagingImageKey })
+          );
+          // Image exists in staging — copy to production
+          const destImageKey = `projects/${sessionMeta.name}/${sessionMeta.architectureImage}`;
+          await s3Client.send(
+            new CopyObjectCommand({
+              Bucket: frontendBucket,
+              CopySource: `${stagingBucket}/${stagingImageKey}`,
+              Key: destImageKey,
+              ContentType: sessionMeta.architectureImage === 'architecture.png' ? 'image/png' : 'image/svg+xml',
+              MetadataDirective: 'REPLACE',
+            })
+          );
+          architectureImage = sessionMeta.architectureImage;
+        } catch (err: unknown) {
+          // If the image does not exist in staging (404/NotFound), proceed without it
+          if (err instanceof Error && (err.name === 'NotFound' || (err as any).$metadata?.httpStatusCode === 404)) {
+            // No architecture image — proceed silently
+          } else {
+            // Non-404 error: still proceed without the image (graceful degradation)
+          }
+        }
+      }
+
       const metadata: ProjectMetadata = {
         name: sessionMeta.name,
         description: readmeContent.slice(0, 200) || 'No description provided',
@@ -322,6 +353,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
           : autoTags,
         date: new Date().toISOString().split('T')[0],
         ...(repositoryUrl && { repositoryUrl }),
+        ...(architectureImage && { architectureImage }),
       };
 
       await writeProject({
@@ -405,6 +437,12 @@ async function cleanupStagedFiles(bucket: string, sessionId: string): Promise<vo
   // Try to delete upload.zip (zip mode) — ignore if doesn't exist
   deletePromises.push(
     s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: `staging/${sessionId}/upload.zip` })).catch(() => {}),
+  );
+
+  // Try to delete architecture image files — ignore if don't exist
+  deletePromises.push(
+    s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: `staging/${sessionId}/architecture.png` })).catch(() => {}),
+    s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: `staging/${sessionId}/architecture.svg` })).catch(() => {}),
   );
 
   // List and delete any files under staging/{sessionId}/files/ (folder mode)
