@@ -7,8 +7,9 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { ProjectMetadata, EditRequest, EditResponse } from 'shared';
-import { PROJECT_NAME_REGEX, MAX_PROJECT_NAME_LENGTH } from 'shared';
+import { PROJECT_NAME_REGEX, MAX_PROJECT_NAME_LENGTH, PRESIGNED_URL_EXPIRY } from 'shared';
 import { validateEditRequest } from '../utils/validate';
 import { regenerateIndex } from '../utils/index-generator';
 import { addTagsToRegistry, getTagRegistry } from '../utils/tag-registry';
@@ -19,7 +20,7 @@ const s3Client = new S3Client({});
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key,Authorization',
-  'Access-Control-Allow-Methods': 'OPTIONS,PATCH',
+  'Access-Control-Allow-Methods': 'OPTIONS,PATCH,POST',
 };
 
 /**
@@ -61,6 +62,15 @@ export function mergeMetadata(existing: ProjectMetadata, request: EditRequest): 
       delete merged.repositoryUrl;
     } else {
       merged.repositoryUrl = request.repositoryUrl;
+    }
+  }
+
+  if (request.architectureImage !== undefined) {
+    if (request.architectureImage === null) {
+      // null means remove the field
+      delete merged.architectureImage;
+    } else {
+      merged.architectureImage = request.architectureImage;
     }
   }
 
@@ -136,6 +146,37 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // 6. Merge existing metadata with edit request
     const { metadata: mergedMetadata, readme } = mergeMetadata(existingMetadata, body);
+
+    // 6.1 Handle architecture image S3 operations
+    if (body.architectureImage !== undefined) {
+      const oldImage = existingMetadata.architectureImage;
+
+      if (body.architectureImage === null && oldImage) {
+        // Removal: delete the existing image file from S3
+        try {
+          await s3Client.send(
+            new DeleteObjectCommand({
+              Bucket: bucket,
+              Key: `projects/${name}/${oldImage}`,
+            })
+          );
+        } catch (_deleteErr) {
+          // If S3 delete fails, still proceed with metadata update (Req 6.4)
+        }
+      } else if (body.architectureImage && oldImage && body.architectureImage !== oldImage) {
+        // Format change (e.g., .png → .svg): delete the old image file
+        try {
+          await s3Client.send(
+            new DeleteObjectCommand({
+              Bucket: bucket,
+              Key: `projects/${name}/${oldImage}`,
+            })
+          );
+        } catch (_deleteErr) {
+          // If S3 delete fails, still proceed with metadata update (Req 6.4)
+        }
+      }
+    }
 
     // 7. Handle rename flow (if name differs from path param)
     let renamed = false;
@@ -325,4 +366,97 @@ async function fetchMetadata(bucket: string, name: string): Promise<ProjectMetad
   }
 
   return JSON.parse(body) as ProjectMetadata;
+}
+
+/**
+ * Lambda handler for POST /projects/{name}/architecture-upload-url.
+ * Validates the project exists and the extension, then generates a presigned PUT URL
+ * for uploading an architecture image directly to the project's production path.
+ */
+export async function architectureUploadUrlHandler(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  // Handle preflight OPTIONS requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: { ...CORS_HEADERS },
+      body: '',
+    };
+  }
+
+  try {
+    // 1. Parse and validate path parameter {name}
+    const name = event.pathParameters?.name;
+    if (!name) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        body: JSON.stringify({ error: 'Invalid project name format' }),
+      };
+    }
+
+    if (name.length > MAX_PROJECT_NAME_LENGTH || !PROJECT_NAME_REGEX.test(name)) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        body: JSON.stringify({ error: 'Invalid project name format' }),
+      };
+    }
+
+    // 2. Parse request body
+    const body = JSON.parse(event.body || '{}');
+    const extension = body.extension;
+
+    // 3. Validate extension is 'png' or 'svg'
+    if (extension !== 'png' && extension !== 'svg') {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        body: JSON.stringify({ error: 'Extension must be "png" or "svg"' }),
+      };
+    }
+
+    // 4. Check project existence
+    const bucket = process.env.BUCKET_NAME!;
+    const exists = await projectExists(bucket, name);
+    if (!exists) {
+      return {
+        statusCode: 404,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        body: JSON.stringify({ error: `Project not found: ${name}` }),
+      };
+    }
+
+    // 5. Generate presigned PUT URL targeting projects/{name}/architecture.{ext}
+    const contentType = extension === 'png' ? 'image/png' : 'image/svg+xml';
+    const s3Key = `projects/${name}/architecture.${extension}`;
+
+    const putCommand = new PutObjectCommand({
+      Bucket: bucket,
+      Key: s3Key,
+      ContentType: contentType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3Client, putCommand, {
+      expiresIn: PRESIGNED_URL_EXPIRY,
+      signableHeaders: new Set(['content-type', 'content-length']),
+      unhoistableHeaders: new Set(['content-type', 'content-length']),
+    });
+
+    const expiresAt = new Date(Date.now() + PRESIGNED_URL_EXPIRY * 1000).toISOString();
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      body: JSON.stringify({ uploadUrl, contentType, expiresAt }),
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      body: JSON.stringify({ error: message }),
+    };
+  }
 }
