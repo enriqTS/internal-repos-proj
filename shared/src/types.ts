@@ -27,6 +27,8 @@ export interface ProjectMetadata {
   date: string;
   /** Optional repository URL extracted from .git/config or manually provided */
   repositoryUrl?: string;
+  /** Optional architecture image filename */
+  architectureImage?: 'architecture.png' | 'architecture.svg';
 }
 
 /**
@@ -82,6 +84,8 @@ export interface InitiateRequest {
   uploadType?: 'zip' | 'folder';
   /** File paths for folder mode — required when uploadType is 'folder' */
   filePaths?: string[];
+  /** Optional architecture image filename for upload */
+  architectureImage?: 'architecture.png' | 'architecture.svg';
 }
 
 /**
@@ -98,6 +102,8 @@ export interface InitiateResponse {
   mode: 'zip' | 'folder';
   /** ISO 8601 timestamp when the presigned URL expires (15 min from creation) */
   expiresAt: string;
+  /** Presigned PUT URL for architecture image upload */
+  architectureImageUploadUrl?: string;
 }
 
 /**
@@ -159,6 +165,8 @@ export interface EditRequest {
   readme?: string;
   /** Repository URL (optional). Must be a valid HTTP(S) URL, max 2048 chars */
   repositoryUrl?: string;
+  /** Architecture image filename to set, or null to remove */
+  architectureImage?: 'architecture.png' | 'architecture.svg' | null;
 }
 
 /**
