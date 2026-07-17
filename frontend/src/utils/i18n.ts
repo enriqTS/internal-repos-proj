@@ -98,6 +98,12 @@ const strings = {
   'delete.deleting': 'Excluindo projeto…',
   'delete.success': 'Projeto "{name}" foi excluído.',
 
+  // Architecture Image
+  'upload.architectureLabel': 'Diagrama de Arquitetura (opcional)',
+  'upload.architectureAccept': 'Formatos aceitos: PNG e SVG (máx. 5 MB)',
+  'validation.architectureExtension': 'Formatos aceitos: PNG e SVG',
+  'validation.architectureSize': 'Tamanho máximo: 5 MB',
+
   // Validation
   'validation.nameRequired': 'Nome do projeto é obrigatório',
   'validation.nameTooLong': 'Nome do projeto deve ter no máximo {max} caracteres',

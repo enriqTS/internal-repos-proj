@@ -5,7 +5,7 @@ import {
   MAX_CLIENT_ZIP_SIZE,
   DENY_LIST,
 } from 'shared/constants';
-import type { TagInput } from 'shared/types';
+import type { TagInput, InitiateRequest as InitiateRequestType } from 'shared/types';
 import { initiateUpload, uploadToS3, uploadFilesToS3, finalizeUpload, fetchTagRegistry, suggestTags } from '../utils/api';
 import { createTagSelector, type TagSelectorAPI } from '../components/tag-selector';
 import { createDropZone, detectUploadMode } from '../components/drop-zone';
@@ -14,6 +14,36 @@ import { invalidateSearchIndex } from '../utils/search-state';
 import { t } from '../utils/i18n';
 import { button, heading, input } from '../utils/ui';
 import JSZip from 'jszip';
+
+// --- Architecture image validation ---
+
+const ALLOWED_ARCHITECTURE_EXTENSIONS = ['.png', '.svg'];
+const MAX_ARCHITECTURE_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+export interface ArchitectureImageValidation {
+  valid: boolean;
+  error?: string;
+  extension?: 'png' | 'svg';
+}
+
+/**
+ * Validate an architecture image file.
+ * Checks extension (case-insensitive) and file size (≤ 5 MB).
+ */
+export function validateArchitectureImage(file: File): ArchitectureImageValidation {
+  const name = file.name.toLowerCase();
+  const ext = name.slice(name.lastIndexOf('.'));
+
+  if (!ALLOWED_ARCHITECTURE_EXTENSIONS.includes(ext)) {
+    return { valid: false, error: t('validation.architectureExtension') };
+  }
+
+  if (file.size > MAX_ARCHITECTURE_IMAGE_SIZE) {
+    return { valid: false, error: t('validation.architectureSize') };
+  }
+
+  return { valid: true, extension: ext === '.png' ? 'png' : 'svg' };
+}
 
 /**
  * Sanitizes a raw folder name into a valid project name.
@@ -414,6 +444,58 @@ export function renderUploadForm(container: HTMLElement): void {
   });
   metaSection.appendChild(repoGroup.wrapper);
 
+  // Architecture image (optional)
+  const archGroupWrapper = document.createElement('div');
+  archGroupWrapper.className = 'flex flex-col gap-1.5';
+
+  const archLabel = document.createElement('label');
+  archLabel.htmlFor = 'project-architecture-image';
+  archLabel.className = 'font-body text-sm font-medium text-text';
+  archLabel.textContent = t('upload.architectureLabel');
+  archGroupWrapper.appendChild(archLabel);
+
+  const archInput = document.createElement('input');
+  archInput.type = 'file';
+  archInput.id = 'project-architecture-image';
+  archInput.name = 'project-architecture-image';
+  archInput.accept = '.png,.svg';
+  archInput.className = 'text-sm text-text file:mr-3 file:px-3 file:py-1.5 file:border file:border-border file:rounded-sm file:bg-surface file:text-text file:cursor-pointer hover:file:bg-surface-hover';
+  archGroupWrapper.appendChild(archInput);
+
+  const archHint = document.createElement('span');
+  archHint.className = 'text-xs text-text-muted';
+  archHint.textContent = t('upload.architectureAccept');
+  archGroupWrapper.appendChild(archHint);
+
+  const archErrorEl = document.createElement('span');
+  archErrorEl.className = 'field-error text-xs text-error';
+  archErrorEl.setAttribute('aria-live', 'polite');
+  archGroupWrapper.appendChild(archErrorEl);
+
+  metaSection.appendChild(archGroupWrapper);
+
+  let selectedArchitectureFile: File | null = null;
+  let architectureExtension: 'png' | 'svg' | null = null;
+
+  archInput.addEventListener('change', () => {
+    archErrorEl.textContent = '';
+    selectedArchitectureFile = null;
+    architectureExtension = null;
+
+    const file = archInput.files?.[0];
+    if (!file) return;
+
+    const validation = validateArchitectureImage(file);
+    if (!validation.valid) {
+      archErrorEl.textContent = validation.error!;
+      archInput.value = '';
+      return;
+    }
+
+    selectedArchitectureFile = file;
+    architectureExtension = validation.extension!;
+  });
+
   // Tags
   const tagsGroupWrapper = document.createElement('div');
   tagsGroupWrapper.className = 'flex flex-col gap-2';
@@ -683,6 +765,9 @@ export function renderUploadForm(container: HTMLElement): void {
         readme,
         uploadType: 'zip',
         ...(repoUrl && { repositoryUrl: repoUrl }),
+        ...(selectedArchitectureFile && architectureExtension && {
+          architectureImage: `architecture.${architectureExtension}` as 'architecture.png' | 'architecture.svg',
+        }),
       });
       if (!initiateResult.ok) {
         statusEl.textContent = initiateResult.error;
@@ -692,12 +777,30 @@ export function renderUploadForm(container: HTMLElement): void {
         return;
       }
 
-      // Upload zip to S3 with progress
+      // Upload zip to S3 with progress (and architecture image in parallel if provided)
       statusEl.textContent = t('upload.submitting');
       try {
-        await uploadToS3(initiateResult.data.uploadUrl!, zipFile, (pct) => {
-          statusEl.textContent = `${t('upload.submitting')} ${pct}%`;
-        });
+        const uploadPromises: Promise<void>[] = [
+          uploadToS3(initiateResult.data.uploadUrl!, zipFile, (pct) => {
+            statusEl.textContent = `${t('upload.submitting')} ${pct}%`;
+          }),
+        ];
+
+        // Upload architecture image in parallel if presigned URL was returned
+        if (selectedArchitectureFile && initiateResult.data.architectureImageUploadUrl) {
+          const contentType = architectureExtension === 'png' ? 'image/png' : 'image/svg+xml';
+          uploadPromises.push(
+            fetch(initiateResult.data.architectureImageUploadUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': contentType },
+              body: selectedArchitectureFile,
+            }).then((resp) => {
+              if (!resp.ok) throw new Error(`Architecture image upload failed (HTTP ${resp.status})`);
+            }),
+          );
+        }
+
+        await Promise.all(uploadPromises);
       } catch (err) {
         statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
         statusEl.className = 'text-sm text-error flex-1';
@@ -738,6 +841,9 @@ export function renderUploadForm(container: HTMLElement): void {
         uploadType: 'folder',
         filePaths,
         ...(repoUrl && { repositoryUrl: repoUrl }),
+        ...(selectedArchitectureFile && architectureExtension && {
+          architectureImage: `architecture.${architectureExtension}` as 'architecture.png' | 'architecture.svg',
+        }),
       });
       if (!initiateResult.ok) {
         statusEl.textContent = initiateResult.error;
@@ -747,16 +853,34 @@ export function renderUploadForm(container: HTMLElement): void {
         return;
       }
 
-      // Upload each file individually to its presigned URL
+      // Upload each file individually to its presigned URL (and architecture image in parallel)
       statusEl.textContent = t('upload.uploadingFiles', { completed: 0, total: filteredFiles.length });
       try {
-        await uploadFilesToS3(
-          initiateResult.data.uploadUrls!,
-          filteredFiles,
-          (completed, total) => {
-            statusEl.textContent = t('upload.uploadingFiles', { completed, total });
-          },
-        );
+        const uploadPromises: Promise<void>[] = [
+          uploadFilesToS3(
+            initiateResult.data.uploadUrls!,
+            filteredFiles,
+            (completed, total) => {
+              statusEl.textContent = t('upload.uploadingFiles', { completed, total });
+            },
+          ),
+        ];
+
+        // Upload architecture image in parallel if presigned URL was returned
+        if (selectedArchitectureFile && initiateResult.data.architectureImageUploadUrl) {
+          const contentType = architectureExtension === 'png' ? 'image/png' : 'image/svg+xml';
+          uploadPromises.push(
+            fetch(initiateResult.data.architectureImageUploadUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': contentType },
+              body: selectedArchitectureFile,
+            }).then((resp) => {
+              if (!resp.ok) throw new Error(`Architecture image upload failed (HTTP ${resp.status})`);
+            }),
+          );
+        }
+
+        await Promise.all(uploadPromises);
       } catch (err) {
         statusEl.textContent = `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
         statusEl.className = 'text-sm text-error flex-1';
