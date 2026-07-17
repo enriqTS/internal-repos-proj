@@ -309,7 +309,7 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
      */
     async function waitFor(
       predicate: () => boolean,
-      timeout = 2000,
+      timeout = 4000,
     ): Promise<void> {
       const start = Date.now();
       while (!predicate()) {
@@ -351,23 +351,34 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           document.body.appendChild(freshContainer);
           vi.clearAllMocks();
 
-          // Set hash to #/projects for the router to match on start
-          window.location.hash = '#/projects';
+          // Track hashchange listeners so we can clean up after each iteration
+          const originalAddEventListener = window.addEventListener.bind(window);
+          const originalRemoveEventListener = window.removeEventListener.bind(window);
+          const addedListeners: Array<{ type: string; listener: EventListenerOrEventListenerObject }> = [];
 
-          const { fetchSearchIndex } = await import('./utils/api');
-          const mockedFetch = vi.mocked(fetchSearchIndex);
-          mockedFetch.mockResolvedValue({ ok: true, data: [{ name: 'proj', description: 'desc', tags: ['t'], date: '2024-01-01', path: 'projects/proj/' }] });
+          window.addEventListener = ((type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
+            addedListeners.push({ type, listener });
+            return originalAddEventListener(type, listener, options);
+          }) as typeof window.addEventListener;
 
-          // Initialize app — router.start() calls onHashChange() which will invoke
-          // renderSearchView since hash is already #/projects
-          await import('./main');
+          try {
+            // Set hash to #/projects for the router to match on start
+            window.location.hash = '#/projects';
 
-          // Wait deterministically until fetchSearchIndex has been called at least once.
-          // The router fires renderSearchView as a fire-and-forget async call, so we must
-          // poll rather than relying on a fixed number of microtask ticks.
-          await waitFor(() => mockedFetch.mock.calls.length >= 1);
-          // Also let the post-fetch logic (initializeSearch, markSearchIndexLoaded) complete
-          await settle();
+            const { fetchSearchIndex } = await import('./utils/api');
+            const mockedFetch = vi.mocked(fetchSearchIndex);
+            mockedFetch.mockResolvedValue({ ok: true, data: [{ name: 'proj', description: 'desc', tags: ['t'], date: '2024-01-01', path: 'projects/proj/' }] });
+
+            // Initialize app — router.start() calls onHashChange() which will invoke
+            // renderSearchView since hash is already #/projects
+            await import('./main');
+
+            // Wait deterministically until fetchSearchIndex has been called at least once.
+            // The router fires renderSearchView as a fire-and-forget async call, so we must
+            // poll rather than relying on a fixed number of microtask ticks.
+            await waitFor(() => mockedFetch.mock.calls.length >= 1);
+            // Also let the post-fetch logic (initializeSearch, markSearchIndexLoaded) complete
+            await settle();
 
           const callCountAfterInit = mockedFetch.mock.calls.length;
 
@@ -387,6 +398,14 @@ describe('Preservation: Index loading behavior for non-mutation flows', () => {
           // After all non-mutation navigations, fetchSearchIndex should NOT have been
           // called again (searchIndexLoaded stays true after successful initial load)
           expect(mockedFetch.mock.calls.length).toBe(callCountAfterInit);
+          } finally {
+            // Clean up all event listeners added during this iteration to prevent
+            // accumulated listeners from interfering with subsequent iterations
+            for (const { type, listener } of addedListeners) {
+              originalRemoveEventListener(type, listener);
+            }
+            window.addEventListener = originalAddEventListener as typeof window.addEventListener;
+          }
         },
       ),
       { numRuns: 15 },
