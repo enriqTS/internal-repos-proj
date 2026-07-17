@@ -1,0 +1,323 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add `architectureImage` field to `ProjectMetadata`, `InitiateRequest`, `InitiateResponse`, and `EditRequest` interfaces in `shared/src/types.ts`": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425292
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289434277
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289509869
+      }
+    ],
+    "2.1 Extend `lambda/src/handlers/initiate.ts` to generate presigned URL for architecture image during upload initiation": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425325
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289514857
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289644214
+      }
+    ],
+    "2.2 Add validation for `architectureImage` field in `lambda/src/utils/validate.ts`": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425356
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289515703
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289645077
+      }
+    ],
+    "3.1 Extend `lambda/src/handlers/process.ts` to handle architecture image during finalization": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425405
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289649889
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289794219
+      }
+    ],
+    "4.1 Add presigned URL sub-endpoint in `lambda/src/handlers/edit.ts` for architecture image upload during edit": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425436
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289650780
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289795189
+      }
+    ],
+    "4.2 Extend PATCH handler in `lambda/src/handlers/edit.ts` to handle `architectureImage` field": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425473
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289651591
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289796254
+      }
+    ],
+    "5. Checkpoint - Ensure backend tests pass": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425505
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289802260
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289880750
+      }
+    ],
+    "6.1 Add `requestArchitectureUploadUrl` function to `frontend/src/utils/api.ts`": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425534
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289803101
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289879173
+      }
+    ],
+    "6.2 Extend `updateProject` function in `frontend/src/utils/api.ts` to accept `architectureImage` field": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425561
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289803938
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289879995
+      }
+    ],
+    "7.1 Add architecture image display to `frontend/src/pages/project-detail.ts`": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425594
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289885901
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290047043
+      }
+    ],
+    "8.1 Add optional architecture image file input to `frontend/src/pages/upload-form.ts`": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425626
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289886757
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290047930
+      }
+    ],
+    "9.1 Add architecture image upload and removal controls to `frontend/src/pages/edit-form.ts`": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425655
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290053551
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290257700
+      }
+    ],
+    "10. Checkpoint - Ensure frontend builds and all tests pass": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425685
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290305925
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290357416
+      }
+    ],
+    "11.1 Add `POST /projects/{name}/architecture-upload-url` route to API Gateway in `infra/api.tf`": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425719
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289887562
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290048759
+      }
+    ],
+    "13. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289425755
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290362822
+      },
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290367236
+      }
+    ],
+    "1. Extend shared types with architecture image fields": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289509899
+      }
+    ],
+    "2. Implement backend: Initiate handler extension": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289645111
+      }
+    ],
+    "3. Implement backend: Process handler extension (finalize)": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289794260
+      }
+    ],
+    "4. Implement backend: Edit handler extensions": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289796285
+      }
+    ],
+    "6. Implement frontend: API layer extensions": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784289880035
+      }
+    ],
+    "7. Implement frontend: Project detail page architecture section": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290047072
+      }
+    ],
+    "8. Implement frontend: Upload form architecture image input": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290047964
+      }
+    ],
+    "11. Add Terraform/API Gateway route for architecture upload URL endpoint": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290048804
+      }
+    ],
+    "9. Implement frontend: Edit form architecture image management": [
+      {
+        "executionId": "f7cdaf8e-eb73-48e2-8f1f-deff30aed702",
+        "chatSessionId": "sess_32926a19-f096-49ea-bf40-8d28d3ea7a11",
+        "timestamp": 1784290257733
+      }
+    ]
+  }
+}
