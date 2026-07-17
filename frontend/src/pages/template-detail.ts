@@ -298,6 +298,7 @@ export async function renderTemplateDetail(
     basePath,
     initialPath: initialFilePath,
     autoLoad: true,
+    suppressRootReadme: true,
     onNavigate: (path: string) => {
       const hash = encodeFilePath('template', name, path);
       window.location.hash = hash;

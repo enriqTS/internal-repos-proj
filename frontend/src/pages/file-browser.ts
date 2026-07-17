@@ -25,6 +25,8 @@ export interface FileBrowserOptions {
   onNavigate?: (path: string) => void;
   /** When true, skips the IDLE state and loads the manifest immediately on mount */
   autoLoad?: boolean;
+  /** When true, suppresses README rendering at the root directory level (useful when the parent page renders its own README) */
+  suppressRootReadme?: boolean;
 }
 
 export interface FileBrowserAPI {
@@ -217,7 +219,7 @@ async function downloadFolderAsZip(
  * - VIEWING_FILE: shows breadcrumb + code viewer (replaces directory listing entirely)
  */
 export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
-  const { container, basePath, initialPath, onNavigate, autoLoad } = options;
+  const { container, basePath, initialPath, onNavigate, autoLoad, suppressRootReadme } = options;
 
   let state: FileBrowserState = 'IDLE';
   let manifest: FileTreeManifest | null = null;
@@ -355,10 +357,14 @@ export function createFileBrowser(options: FileBrowserOptions): FileBrowserAPI {
     container.appendChild(wrapper);
 
     // Per-folder README rendering (async, below the listing)
+    // Skip root-level README when suppressRootReadme is set (parent page handles it)
     if (manifest) {
-      const readmeEntry = hasReadme(manifest, currentPath);
-      if (readmeEntry) {
-        renderReadmeBelow(wrapper, readmeEntry);
+      const isRoot = currentPath === '' || currentPath === '/';
+      if (!(isRoot && suppressRootReadme)) {
+        const readmeEntry = hasReadme(manifest, currentPath);
+        if (readmeEntry) {
+          renderReadmeBelow(wrapper, readmeEntry);
+        }
       }
     }
   }

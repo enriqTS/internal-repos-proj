@@ -133,6 +133,7 @@ export async function renderProjectDetail(
     basePath,
     initialPath: initialFilePath,
     autoLoad: true,
+    suppressRootReadme: true,
     onNavigate: (path: string) => {
       const hash = encodeFilePath('project', projectName, path);
       window.location.hash = hash;
